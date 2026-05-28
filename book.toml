@@ -1,0 +1,41 @@
+[book]
+title = "模仿学习的数学原理"
+authors = ["kai feng"]
+description = "一本面向机器人模仿学习的数学原理教程：从 Behavior Cloning、DAgger、MDP 到 ACT、Diffusion Policy、VLA 与工程落地。"
+language = "zh-CN"
+multilingual = false
+src = "模仿学习的数学原理_终稿校验整理版"
+
+[build]
+build-dir = "book"
+create-missing = false
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/fengkai11/Mathematical-principles-of-imitation-learning"
+git-repository-icon = "fa-github"
+edit-url-template = "https://github.com/fengkai11/Mathematical-principles-of-imitation-learning/edit/main/{path}"
+site-url = "/Mathematical-principles-of-imitation-learning/"
+mathjax-support = true
+copy-fonts = true
+no-section-label = false
+
+[output.html.print]
+enable = true
+page-break = true
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.search]
+enable = true
+limit-results = 30
+teaser-word-count = 30
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 1
+boost-paragraph = 1
+expand = true
+heading-split-level = 3
