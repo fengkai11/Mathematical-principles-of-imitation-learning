@@ -17,7 +17,8 @@ git-repository-url = "https://github.com/fengkai11/Mathematical-principles-of-im
 git-repository-icon = "fa-github"
 edit-url-template = "https://github.com/fengkai11/Mathematical-principles-of-imitation-learning/edit/main/{path}"
 site-url = "/Mathematical-principles-of-imitation-learning/"
-mathjax-support = true
+mathjax-support = false
+additional-js = ["mathjax-config.js", "mathjax/tex-chtml.js"]
 copy-fonts = true
 no-section-label = false
 
