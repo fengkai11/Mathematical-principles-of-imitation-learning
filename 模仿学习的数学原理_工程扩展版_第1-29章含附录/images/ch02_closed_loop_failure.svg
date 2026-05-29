@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
+  <rect width="1200" height="620" fill="#ffffff"/>
+  <text x="600" y="46" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="28" font-weight="700" fill="#111827">图2-3 训练误差小，不代表闭环执行一定成功</text>
+
+  <line x1="120" y1="180" x2="1080" y2="180" stroke="#d1d5db" stroke-width="2"/>
+  <line x1="120" y1="380" x2="1080" y2="380" stroke="#d1d5db" stroke-width="2"/>
+  <text x="70" y="185" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" font-weight="700" fill="#111827">专家轨迹</text>
+  <text x="70" y="385" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" font-weight="700" fill="#111827">BC执行</text>
+
+  <path d="M140 180 C260 130, 380 120, 500 175 C650 245, 790 190, 930 160 C1005 145, 1055 155, 1090 175" fill="none" stroke="#111827" stroke-width="5"/>
+  <circle cx="140" cy="180" r="8" fill="#111827"/>
+  <circle cx="500" cy="175" r="8" fill="#111827"/>
+  <circle cx="930" cy="160" r="8" fill="#111827"/>
+  <rect x="1065" y="150" width="45" height="45" rx="8" fill="#ecfdf5" stroke="#065f46" stroke-width="2"/>
+  <text x="1088" y="178" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" fill="#065f46">目标</text>
+
+  <path d="M140 380 C255 330, 375 325, 500 378 C615 430, 720 455, 850 475 C950 492, 1025 500, 1080 510" fill="none" stroke="#dc2626" stroke-width="5" stroke-dasharray="12 8"/>
+  <circle cx="140" cy="380" r="8" fill="#dc2626"/>
+  <circle cx="500" cy="378" r="8" fill="#dc2626"/>
+  <circle cx="850" cy="475" r="8" fill="#dc2626"/>
+  <text x="1000" y="535" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="17" fill="#b91c1c">偏离专家分布</text>
+
+  <path d="M500 190 L500 360" stroke="#7c2d12" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="535" y="275" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#7c2d12">第一步小误差</text>
+
+  <path d="M850 455 L850 200" stroke="#7c2d12" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="875" y="330" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#7c2d12">误差累积</text>
+
+  <rect x="235" y="530" width="730" height="52" rx="14" fill="#fff7ed" stroke="#9a3412"/>
+  <text x="600" y="562" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="17" fill="#7c2d12">BC 只在专家访问过的观测上训练；一旦执行偏离，模型可能遇到训练集中没有见过的观测</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#7c2d12"/>
+    </marker>
+  </defs>
+</svg>
