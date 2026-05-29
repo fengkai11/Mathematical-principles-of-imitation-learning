@@ -28,16 +28,16 @@
 
 这就是离线策略评估：
 
-$$
+<div class="math">\[
 \text{OPE: evaluate } V^\pi \text{ using data collected by } \mu
 \tag{27.1}
-$$
+\]</div>
 
 其中：
 
-- $\mu$：采集数据时使用的行为策略；
-- $\pi$：要评估的新策略；
-- $V^\pi$：新策略的期望回报或成功率。
+- <span class="math">\\(\mu\\)</span>：采集数据时使用的行为策略；
+- <span class="math">\\(\pi\\)</span>：要评估的新策略；
+- <span class="math">\\(V^\pi\\)</span>：新策略的期望回报或成功率。
 
 ---
 
@@ -45,13 +45,13 @@ $$
 
 行为克隆常用验证集损失：
 
-$$
+<div class="math">\[
 \hat L_{val}(\pi)
 =
 \frac{1}{N}\sum_{i=1}^{N}
 \ell(\pi(o_i),a_i)
 \tag{27.2}
-$$
+\]</div>
 
 但这个指标只回答：
 
@@ -66,13 +66,13 @@ $$
 
 所以，OPE 关注的是策略价值：
 
-$$
+<div class="math">\[
 V^\pi
 =
-\mathbb E_{\tau\sim p_\pi(\tau)}
+\mathbb{E}_{\tau\sim p_\pi(\tau)}
 [R(\tau)]
 \tag{27.3}
-$$
+\]</div>
 
 而不是单步预测误差。
 
@@ -80,21 +80,21 @@ $$
 
 ## 2. 行为策略与目标策略
 
-离线数据来自行为策略 $\mu$：
+离线数据来自行为策略 <span class="math">\\(\mu\\)</span>：
 
-$$
+<div class="math">\[
 \tau_i \sim p_\mu(\tau)
 \tag{27.4}
-$$
+\]</div>
 
-但我们想评估的是目标策略 $\pi$：
+但我们想评估的是目标策略 <span class="math">\\(\pi\\)</span>：
 
-$$
+<div class="math">\[
 V^\pi =
-\mathbb E_{\tau\sim p_\pi(\tau)}
+\mathbb{E}_{\tau\sim p_\pi(\tau)}
 [R(\tau)]
 \tag{27.5}
-$$
+\]</div>
 
 这就出现了核心困难：
 
@@ -103,7 +103,7 @@ $$
 评估对象是 π
 ```
 
-如果 $\pi$ 经常选择 $\mu$ 从未尝试过的动作，那么离线数据根本没有证据支持评估。
+如果 <span class="math">\\(\pi\\)</span> 经常选择 <span class="math">\\(\mu\\)</span> 从未尝试过的动作，那么离线数据根本没有证据支持评估。
 
 ---
 
@@ -111,43 +111,43 @@ $$
 
 重要性采样的基本思想是：
 
-$$
-\mathbb E_{x\sim p}[f(x)]
+<div class="math">\[
+\mathbb{E}_{x\sim p}[f(x)]
 =
-\mathbb E_{x\sim q}
+\mathbb{E}_{x\sim q}
 \left[
 \frac{p(x)}{q(x)}f(x)
 \right]
 \tag{27.6}
-$$
+\]</div>
 
 应用到轨迹上：
 
-$$
+<div class="math">\[
 V^\pi
 =
-\mathbb E_{\tau\sim p_\mu}
+\mathbb{E}_{\tau\sim p_\mu}
 \left[
 \frac{p_\pi(\tau)}{p_\mu(\tau)}
 R(\tau)
 \right]
 \tag{27.7}
-$$
+\]</div>
 
 在相同环境动力学下，轨迹密度比可写成策略概率比的乘积：
 
-$$
+<div class="math">\[
 \frac{p_\pi(\tau)}{p_\mu(\tau)}
 =
 \prod_{t=0}^{T}
 \frac{\pi(a_t\mid s_t)}
 {\mu(a_t\mid s_t)}
 \tag{27.8}
-$$
+\]</div>
 
 于是得到 IS 估计：
 
-$$
+<div class="math">\[
 \hat V_{IS}
 =
 \frac{1}{N}\sum_{i=1}^{N}
@@ -158,7 +158,7 @@ $$
 \right)
 R(\tau_i)
 \tag{27.9}
-$$
+\]</div>
 
 这个公式非常直观：如果某条轨迹在目标策略下更可能出现，就给它更大权重。
 
@@ -172,14 +172,14 @@ $$
 
 如果回报可写成逐步奖励：
 
-$$
+<div class="math">\[
 R(\tau)=\sum_{t=0}^{T}\gamma^t r_t
 \tag{27.10}
-$$
+\]</div>
 
 可以使用 per-decision importance sampling：
 
-$$
+<div class="math">\[
 \hat V_{PDIS}
 =
 \frac{1}{N}\sum_{i=1}^{N}
@@ -192,7 +192,7 @@ $$
 \right)
 r_t^i
 \tag{27.11}
-$$
+\]</div>
 
 它只用到当前奖励之前的密度比，通常比整轨迹 IS 稳定一些。
 
@@ -204,23 +204,23 @@ $$
 
 另一类思路是先学习一个模型：
 
-$$
+<div class="math">\[
 \hat P(s_{t+1}\mid s_t,a_t)
 \tag{27.12}
-$$
+\]</div>
 
 或学习价值函数：
 
-$$
+<div class="math">\[
 \hat Q(s,a)
 \approx
-\mathbb E[R(\tau)\mid s_0=s,a_0=a,\pi]
+\mathbb{E}[R(\tau)\mid s_0=s,a_0=a,\pi]
 \tag{27.13}
-$$
+\]</div>
 
 然后用它估计：
 
-$$
+<div class="math">\[
 \hat V_{model}^{\pi}
 =
 \frac{1}{N}\sum_{i=1}^{N}
@@ -228,7 +228,7 @@ $$
 \pi(a\mid s_i)
 \hat Q(s_i,a)
 \tag{27.14}
-$$
+\]</div>
 
 模型化评估的优点是方差低；缺点是如果模型错了，偏差会很大。
 
@@ -242,7 +242,7 @@ Doubly Robust 的思想是：
 
 简化写法如下：
 
-$$
+<div class="math">\[
 \hat V_{DR}
 =
 \frac{1}{N}\sum_{i=1}^{N}
@@ -260,25 +260,25 @@ r_t^i
 \right)
 \right]
 \tag{27.15}
-$$
+\]</div>
 
 其中：
 
-$$
+<div class="math">\[
 \rho_{0:t}^i
 =
 \prod_{k=0}^{t}
 \frac{\pi(a_k^i\mid s_k^i)}
 {\mu(a_k^i\mid s_k^i)}
 \tag{27.16}
-$$
+\]</div>
 
 括号里的项：
 
-$$
+<div class="math">\[
 r_t^i+\gamma\hat V(s_{t+1}^i)-\hat Q(s_t^i,a_t^i)
 \tag{27.17}
-$$
+\]</div>
 
 可以理解为模型预测误差的校正量。
 
@@ -290,21 +290,21 @@ $$
 
 机器人策略常常是连续动作：
 
-$$
-a_t \in \mathbb R^d
+<div class="math">\[
+a_t \in \mathbb{R}^d
 \tag{27.18}
-$$
+\]</div>
 
 这会让 OPE 更困难。
 
 如果目标策略是确定性策略：
 
-$$
+<div class="math">\[
 a_t = f_\theta(s_t)
 \tag{27.19}
-$$
+\]</div>
 
-而行为策略 $\mu$ 是连续分布，那么普通密度比可能不稳定，甚至无法直接使用。原因是确定性策略在连续空间中对应狄拉克分布，而日志数据几乎不可能刚好采到同一个动作。
+而行为策略 <span class="math">\\(\mu\\)</span> 是连续分布，那么普通密度比可能不稳定，甚至无法直接使用。原因是确定性策略在连续空间中对应狄拉克分布，而日志数据几乎不可能刚好采到同一个动作。
 
 因此，连续控制 OPE 往往需要：
 
@@ -321,22 +321,22 @@ $$
 
 对于 ACT、Diffusion Policy、Flow Matching，一次输出可能是动作块：
 
-$$
+<div class="math">\[
 A_t = a_{t:t+H-1}
 \tag{27.20}
-$$
+\]</div>
 
 目标策略是：
 
-$$
+<div class="math">\[
 \pi_\theta(A_t\mid o_t)
 \tag{27.21}
-$$
+\]</div>
 
 这时评估难点包括：
 
 1. 动作块概率密度难以准确计算；
-2. 行为策略 $\mu(A_t\mid o_t)$ 往往未知；
+2. 行为策略 <span class="math">\\(\mu(A\_t\mid o\_t)\\)</span> 往往未知；
 3. 动作块重叠执行导致独立性假设不成立；
 4. 实际控制器可能对动作做安全投影，导致日志动作不等于模型动作。
 
@@ -357,21 +357,21 @@ $$
 
 部署决策不能只看点估计：
 
-$$
+<div class="math">\[
 \hat V^\pi
 \tag{27.22}
-$$
+\]</div>
 
 还应该给出置信区间：
 
-$$
+<div class="math">\[
 \Pr
 \left(
 V^\pi \in [L,U]
 \right)
 \ge 1-\delta
 \tag{27.23}
-$$
+\]</div>
 
 工程上更常用的判断是：
 
@@ -381,10 +381,10 @@ $$
 
 也就是检查：
 
-$$
+<div class="math">\[
 L(\pi_{new}) > U(\pi_{old}) - \epsilon
 \tag{27.24}
-$$
+\]</div>
 
 如果不满足，就不应该直接大规模部署。
 

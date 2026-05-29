@@ -13,23 +13,23 @@
 
 例如行为克隆的目标可以写成：
 
-$$
-\mathcal L_{\mathrm{BC}}(\theta)
+<div class="math">\[
+\mathcal{L}_{\mathrm{BC}}(\theta)
 =
--\mathbb E_{(o,a)\sim\mathcal D}
+-\mathbb{E}_{(o,a)\sim\mathcal{D}}
 [
 \log \pi_\theta(a|o)
-] \tag{A.1}$$
+] \tag{A.1}\]</div>
 
 如果你第一次看到它，可能会同时被几件事攻击：
 
-- $\mathcal L$ 是什么？
-- $\theta$ 是什么？
+- <span class="math">\\(\mathcal{L}\\)</span> 是什么？
+- <span class="math">\\(\theta\\)</span> 是什么？
 - 为什么有个负号？
-- $\mathbb E$ 为什么突然出现？
-- $(o,a)\sim\mathcal D$ 又是什么？
-- $\pi_\theta(a|o)$ 为什么像概率？
-- $\log$ 为什么也来凑热闹？
+- <span class="math">\\(\mathbb{E}\\)</span> 为什么突然出现？
+- <span class="math">\\((o,a)\sim\mathcal{D}\\)</span> 又是什么？
+- <span class="math">\\(\pi\_\theta(a|o)\\)</span> 为什么像概率？
+- <span class="math">\\(\log\\)</span> 为什么也来凑热闹？
 
 于是大脑很自然地选择了一个策略：关闭页面，假装自己没看见。
 
@@ -61,30 +61,30 @@ $$
 
 以公式 A.1 为例：
 
-$$
-\mathcal L_{\mathrm{BC}}(\theta)
+<div class="math">\[
+\mathcal{L}_{\mathrm{BC}}(\theta)
 =
--\mathbb E_{(o,a)\sim\mathcal D}
+-\mathbb{E}_{(o,a)\sim\mathcal{D}}
 [
 \log \pi_\theta(a|o)
-] \tag{A.2}$$
+] \tag{A.2}\]</div>
 
 变量可以分成三类。
 
 第一类是数据变量：
 
-- $o$：observation，观测，可以是图像、点云、关节状态、车辆状态；
-- $a$：action，动作，可以是机械臂末端位姿增量、关节速度、方向盘角度、油门刹车；
-- $(o,a)$：一条监督学习样本。
+- <span class="math">\\(o\\)</span>：observation，观测，可以是图像、点云、关节状态、车辆状态；
+- <span class="math">\\(a\\)</span>：action，动作，可以是机械臂末端位姿增量、关节速度、方向盘角度、油门刹车；
+- <span class="math">\\((o,a)\\)</span>：一条监督学习样本。
 
 第二类是模型变量：
 
-- $\pi_\theta$：带参数的策略模型；
-- $\theta$：神经网络参数，也就是训练要更新的一堆权重。
+- <span class="math">\\(\pi\_\theta\\)</span>：带参数的策略模型；
+- <span class="math">\\(\theta\\)</span>：神经网络参数，也就是训练要更新的一堆权重。
 
 第三类是目标变量：
 
-- $\mathcal L_{\mathrm{BC}}(\theta)$：行为克隆损失，数值越小越好。
+- <span class="math">\\(\mathcal{L}\_{\mathrm{BC}}(\theta)\\)</span>：行为克隆损失，数值越小越好。
 
 读到这里，公式已经没那么吓人了。它不是在召唤数学恶魔，只是在描述一个训练目标。
 
@@ -96,28 +96,28 @@ $$
 
 在公式 A.1 里：
 
-$$
-(o,a)\sim\mathcal D \tag{A.3}$$
+<div class="math">\[
+(o,a)\sim\mathcal{D} \tag{A.3}\]</div>
 
 这句话的意思是：
 
-> 从专家演示数据集 $\mathcal D$ 中抽取一条观测—动作样本。
+> 从专家演示数据集 <span class="math">\\(\mathcal{D}\\)</span> 中抽取一条观测—动作样本。
 
-它不是说真实世界天然就按照 $\mathcal D$ 分布运行，而是说训练时我们只能看到数据集里的样本。
+它不是说真实世界天然就按照 <span class="math">\\(\mathcal{D}\\)</span> 分布运行，而是说训练时我们只能看到数据集里的样本。
 
 这点非常关键。第 3 章讲分布偏移时，我们反复强调：训练时样本来自专家数据分布，执行时样本来自模型自己造成的状态分布。二者未必一样。
 
 训练时：
 
-$$
-s\sim d^{\pi_E}(s) \tag{A.4}$$
+<div class="math">\[
+s\sim d^{\pi_E}(s) \tag{A.4}\]</div>
 
 执行时：
 
-$$
-s\sim d^{\pi_\theta}(s) \tag{A.5}$$
+<div class="math">\[
+s\sim d^{\pi_\theta}(s) \tag{A.5}\]</div>
 
-如果你看到一个公式里出现 $x\sim p(x)$，就要立刻问：
+如果你看到一个公式里出现 <span class="math">\\(x\sim p(x)\\)</span>，就要立刻问：
 
 ```text
 这个 x 是从哪个分布采样来的？
@@ -137,15 +137,15 @@ s\sim d^{\pi_\theta}(s) \tag{A.5}$$
 
 策略函数通常写作：
 
-$$
-\pi_\theta(a|o) \tag{A.6}$$
+<div class="math">\[
+\pi_\theta(a|o) \tag{A.6}\]</div>
 
-它表示：给定观测 $o$，策略给动作 $a$ 的概率。
+它表示：给定观测 <span class="math">\\(o\\)</span>，策略给动作 <span class="math">\\(a\\)</span> 的概率。
 
 如果动作是连续的，也可以写成：
 
-$$
-a = f_\theta(o) \tag{A.7}$$
+<div class="math">\[
+a = f_\theta(o) \tag{A.7}\]</div>
 
 这时策略像一个普通回归模型，输入观测，输出动作。
 
@@ -153,26 +153,26 @@ a = f_\theta(o) \tag{A.7}$$
 
 损失函数通常写作：
 
-$$
-\mathcal L(\theta) \tag{A.8}$$
+<div class="math">\[
+\mathcal{L}(\theta) \tag{A.8}\]</div>
 
-它表示：当前参数 $\theta$ 的模型有多糟糕。
+它表示：当前参数 <span class="math">\\(\theta\\)</span> 的模型有多糟糕。
 
 训练就是不断降低这个数：
 
-$$
-\theta^* = \arg\min_\theta \mathcal L(\theta) \tag{A.9}$$
+<div class="math">\[
+\theta^* = \arg\min_\theta \mathcal{L}(\theta) \tag{A.9}\]</div>
 
-这里 $\arg\min$ 的意思不是“最小值是多少”，而是“让函数最小的参数是谁”。
+这里 <span class="math">\\(\arg\min\\)</span> 的意思不是“最小值是多少”，而是“让函数最小的参数是谁”。
 
 ### A.5.3 奖励函数
 
 强化学习和 IRL 中常见：
 
-$$
-r = R(s,a) \tag{A.10}$$
+<div class="math">\[
+r = R(s,a) \tag{A.10}\]</div>
 
-它表示：在状态 $s$ 做动作 $a$，获得奖励 $r$。
+它表示：在状态 <span class="math">\\(s\\)</span> 做动作 <span class="math">\\(a\\)</span>，获得奖励 <span class="math">\\(r\\)</span>。
 
 在模仿学习里，我们很多时候没有显式奖励，只有专家演示。但 GAIL、IRL、Offline RL 等方法会把奖励重新请回牌桌。
 
@@ -180,8 +180,8 @@ r = R(s,a) \tag{A.10}$$
 
 GAIL 中会出现判别器：
 
-$$
-D_\omega(s,a) \tag{A.11}$$
+<div class="math">\[
+D_\omega(s,a) \tag{A.11}\]</div>
 
 它试图判断一个状态—动作对来自专家还是来自当前策略。
 
@@ -197,48 +197,48 @@ D_\omega(s,a) \tag{A.11}$$
 
 ### A.6.1 求和
 
-$$
-\sum_{t=1}^{N} \ell_t \tag{A.12}$$
+<div class="math">\[
+\sum_{t=1}^{N} \ell_t \tag{A.12}\]</div>
 
-表示把第 $1$ 到第 $N$ 个样本的损失加起来。
+表示把第 <span class="math">\\(1\\)</span> 到第 <span class="math">\\(N\\)</span> 个样本的损失加起来。
 
 ### A.6.2 时间累加
 
 轨迹回报常写成：
 
-$$
+<div class="math">\[
 G_t
 =
-\sum_{k=t}^{T}\gamma^{k-t} r_k \tag{A.13}$$
+\sum_{k=t}^{T}\gamma^{k-t} r_k \tag{A.13}\]</div>
 
-它表示从当前时刻 $t$ 开始，未来奖励的折扣累加。
+它表示从当前时刻 <span class="math">\\(t\\)</span> 开始，未来奖励的折扣累加。
 
-这里 $\gamma$ 是折扣因子，越接近 1，越重视长期结果。
+这里 <span class="math">\\(\gamma\\)</span> 是折扣因子，越接近 1，越重视长期结果。
 
 ### A.6.3 期望
 
-$$
-\mathbb E_{x\sim p(x)}[f(x)] \tag{A.14}$$
+<div class="math">\[
+\mathbb{E}_{x\sim p(x)}[f(x)] \tag{A.14}\]</div>
 
-表示：如果 $x$ 按照分布 $p(x)$ 出现，那么 $f(x)$ 的平均值是多少。
+表示：如果 <span class="math">\\(x\\)</span> 按照分布 <span class="math">\\(p(x)\\)</span> 出现，那么 <span class="math">\\(f(x)\\)</span> 的平均值是多少。
 
 在代码里，期望经常被 mini-batch 平均近似：
 
-$$
-\mathbb E_{x\sim p(x)}[f(x)]
+<div class="math">\[
+\mathbb{E}_{x\sim p(x)}[f(x)]
 \approx
-\frac{1}{B}\sum_{i=1}^{B} f(x_i) \tag{A.15}$$
+\frac{1}{B}\sum_{i=1}^{B} f(x_i) \tag{A.15}\]</div>
 
 ### A.6.4 积分
 
 隐变量模型中常见：
 
-$$
+<div class="math">\[
 p_\theta(a|o)
 =
-\int p_\theta(a|o,z)p(z)dz \tag{A.16}$$
+\int p_\theta(a|o,z)p(z)dz \tag{A.16}\]</div>
 
-它表示：动作 $a$ 的概率来自所有可能隐变量 $z$ 的贡献。
+它表示：动作 <span class="math">\\(a\\)</span> 的概率来自所有可能隐变量 <span class="math">\\(z\\)</span> 的贡献。
 
 如果你不喜欢积分，可以先把它理解成连续版本的求和：把所有可能风格都加权考虑一遍。
 
@@ -250,26 +250,26 @@ p_\theta(a|o)
 
 例如：
 
-$$
+<div class="math">\[
 \theta^*
 =
 \arg\min_\theta
-\mathcal L(\theta) \tag{A.17}$$
+\mathcal{L}(\theta) \tag{A.17}\]</div>
 
-这里优化变量是 $\theta$。
+这里优化变量是 <span class="math">\\(\theta\\)</span>。
 
 再看 GAIL 的 min-max 目标：
 
-$$
+<div class="math">\[
 \min_\pi \max_D
-\mathbb E_{(s,a)\sim\rho_{\pi_E}}[\log D(s,a)]
+\mathbb{E}_{(s,a)\sim\rho_{\pi_E}}[\log D(s,a)]
 +
-\mathbb E_{(s,a)\sim\rho_\pi}[\log(1-D(s,a))] \tag{A.18}$$
+\mathbb{E}_{(s,a)\sim\rho_\pi}[\log(1-D(s,a))] \tag{A.18}\]</div>
 
 这里有两个角色：
 
-- $D$：判别器，希望把专家和策略区分开，所以它要最大化这个目标；
-- $\pi$：策略，希望骗过判别器，所以它要最小化这个目标。
+- <span class="math">\\(D\\)</span>：判别器，希望把专家和策略区分开，所以它要最大化这个目标；
+- <span class="math">\\(\pi\\)</span>：策略，希望骗过判别器，所以它要最小化这个目标。
 
 读这种公式时，不要着急看细节，先问：
 
@@ -288,24 +288,24 @@ $$
 
 | 符号 | 常见含义 | 本书中的直觉 |
 |---|---|---|
-| $s$ | state，状态 | 环境真实状态，可能不可完全观测 |
-| $o$ | observation，观测 | 传感器看到的信息 |
-| $a$ | action，动作 | 机器人或车辆要执行的控制量 |
-| $\tau$ | trajectory，轨迹 | 一串状态和动作 |
-| $\pi$ | policy，策略 | 根据观测/状态决定动作的规则 |
-| $\pi_E$ | expert policy | 专家策略，老师傅 |
-| $\pi_\theta$ | learned policy | 参数为 $\theta$ 的学习策略 |
-| $\theta$ | 模型参数 | 神经网络权重 |
-| $\mathcal D$ | 数据集 | 专家演示或离线数据 |
-| $\mathcal L$ | loss | 训练时要最小化的错误度量 |
-| $R$ | reward | 强化学习中的奖励函数 |
-| $G_t$ | return | 从时刻 $t$ 开始的未来累计奖励 |
-| $d^\pi(s)$ | 策略诱导状态分布 | 策略 $\pi$ 会把机器人带到哪些状态 |
-| $\rho_\pi(s,a)$ | occupancy measure | 策略访问状态—动作对的频率 |
-| $z$ | latent variable | 隐变量，动作风格旋钮 |
-| $\epsilon$ | noise | 噪声，Diffusion 中尤其常见 |
-| $\mathbb E[\cdot]$ | 期望 | 按某个分布取平均 |
-| $D_{\mathrm{KL}}$ | KL 散度 | 两个分布有多不一样的一种度量 |
+| <span class="math">\\(s\\)</span> | state，状态 | 环境真实状态，可能不可完全观测 |
+| <span class="math">\\(o\\)</span> | observation，观测 | 传感器看到的信息 |
+| <span class="math">\\(a\\)</span> | action，动作 | 机器人或车辆要执行的控制量 |
+| <span class="math">\\(\tau\\)</span> | trajectory，轨迹 | 一串状态和动作 |
+| <span class="math">\\(\pi\\)</span> | policy，策略 | 根据观测/状态决定动作的规则 |
+| <span class="math">\\(\pi\_E\\)</span> | expert policy | 专家策略，老师傅 |
+| <span class="math">\\(\pi\_\theta\\)</span> | learned policy | 参数为 <span class="math">\\(\theta\\)</span> 的学习策略 |
+| <span class="math">\\(\theta\\)</span> | 模型参数 | 神经网络权重 |
+| <span class="math">\\(\mathcal{D}\\)</span> | 数据集 | 专家演示或离线数据 |
+| <span class="math">\\(\mathcal{L}\\)</span> | loss | 训练时要最小化的错误度量 |
+| <span class="math">\\(R\\)</span> | reward | 强化学习中的奖励函数 |
+| <span class="math">\\(G\_t\\)</span> | return | 从时刻 <span class="math">\\(t\\)</span> 开始的未来累计奖励 |
+| <span class="math">\\(d^\pi(s)\\)</span> | 策略诱导状态分布 | 策略 <span class="math">\\(\pi\\)</span> 会把机器人带到哪些状态 |
+| <span class="math">\\(\rho\_\pi(s,a)\\)</span> | occupancy measure | 策略访问状态—动作对的频率 |
+| <span class="math">\\(z\\)</span> | latent variable | 隐变量，动作风格旋钮 |
+| <span class="math">\\(\epsilon\\)</span> | noise | 噪声，Diffusion 中尤其常见 |
+| <span class="math">\\(\mathbb{E}[\cdot]\\)</span> | 期望 | 按某个分布取平均 |
+| <span class="math">\\(D\_{\mathrm{KL}}\\)</span> | KL 散度 | 两个分布有多不一样的一种度量 |
 
 ---
 
@@ -313,36 +313,36 @@ $$
 
 ### A.9.1 监督学习式
 
-$$
-\mathcal L(\theta)
+<div class="math">\[
+\mathcal{L}(\theta)
 =
-\mathbb E_{(x,y)\sim\mathcal D}
+\mathbb{E}_{(x,y)\sim\mathcal{D}}
 [
 \ell(f_\theta(x),y)
-] \tag{A.19}$$
+] \tag{A.19}\]</div>
 
 人话：从数据集中抽样，模型预测，和标签比较，平均损失。
 
-行为克隆就是把 $x$ 换成观测 $o$，把 $y$ 换成专家动作 $a$。
+行为克隆就是把 <span class="math">\\(x\\)</span> 换成观测 <span class="math">\\(o\\)</span>，把 <span class="math">\\(y\\)</span> 换成专家动作 <span class="math">\\(a\\)</span>。
 
 ### A.9.2 最大似然式
 
-$$
+<div class="math">\[
 \theta^*
 =
 \arg\max_\theta
-\sum_{i=1}^{N}\log p_\theta(x_i) \tag{A.20}$$
+\sum_{i=1}^{N}\log p_\theta(x_i) \tag{A.20}\]</div>
 
 人话：调参数，让模型认为真实数据更可能发生。
 
 ### A.9.3 KL 正则式
 
-$$
-\mathcal L(\theta)
+<div class="math">\[
+\mathcal{L}(\theta)
 =
-\mathcal L_{\mathrm{task}}(\theta)
+\mathcal{L}_{\mathrm{task}}(\theta)
 +
-\beta D_{\mathrm{KL}}(q\|p) \tag{A.21}$$
+\beta D_{\mathrm{KL}}(q\|p) \tag{A.21}\]</div>
 
 人话：既要完成任务，又不要让某个分布偏离参考分布太远。
 
@@ -350,13 +350,13 @@ CVAE、VAE、RLHF、策略正则里都能看到类似结构。
 
 ### A.9.4 轨迹期望式
 
-$$
+<div class="math">\[
 J(\pi)
 =
-\mathbb E_{\tau\sim p_\pi(\tau)}
+\mathbb{E}_{\tau\sim p_\pi(\tau)}
 [
 R(\tau)
-] \tag{A.22}$$
+] \tag{A.22}\]</div>
 
 人话：让策略在真实执行出来的轨迹上拿到更高回报。
 
@@ -425,15 +425,15 @@ R(\tau)
 
 1. 请把下面公式拆成“数据来源、模型输出、损失函数、优化方向”四部分：
 
-$$
+<div class="math">\[
 \min_\theta
--\mathbb E_{(o,a)\sim\mathcal D}
+-\mathbb{E}_{(o,a)\sim\mathcal{D}}
 [
 \log \pi_\theta(a|o)
-] \tag{A.23}$$
+] \tag{A.23}\]</div>
 
-2. 请解释 $\mathbb E_{s\sim d^{\pi_\theta}}[\ell(s)]$ 和 $\mathbb E_{s\sim d^{\pi_E}}[\ell(s)]$ 的区别。
+2. 请解释 <span class="math">\\(\mathbb{E}\_{s\sim d^{\pi\_\theta}}[\ell(s)]\\)</span> 和 <span class="math">\\(\mathbb{E}\_{s\sim d^{\pi\_E}}[\ell(s)]\\)</span> 的区别。
 
-3. 看到 $\arg\min_\theta$ 时，你应该立刻问哪两个问题？
+3. 看到 <span class="math">\\(\arg\min\_\theta\\)</span> 时，你应该立刻问哪两个问题？
 
 4. 请从本书任意一章找一个公式，按“五步法”读一遍。

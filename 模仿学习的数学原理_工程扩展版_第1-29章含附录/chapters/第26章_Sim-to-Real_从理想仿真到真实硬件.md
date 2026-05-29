@@ -16,10 +16,10 @@
 
 在仿真环境里，一个模仿学习策略可能表现很好：
 
-$$
+<div class="math">\[
 a_t \sim \pi_\theta(a_t \mid o_t)
 \tag{26.1}
-$$
+\]</div>
 
 但一旦放到真实机械臂、移动机器人或自动驾驶域控上，效果可能突然下降。原因不是公式错了，而是训练时的世界和执行时的世界不一样。
 
@@ -38,21 +38,21 @@ $$
 
 ## 1. 从理想状态到真实观测
 
-前文为了讲清模仿学习，常常把状态 $s_t$ 或观测 $o_t$ 当成干净输入。但真实系统中，策略拿到的不是 $s_t$，而是带噪观测：
+前文为了讲清模仿学习，常常把状态 <span class="math">\\(s\_t\\)</span> 或观测 <span class="math">\\(o\_t\\)</span> 当成干净输入。但真实系统中，策略拿到的不是 <span class="math">\\(s\_t\\)</span>，而是带噪观测：
 
-$$
+<div class="math">\[
 o_t = h(s_t) + \epsilon_t
 \tag{26.2}
-$$
+\]</div>
 
 其中：
 
-- $s_t$：真实物理状态；
-- $h(\cdot)$：传感器观测函数；
-- $\epsilon_t$：观测噪声；
-- $o_t$：策略真正看到的输入。
+- <span class="math">\\(s\_t\\)</span>：真实物理状态；
+- <span class="math">\\(h(\cdot)\\)</span>：传感器观测函数；
+- <span class="math">\\(\epsilon\_t\\)</span>：观测噪声；
+- <span class="math">\\(o\_t\\)</span>：策略真正看到的输入。
 
-如果 $\epsilon_t$ 是小的高斯噪声，策略可能还能靠数据增强扛住；如果是遮挡、反光、油污、标定漂移造成的重尾噪声，策略就可能进入训练集中从未覆盖的区域。
+如果 <span class="math">\\(\epsilon\_t\\)</span> 是小的高斯噪声，策略可能还能靠数据增强扛住；如果是遮挡、反光、油污、标定漂移造成的重尾噪声，策略就可能进入训练集中从未覆盖的区域。
 
 因此，真实部署时要区分：
 
@@ -70,39 +70,39 @@ $$
 
 在理想 MDP 中，状态转移可以写成：
 
-$$
+<div class="math">\[
 s_{t+1} \sim P(s_{t+1}\mid s_t,a_t)
 \tag{26.3}
-$$
+\]</div>
 
 但真实硬件里，更接近下面的形式：
 
-$$
+<div class="math">\[
 s_{t+1} = f(s_t,a_t;\xi) + w_t
 \tag{26.4}
-$$
+\]</div>
 
 其中：
 
-- $f$：真实动力学；
-- $\xi$：环境和硬件参数，例如摩擦、质量、关节阻尼、相机外参；
-- $w_t$：未建模扰动。
+- <span class="math">\\(f\\)</span>：真实动力学；
+- <span class="math">\\(\xi\\)</span>：环境和硬件参数，例如摩擦、质量、关节阻尼、相机外参；
+- <span class="math">\\(w\_t\\)</span>：未建模扰动。
 
 仿真到现实的困难在于，训练时使用的是：
 
-$$
+<div class="math">\[
 s_{t+1}^{sim} = f_{sim}(s_t,a_t;\xi_{sim})
 \tag{26.5}
-$$
+\]</div>
 
 而真实执行时遇到的是：
 
-$$
+<div class="math">\[
 s_{t+1}^{real} = f_{real}(s_t,a_t;\xi_{real}) + w_t
 \tag{26.6}
-$$
+\]</div>
 
-当 $f_{sim}$ 和 $f_{real}$ 差距很大时，策略即使在仿真中模仿得很好，也可能在真实系统中失败。
+当 <span class="math">\\(f\_{sim}\\)</span> 和 <span class="math">\\(f\_{real}\\)</span> 差距很大时，策略即使在仿真中模仿得很好，也可能在真实系统中失败。
 
 ---
 
@@ -110,22 +110,22 @@ $$
 
 一种常见做法是 domain randomization。其思想是：不要只在一个干净仿真环境中训练，而是在一族随机参数下训练：
 
-$$
+<div class="math">\[
 \xi \sim p(\xi)
 \tag{26.7}
-$$
+\]</div>
 
 训练目标变为：
 
-$$
+<div class="math">\[
 \min_\theta
-\mathbb E_{\xi \sim p(\xi)}
-\mathbb E_{(o,a)\sim \mathcal D_\xi}
+\mathbb{E}_{\xi \sim p(\xi)}
+\mathbb{E}_{(o,a)\sim \mathcal{D}_\xi}
 \left[
 \ell(\pi_\theta(o),a)
 \right]
 \tag{26.8}
-$$
+\]</div>
 
 这意味着策略不是只适配一个仿真器，而是要在一组动力学、光照、噪声、摩擦和标定扰动下都能工作。
 
@@ -137,12 +137,12 @@ $$
 
 ## 4. 时延：动作不是立刻生效的
 
-很多模仿学习公式默认动作 $a_t$ 作用于当前状态 $s_t$。但真实系统中，动作可能在延迟 $d$ 个周期后才真正生效：
+很多模仿学习公式默认动作 <span class="math">\\(a\_t\\)</span> 作用于当前状态 <span class="math">\\(s\_t\\)</span>。但真实系统中，动作可能在延迟 <span class="math">\\(d\\)</span> 个周期后才真正生效：
 
-$$
+<div class="math">\[
 s_{t+1} = f(s_t, a_{t-d})
 \tag{26.9}
-$$
+\]</div>
 
 这对高频控制非常致命。一个策略可能以为自己在根据当前图像控制机械臂，实际上机械臂执行的是几个周期之前的动作。
 
@@ -156,10 +156,10 @@ $$
 
 因此，真实系统中应该把历史动作和状态纳入策略输入：
 
-$$
+<div class="math">\[
 a_t \sim \pi_\theta(a_t\mid o_{t-L:t}, a_{t-L:t-1})
 \tag{26.10}
-$$
+\]</div>
 
 这也是第18章 Transformer Policy、第19章 SSM / Mamba 和第23章快慢模型在工程上重要的原因。
 
@@ -169,24 +169,24 @@ $$
 
 如果真实状态不可直接观测，我们需要估计一个 belief 或状态估计：
 
-$$
-\hat s_t = \mathbb E[s_t \mid o_{1:t}, a_{1:t-1}]
+<div class="math">\[
+\hat s_t = \mathbb{E}[s_t \mid o_{1:t}, a_{1:t-1}]
 \tag{26.11}
-$$
+\]</div>
 
 在最简单的线性高斯系统中，可以写成：
 
-$$
+<div class="math">\[
 s_{t+1} = A s_t + B a_t + w_t
 \tag{26.12}
-$$
+\]</div>
 
-$$
+<div class="math">\[
 o_t = C s_t + v_t
 \tag{26.13}
-$$
+\]</div>
 
-其中 $w_t$ 和 $v_t$ 分别是过程噪声和观测噪声。
+其中 <span class="math">\\(w\_t\\)</span> 和 <span class="math">\\(v\_t\\)</span> 分别是过程噪声和观测噪声。
 
 卡尔曼滤波做的事情，就是在“模型预测”和“传感器观测”之间做加权融合。对模仿学习来说，关键不是要求策略自己学会所有滤波，而是要明确：
 
@@ -200,30 +200,30 @@ $$
 
 定义安全集合：
 
-$$
-\mathcal S_{safe} = \{s \mid g_i(s) \le 0,\ i=1,\dots,m\}
+<div class="math">\[
+\mathcal{S}_{safe} = \{s \mid g_i(s) \le 0,\ i=1,\dots,m\}
 \tag{26.14}
-$$
+\]</div>
 
 安全执行要求：
 
-$$
-s_t \in \mathcal S_{safe},\quad \forall t
+<div class="math">\[
+s_t \in \mathcal{S}_{safe},\quad \forall t
 \tag{26.15}
-$$
+\]</div>
 
-对于策略输出动作 $a_t^{raw}$，实际送到底层控制器之前，常常需要经过安全投影：
+对于策略输出动作 <span class="math">\\(a\_t^{raw}\\)</span>，实际送到底层控制器之前，常常需要经过安全投影：
 
-$$
+<div class="math">\[
 a_t^{safe}
 =
 \arg\min_a \|a-a_t^{raw}\|^2
 \quad
 \text{s.t.}
 \quad
-f(s_t,a)\in \mathcal S_{safe}
+f(s_t,a)\in \mathcal{S}_{safe}
 \tag{26.16}
-$$
+\]</div>
 
 这个公式表达的是：
 
@@ -235,21 +235,21 @@ $$
 
 普通训练目标关注平均性能：
 
-$$
-\max_\pi \mathbb E_{\tau\sim p_\pi(\tau)}[R(\tau)]
+<div class="math">\[
+\max_\pi \mathbb{E}_{\tau\sim p_\pi(\tau)}[R(\tau)]
 \tag{26.17}
-$$
+\]</div>
 
 但工程落地更关心 worst-case 或风险敏感性能：
 
-$$
+<div class="math">\[
 \max_\pi \min_{\delta\in\Delta}
-\mathbb E_{\tau\sim p_{\pi,\delta}(\tau)}
+\mathbb{E}_{\tau\sim p_{\pi,\delta}(\tau)}
 [R(\tau)]
 \tag{26.18}
-$$
+\]</div>
 
-其中 $\delta$ 表示扰动，例如延迟、噪声、摩擦变化、传感器异常。
+其中 <span class="math">\\(\delta\\)</span> 表示扰动，例如延迟、噪声、摩擦变化、传感器异常。
 
 这说明：真实部署不是问“平均成功率多少”，还要问：
 

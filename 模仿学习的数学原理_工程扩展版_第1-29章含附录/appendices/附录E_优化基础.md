@@ -19,29 +19,29 @@
 
 数学写作：
 
-$$
+<div class="math">\[
 \theta^*
 =
 \arg\min_\theta
-\mathcal L(\theta) \tag{E.1}$$
+\mathcal{L}(\theta) \tag{E.1}\]</div>
 
 其中：
 
-- $\theta$：模型参数；
-- $\mathcal L(\theta)$：损失函数；
-- $\theta^*$：让损失尽可能小的参数。
+- <span class="math">\\(\theta\\)</span>：模型参数；
+- <span class="math">\\(\mathcal{L}(\theta)\\)</span>：损失函数；
+- <span class="math">\\(\theta^*\\)</span>：让损失尽可能小的参数。
 
 这就是最小化问题。
 
 在行为克隆中，loss 可以是：
 
-$$
-\mathcal L_{\mathrm{BC}}(\theta)
+<div class="math">\[
+\mathcal{L}_{\mathrm{BC}}(\theta)
 =
--\mathbb E_{(o,a)\sim\mathcal D}
+-\mathbb{E}_{(o,a)\sim\mathcal{D}}
 [
 \log\pi_\theta(a|o)
-] \tag{E.2}$$
+] \tag{E.2}\]</div>
 
 训练的目标就是让模型给专家动作更高概率，从而让这个负 log 概率更小。
 
@@ -55,42 +55,42 @@ $$
 
 ### E.2.1 MSE
 
-$$
-\mathcal L_{\mathrm{MSE}}
+<div class="math">\[
+\mathcal{L}_{\mathrm{MSE}}
 =
-\|a-\hat a\|^2 \tag{E.3}$$
+\|a-\hat a\|^2 \tag{E.3}\]</div>
 
 用于连续动作回归。
 
 ### E.2.2 交叉熵
 
-$$
-\mathcal L_{\mathrm{CE}}
+<div class="math">\[
+\mathcal{L}_{\mathrm{CE}}
 =
 -
-\sum_a y(a)\log \hat p(a) \tag{E.4}$$
+\sum_a y(a)\log \hat p(a) \tag{E.4}\]</div>
 
 用于离散动作分类。
 
 ### E.2.3 KL 正则
 
-$$
-\mathcal L_{\mathrm{KL}}
+<div class="math">\[
+\mathcal{L}_{\mathrm{KL}}
 =
-D_{\mathrm{KL}}(q\|p) \tag{E.5}$$
+D_{\mathrm{KL}}(q\|p) \tag{E.5}\]</div>
 
 用于约束分布不要偏离太远。
 
 一个训练目标也可以由多项组成：
 
-$$
-\mathcal L(\theta)
+<div class="math">\[
+\mathcal{L}(\theta)
 =
-\mathcal L_{\mathrm{task}}(\theta)
+\mathcal{L}_{\mathrm{task}}(\theta)
 +
-\lambda\mathcal L_{\mathrm{reg}}(\theta) \tag{E.6}$$
+\lambda\mathcal{L}_{\mathrm{reg}}(\theta) \tag{E.6}\]</div>
 
-这里 $\lambda$ 控制正则项权重。工程上 $\lambda$ 不是随便写的，它会改变模型行为。太小，约束不干活；太大，模型可能任务都学不好。
+这里 <span class="math">\\(\lambda\\)</span> 控制正则项权重。工程上 <span class="math">\\(\lambda\\)</span> 不是随便写的，它会改变模型行为。太小，约束不干活；太大，模型可能任务都学不好。
 
 ---
 
@@ -98,27 +98,27 @@ $$
 
 梯度写作：
 
-$$
-\nabla_\theta \mathcal L(\theta) \tag{E.7}$$
+<div class="math">\[
+\nabla_\theta \mathcal{L}(\theta) \tag{E.7}\]</div>
 
-它表示损失函数相对于参数 $\theta$ 的变化方向。
+它表示损失函数相对于参数 <span class="math">\\(\theta\\)</span> 的变化方向。
 
-如果 $\theta$ 只有一个参数，梯度就是导数：
+如果 <span class="math">\\(\theta\\)</span> 只有一个参数，梯度就是导数：
 
-$$
-\frac{d\mathcal L(\theta)}{d\theta} \tag{E.8}$$
+<div class="math">\[
+\frac{d\mathcal{L}(\theta)}{d\theta} \tag{E.8}\]</div>
 
-如果 $\theta$ 有很多维，梯度是一个向量：
+如果 <span class="math">\\(\theta\\)</span> 有很多维，梯度是一个向量：
 
-$$
-\nabla_\theta \mathcal L(\theta)
+<div class="math">\[
+\nabla_\theta \mathcal{L}(\theta)
 =
 \left[
-\frac{\partial\mathcal L}{\partial\theta_1},
-\frac{\partial\mathcal L}{\partial\theta_2},
+\frac{\partial\mathcal{L}}{\partial\theta_1},
+\frac{\partial\mathcal{L}}{\partial\theta_2},
 \dots,
-\frac{\partial\mathcal L}{\partial\theta_d}
-\right] \tag{E.9}$$
+\frac{\partial\mathcal{L}}{\partial\theta_d}
+\right] \tag{E.9}\]</div>
 
 直觉：
 
@@ -132,25 +132,25 @@ $$
 
 梯度下降更新公式：
 
-$$
+<div class="math">\[
 \theta
 \leftarrow
 \theta-
 \eta
-\nabla_\theta\mathcal L(\theta) \tag{E.10}$$
+\nabla_\theta\mathcal{L}(\theta) \tag{E.10}\]</div>
 
 拆开看：
 
-- 当前参数：$\theta$；
-- 梯度：$\nabla_\theta\mathcal L(\theta)$；
-- 学习率：$\eta$；
+- 当前参数：<span class="math">\\(\theta\\)</span>；
+- 梯度：<span class="math">\\(\nabla\_\theta\mathcal{L}(\theta)\\)</span>；
+- 学习率：<span class="math">\\(\eta\\)</span>；
 - 更新方向：负梯度方向。
 
 人话：
 
 > loss 往哪边涨得最快，我们就往反方向挪一点。
 
-$\eta$ 控制挪多大一步。
+<span class="math">\\(\eta\\)</span> 控制挪多大一步。
 
 如果学习率太大，可能一步跨过谷底，在 loss 山谷两边蹦迪；如果学习率太小，训练像老年人过马路，安全但很慢。
 
@@ -162,24 +162,24 @@ $\eta$ 控制挪多大一步。
 
 全数据 loss：
 
-$$
-\mathcal L(\theta)
+<div class="math">\[
+\mathcal{L}(\theta)
 =
-\frac{1}{N}\sum_{i=1}^{N}\ell_i(\theta) \tag{E.11}$$
+\frac{1}{N}\sum_{i=1}^{N}\ell_i(\theta) \tag{E.11}\]</div>
 
 mini-batch 近似：
 
-$$
-\hat{\mathcal L}(\theta)
+<div class="math">\[
+\hat{\mathcal{L}}(\theta)
 =
-\frac{1}{B}\sum_{i=1}^{B}\ell_i(\theta) \tag{E.12}$$
+\frac{1}{B}\sum_{i=1}^{B}\ell_i(\theta) \tag{E.12}\]</div>
 
 对应梯度：
 
-$$
-\nabla_\theta\hat{\mathcal L}(\theta)
+<div class="math">\[
+\nabla_\theta\hat{\mathcal{L}}(\theta)
 \approx
-\nabla_\theta\mathcal L(\theta) \tag{E.13}$$
+\nabla_\theta\mathcal{L}(\theta) \tag{E.13}\]</div>
 
 mini-batch 梯度有噪声，但计算快，还能帮助跳出一些不好的局部区域。深度学习训练很多时候就是在这种带噪声的方向感里前进，有点像晚上倒车入库：不是每一步都精确，但整体要往对的方向修。
 
@@ -189,38 +189,38 @@ mini-batch 梯度有噪声，但计算快，还能帮助跳出一些不好的局
 
 神经网络是很多函数的复合：
 
-$$
-y=f_\theta(x) \tag{E.14}$$
+<div class="math">\[
+y=f_\theta(x) \tag{E.14}\]</div>
 
 loss 是：
 
-$$
-\mathcal L=\ell(y,y^*) \tag{E.15}$$
+<div class="math">\[
+\mathcal{L}=\ell(y,y^*) \tag{E.15}\]</div>
 
 要更新参数，需要计算：
 
-$$
-\frac{\partial\mathcal L}{\partial\theta} \tag{E.16}$$
+<div class="math">\[
+\frac{\partial\mathcal{L}}{\partial\theta} \tag{E.16}\]</div>
 
 反向传播的核心是链式法则。
 
 简单例子：
 
-$$
+<div class="math">\[
 z=f(x),
 \quad
 y=g(z),
 \quad
-\mathcal L=h(y) \tag{E.17}$$
+\mathcal{L}=h(y) \tag{E.17}\]</div>
 
 那么：
 
-$$
-\frac{d\mathcal L}{dx}
+<div class="math">\[
+\frac{d\mathcal{L}}{dx}
 =
-\frac{d\mathcal L}{dy}
+\frac{d\mathcal{L}}{dy}
 \frac{dy}{dz}
-\frac{dz}{dx} \tag{E.18}$$
+\frac{dz}{dx} \tag{E.18}\]</div>
 
 神经网络只是把这个链式法则应用到很多层、很多参数上。框架如 PyTorch 会自动计算，但你要知道它不是魔法，而是链式法则的批量施工队。
 
@@ -232,17 +232,17 @@ $$
 
 朴素梯度下降：
 
-$$
-\theta\leftarrow\theta-\eta g_t \tag{E.19}$$
+<div class="math">\[
+\theta\leftarrow\theta-\eta g_t \tag{E.19}\]</div>
 
-其中 $g_t=\nabla_\theta\mathcal L_t(\theta)$。
+其中 <span class="math">\\(g\_t=\nabla\_\theta\mathcal{L}\_t(\theta)\\)</span>。
 
 带动量的方法会累积历史梯度方向：
 
-$$
-v_t=\beta v_{t-1}+(1-\beta)g_t \tag{E.20}$$
+<div class="math">\[
+v_t=\beta v_{t-1}+(1-\beta)g_t \tag{E.20}\]</div>
 
-再用 $v_t$ 更新参数。
+再用 <span class="math">\\(v\_t\\)</span> 更新参数。
 
 直觉是：如果连续很多步都往同一个方向走，那这个方向可能靠谱；如果梯度乱跳，动量可以让更新别那么抽风。
 
@@ -256,10 +256,10 @@ Adam 还会根据梯度二阶矩自适应调整步长。你不需要先背完 Ad
 
 所以训练通常不保证找到全局最优：
 
-$$
+<div class="math">\[
 \theta_{\mathrm{trained}}
 \neq
-\arg\min_\theta \mathcal L(\theta) \tag{E.21}$$
+\arg\min_\theta \mathcal{L}(\theta) \tag{E.21}\]</div>
 
 但工程上我们不一定需要数学意义上的全局最优。我们需要的是：
 
@@ -280,30 +280,30 @@ $$
 
 经验风险：
 
-$$
+<div class="math">\[
 \hat R(\theta)
 =
-\frac{1}{N}\sum_{i=1}^{N}\ell(f_\theta(x_i),y_i) \tag{E.22}$$
+\frac{1}{N}\sum_{i=1}^{N}\ell(f_\theta(x_i),y_i) \tag{E.22}\]</div>
 
 真实风险：
 
-$$
+<div class="math">\[
 R(\theta)
 =
-\mathbb E_{(x,y)\sim p_{\mathrm{data}}}
+\mathbb{E}_{(x,y)\sim p_{\mathrm{data}}}
 [
-\ell(f_\theta(x),y)] \tag{E.23}$$
+\ell(f_\theta(x),y)] \tag{E.23}\]</div>
 
 训练只看经验风险，但我们真正关心真实风险。
 
 正则化常写作：
 
-$$
-\mathcal L(\theta)
+<div class="math">\[
+\mathcal{L}(\theta)
 =
-\hat R(\theta)+\lambda\Omega(\theta) \tag{E.24}$$
+\hat R(\theta)+\lambda\Omega(\theta) \tag{E.24}\]</div>
 
-其中 $\Omega(\theta)$ 是正则项，例如权重衰减。
+其中 <span class="math">\\(\Omega(\theta)\\)</span> 是正则项，例如权重衰减。
 
 模仿学习中还有一种更现实的“过拟合”：模型在录制场景很好，换一个光照、工件批次、相机高度、地面材质就翻车。这不仅是统计问题，也是数据覆盖和部署环境问题。
 
@@ -313,28 +313,28 @@ $$
 
 CVAE、Diffusion、机器人策略训练中常见多项 loss：
 
-$$
-\mathcal L
+<div class="math">\[
+\mathcal{L}
 =
-\mathcal L_1
+\mathcal{L}_1
 +
-\lambda_2\mathcal L_2
+\lambda_2\mathcal{L}_2
 +
-\lambda_3\mathcal L_3 \tag{E.25}$$
+\lambda_3\mathcal{L}_3 \tag{E.25}\]</div>
 
 比如 ACT 中可能有重建损失和 KL 项：
 
-$$
-\mathcal L_{\mathrm{ACT}}
+<div class="math">\[
+\mathcal{L}_{\mathrm{ACT}}
 =
-\mathcal L_{\mathrm{recon}}
+\mathcal{L}_{\mathrm{recon}}
 +
-\beta D_{\mathrm{KL}}(q_\phi(z|o,a)\|p(z)) \tag{E.26}$$
+\beta D_{\mathrm{KL}}(q_\phi(z|o,a)\|p(z)) \tag{E.26}\]</div>
 
-这里 $\beta$ 不只是数学符号，它是行为调节旋钮。
+这里 <span class="math">\\(\beta\\)</span> 不只是数学符号，它是行为调节旋钮。
 
-- $\beta$ 太小：latent 可能乱跑，推理时采样不稳定；
-- $\beta$ 太大：latent 可能被压死，模型退化成普通回归。
+- <span class="math">\\(\beta\\)</span> 太小：latent 可能乱跑，推理时采样不稳定；
+- <span class="math">\\(\beta\\)</span> 太大：latent 可能被压死，模型退化成普通回归。
 
 所以调 loss 权重不是“玄学炼丹”这么简单，它是在不同目标之间做工程取舍。
 
@@ -381,7 +381,7 @@ $$
 
 ## E.13 小练习
 
-1. 请解释 $\theta\leftarrow\theta-\eta\nabla_\theta\mathcal L(\theta)$ 中每个符号的含义。
+1. 请解释 <span class="math">\\(\theta\leftarrow\theta-\eta\nabla\_\theta\mathcal{L}(\theta)\\)</span> 中每个符号的含义。
 
 2. 为什么梯度下降要沿负梯度方向走？
 
@@ -389,4 +389,4 @@ $$
 
 4. 一个模型训练 loss 下降但 rollout 成功率不上升，可能有哪些原因？
 
-5. 多项 loss 中的权重 $\lambda$ 或 $\beta$ 改变后，为什么模型行为会变？
+5. 多项 loss 中的权重 <span class="math">\\(\lambda\\)</span> 或 <span class="math">\\(\beta\\)</span> 改变后，为什么模型行为会变？

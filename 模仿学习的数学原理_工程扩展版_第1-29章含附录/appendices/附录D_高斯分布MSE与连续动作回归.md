@@ -13,7 +13,7 @@
 
 但机器人动作经常是连续的：
 
-- 机械臂末端位置增量 $(\Delta x,\Delta y,\Delta z)$；
+- 机械臂末端位置增量 <span class="math">\\((\Delta x,\Delta y,\Delta z)\\)</span>；
 - 机械臂姿态变化；
 - 关节速度；
 - 夹爪开合量；
@@ -22,16 +22,16 @@
 
 连续动作不能简单地列出所有类别。最朴素的做法是让模型直接输出一个数值：
 
-$$
-\hat a_t=f_\theta(o_t) \tag{D.1}$$
+<div class="math">\[
+\hat a_t=f_\theta(o_t) \tag{D.1}\]</div>
 
 然后用 MSE：
 
-$$
-\mathcal L_{\mathrm{MSE}}(\theta)
+<div class="math">\[
+\mathcal{L}_{\mathrm{MSE}}(\theta)
 =
 \frac{1}{N}\sum_{t=1}^{N}
-\|a_t-\hat a_t\|^2 \tag{D.2}$$
+\|a_t-\hat a_t\|^2 \tag{D.2}\]</div>
 
 问题是：这个平方误差为什么合理？答案来自高斯分布。
 
@@ -41,12 +41,12 @@ $$
 
 一维高斯分布写作：
 
-$$
-x\sim\mathcal N(\mu,\sigma^2) \tag{D.3}$$
+<div class="math">\[
+x\sim\mathcal{N}(\mu,\sigma^2) \tag{D.3}\]</div>
 
 概率密度为：
 
-$$
+<div class="math">\[
 p(x)
 =
 \frac{1}{\sqrt{2\pi\sigma^2}}
@@ -54,33 +54,33 @@ p(x)
 \left(
 -
 \frac{(x-\mu)^2}{2\sigma^2}
-\right) \tag{D.4}$$
+\right) \tag{D.4}\]</div>
 
 拆开看：
 
-- $\mu$：均值，分布中心；
-- $\sigma^2$：方差，控制分布宽度；
-- $(x-\mu)^2$：离中心越远，惩罚越大；
-- $\exp(\cdot)$：把负惩罚变成正概率密度。
+- <span class="math">\\(\mu\\)</span>：均值，分布中心；
+- <span class="math">\\(\sigma^2\\)</span>：方差，控制分布宽度；
+- <span class="math">\\((x-\mu)^2\\)</span>：离中心越远，惩罚越大；
+- <span class="math">\\(\exp(\cdot)\\)</span>：把负惩罚变成正概率密度。
 
 工程直觉：
 
 > 高斯分布认为“离均值近的值更可能，离均值远的值更不可能”。
 
-这和连续动作回归很像：如果专家动作 $a$ 离模型输出 $\mu_\theta(o)$ 越近，我们越满意。
+这和连续动作回归很像：如果专家动作 <span class="math">\\(a\\)</span> 离模型输出 <span class="math">\\(\mu\_\theta(o)\\)</span> 越近，我们越满意。
 
 ---
 
 ## D.3 多维高斯分布
 
-多维动作 $a\in\mathbb R^d$ 可以用多维高斯：
+多维动作 <span class="math">\\(a\in\mathbb{R}^d\\)</span> 可以用多维高斯：
 
-$$
-a\sim\mathcal N(\mu,\Sigma) \tag{D.5}$$
+<div class="math">\[
+a\sim\mathcal{N}(\mu,\Sigma) \tag{D.5}\]</div>
 
 概率密度为：
 
-$$
+<div class="math">\[
 p(a)
 =
 \frac{1}{(2\pi)^{d/2}|\Sigma|^{1/2}}
@@ -88,27 +88,27 @@ p(a)
 \left(
 -
 \frac{1}{2}(a-\mu)^T\Sigma^{-1}(a-\mu)
-\right) \tag{D.6}$$
+\right) \tag{D.6}\]</div>
 
 其中：
 
-- $d$：动作维度；
-- $\mu\in\mathbb R^d$：均值向量；
-- $\Sigma\in\mathbb R^{d\times d}$：协方差矩阵；
-- $|\Sigma|$：协方差矩阵行列式；
-- $(a-\mu)^T\Sigma^{-1}(a-\mu)$：Mahalanobis 距离形式。
+- <span class="math">\\(d\\)</span>：动作维度；
+- <span class="math">\\(\mu\in\mathbb{R}^d\\)</span>：均值向量；
+- <span class="math">\\(\Sigma\in\mathbb{R}^{d\times d}\\)</span>：协方差矩阵；
+- <span class="math">\\(|\Sigma|\\)</span>：协方差矩阵行列式；
+- <span class="math">\\((a-\mu)^T\Sigma^{-1}(a-\mu)\\)</span>：Mahalanobis 距离形式。
 
-如果协方差取成 $\sigma^2I$，也就是各维独立且方差相同：
+如果协方差取成 <span class="math">\\(\sigma^2I\\)</span>，也就是各维独立且方差相同：
 
-$$
-\Sigma=\sigma^2I \tag{D.7}$$
+<div class="math">\[
+\Sigma=\sigma^2I \tag{D.7}\]</div>
 
 那么指数里的距离项变成：
 
-$$
+<div class="math">\[
 (a-\mu)^T(\sigma^2I)^{-1}(a-\mu)
 =
-\frac{1}{\sigma^2}\|a-\mu\|^2 \tag{D.8}$$
+\frac{1}{\sigma^2}\|a-\mu\|^2 \tag{D.8}\]</div>
 
 平方误差开始登场。
 
@@ -116,24 +116,24 @@ $$
 
 ## D.4 连续动作策略的高斯建模
 
-假设模型在观测 $o_t$ 下输出动作均值：
+假设模型在观测 <span class="math">\\(o\_t\\)</span> 下输出动作均值：
 
-$$
-\mu_\theta(o_t) \tag{D.9}$$
+<div class="math">\[
+\mu_\theta(o_t) \tag{D.9}\]</div>
 
 我们把专家动作看成从高斯分布采样：
 
-$$
-a_t\sim\mathcal N(\mu_\theta(o_t),\sigma^2I) \tag{D.10}$$
+<div class="math">\[
+a_t\sim\mathcal{N}(\mu_\theta(o_t),\sigma^2I) \tag{D.10}\]</div>
 
 也就是说，策略为：
 
-$$
+<div class="math">\[
 \pi_\theta(a_t|o_t)
 =
-\mathcal N(a_t;\mu_\theta(o_t),\sigma^2I) \tag{D.11}$$
+\mathcal{N}(a_t;\mu_\theta(o_t),\sigma^2I) \tag{D.11}\]</div>
 
-这里的 $\mu_\theta(o_t)$ 是模型预测的中心动作，$\sigma^2I$ 表示我们假设专家动作围绕这个中心有高斯噪声。
+这里的 <span class="math">\\(\mu\_\theta(o\_t)\\)</span> 是模型预测的中心动作，<span class="math">\\(\sigma^2I\\)</span> 表示我们假设专家动作围绕这个中心有高斯噪声。
 
 ---
 
@@ -141,27 +141,27 @@ $$
 
 对单个样本，负 log likelihood 为：
 
-$$
+<div class="math">\[
 -\log \pi_\theta(a_t|o_t)
 =
 -
 \log
-\mathcal N(a_t;\mu_\theta(o_t),\sigma^2I) \tag{D.12}$$
+\mathcal{N}(a_t;\mu_\theta(o_t),\sigma^2I) \tag{D.12}\]</div>
 
-代入多维高斯公式，忽略与 $\theta$ 无关的常数项，可得：
+代入多维高斯公式，忽略与 <span class="math">\\(\theta\\)</span> 无关的常数项，可得：
 
-$$
+<div class="math">\[
 -\log \pi_\theta(a_t|o_t)
 =
 \frac{1}{2\sigma^2}
 \|a_t-\mu_\theta(o_t)\|^2
 +
-\mathrm{const} \tag{D.13}$$
+\mathrm{const} \tag{D.13}\]</div>
 
-如果 $\sigma^2$ 固定，$\frac{1}{2\sigma^2}$ 只是一个常数系数。因此最小化高斯 NLL 等价于最小化：
+如果 <span class="math">\\(\sigma^2\\)</span> 固定，<span class="math">\\(\frac{1}{2\sigma^2}\\)</span> 只是一个常数系数。因此最小化高斯 NLL 等价于最小化：
 
-$$
-\|a_t-\mu_\theta(o_t)\|^2 \tag{D.14}$$
+<div class="math">\[
+\|a_t-\mu_\theta(o_t)\|^2 \tag{D.14}\]</div>
 
 这就是 MSE。
 
@@ -187,10 +187,10 @@ MSE 的优点很明显：
 
 数学上，MSE 最优解倾向于条件均值：
 
-$$
+<div class="math">\[
 f^*(o)
 =
-\mathbb E[A|O=o] \tag{D.15}$$
+\mathbb{E}[A|O=o] \tag{D.15}\]</div>
 
 如果动作分布是单峰高斯，均值很好；如果动作分布是多峰的，均值可能落在没有人会选择的尴尬区域。
 
@@ -202,8 +202,8 @@ f^*(o)
 
 前面我们假设：
 
-$$
-\Sigma=\sigma^2I \tag{D.16}$$
+<div class="math">\[
+\Sigma=\sigma^2I \tag{D.16}\]</div>
 
 这很方便，但不一定真实。
 
@@ -211,21 +211,21 @@ $$
 
 于是可以让模型同时输出均值和方差：
 
-$$
+<div class="math">\[
 \pi_\theta(a|o)
 =
-\mathcal N(a;\mu_\theta(o),\Sigma_\theta(o)) \tag{D.17}$$
+\mathcal{N}(a;\mu_\theta(o),\Sigma_\theta(o)) \tag{D.17}\]</div>
 
 这时 NLL 不再只是 MSE，还包括方差项：
 
-$$
+<div class="math">\[
 -\log\pi_\theta(a|o)
 =
 \frac{1}{2}(a-\mu_\theta(o))^T\Sigma_\theta(o)^{-1}(a-\mu_\theta(o))
 +
 \frac{1}{2}\log|\Sigma_\theta(o)|
 +
-\mathrm{const} \tag{D.18}$$
+\mathrm{const} \tag{D.18}\]</div>
 
 第一项惩罚预测误差，第二项惩罚方差太大。
 
@@ -237,8 +237,8 @@ $$
 
 多维动作中，最常见简化是对角协方差：
 
-$$
-\Sigma=\mathrm{diag}(\sigma_1^2,\dots,\sigma_d^2) \tag{D.19}$$
+<div class="math">\[
+\Sigma=\mathrm{diag}(\sigma_1^2,\dots,\sigma_d^2) \tag{D.19}\]</div>
 
 这表示不同动作维度之间相互独立。
 
@@ -246,7 +246,7 @@ $$
 
 缺点：不能表达不同维度之间的相关性。
 
-例如机械臂末端 $x$ 和 $y$ 方向动作可能相关，泊车中的速度和转角也可能相关。完整协方差可以表达这种关系，但训练更复杂，数值稳定性也更难。
+例如机械臂末端 <span class="math">\\(x\\)</span> 和 <span class="math">\\(y\\)</span> 方向动作可能相关，泊车中的速度和转角也可能相关。完整协方差可以表达这种关系，但训练更复杂，数值稳定性也更难。
 
 工程上常见选择是：
 
@@ -261,20 +261,20 @@ $$
 
 概率策略可以从高斯中采样：
 
-$$
+<div class="math">\[
 a_t=\mu_\theta(o_t)+\sigma\epsilon,
 \quad
-\epsilon\sim\mathcal N(0,I) \tag{D.20}$$
+\epsilon\sim\mathcal{N}(0,I) \tag{D.20}\]</div>
 
 这表示动作由两部分组成：
 
-- $\mu_\theta(o_t)$：模型认为最中心的动作；
-- $\sigma\epsilon$：随机扰动。
+- <span class="math">\\(\mu\_\theta(o\_t)\\)</span>：模型认为最中心的动作；
+- <span class="math">\\(\sigma\epsilon\\)</span>：随机扰动。
 
 在训练或探索时，采样可以提供多样性；在部署时，很多系统会直接使用均值动作，减少随机性：
 
-$$
-a_t=\mu_\theta(o_t) \tag{D.21}$$
+<div class="math">\[
+a_t=\mu_\theta(o_t) \tag{D.21}\]</div>
 
 这不是说概率策略没用，而是工程部署常常更保守。产线机器人不是抽盲盒，动作随机性必须可控。
 
@@ -284,30 +284,30 @@ a_t=\mu_\theta(o_t) \tag{D.21}$$
 
 Diffusion Policy 里也大量使用高斯噪声。正向加噪过程通常写作：
 
-$$
+<div class="math">\[
 q(x_t|x_{t-1})
 =
-\mathcal N(
+\mathcal{N}(
 \sqrt{1-\beta_t}x_{t-1},
 \beta_tI
-) \tag{D.22}$$
+) \tag{D.22}\]</div>
 
 这里：
 
-- $x_{t-1}$：上一噪声等级的动作序列；
-- $x_t$：加噪后的动作序列；
-- $\beta_t$：噪声强度；
-- $I$：各维独立同方差噪声。
+- <span class="math">\\(x\_{t-1}\\)</span>：上一噪声等级的动作序列；
+- <span class="math">\\(x\_t\\)</span>：加噪后的动作序列；
+- <span class="math">\\(\beta\_t\\)</span>：噪声强度；
+- <span class="math">\\(I\\)</span>：各维独立同方差噪声。
 
 Diffusion 的训练目标常写成预测噪声的 MSE：
 
-$$
-\mathcal L(\theta)
+<div class="math">\[
+\mathcal{L}(\theta)
 =
-\mathbb E
+\mathbb{E}
 [
 \|\epsilon-\epsilon_\theta(x_t,t,o)\|^2
-] \tag{D.23}$$
+] \tag{D.23}\]</div>
 
 所以第 11 章的 MSE 不再是直接回归动作，而是回归被加入的噪声。它依然和高斯建模密切相关。
 

@@ -49,7 +49,7 @@
 
 1. 什么是模仿学习里的分布偏移？
 2. 为什么 Behavior Cloning 在训练时优化的是专家状态分布，而不是自己执行时的状态分布？
-3. 什么是 $d^{\pi_E}(s)$ 和 $d^{\pi_\theta}(s)$？
+3. 什么是 <span class="math">\\(d^{\pi\_E}(s)\\)</span> 和 <span class="math">\\(d^{\pi\_\theta}(s)\\)</span>？
 4. 为什么单步小误差会演化成闭环大问题？
 5. 为什么 open-loop 指标往往比 closed-loop 表现乐观？
 6. 分布偏移在机器人、自动驾驶和泊车任务中具体怎么体现？
@@ -104,25 +104,25 @@ Behavior Cloning 的训练方式很朴素：
 
 ---
 
-## 4. 状态分布：为什么要引入 $d^\pi(s)$？
+## 4. 状态分布：为什么要引入 <span class="math">\\(d^\pi(s)\\)</span>？
 
 要把这个问题讲清楚，我们需要一个重要数学对象：**状态分布（state distribution）**。
 
 ### 4.1 状态分布的直觉含义
 
-给定一个策略 $\pi$，让它在环境中运行，你就会发现：
+给定一个策略 <span class="math">\\(\pi\\)</span>，让它在环境中运行，你就会发现：
 
 - 有些状态会经常访问到；
 - 有些状态几乎从不访问到；
 - 还有一些状态只要一出事就突然出现，比如快撞墙时的姿态、车已经偏到边线附近时的画面。
 
-于是我们用 $d^\pi(s)$ 表示：
+于是我们用 <span class="math">\\(d^\pi(s)\\)</span> 表示：
 
-> **当系统按照策略 $\pi$ 执行时，它会访问到哪些状态，以及这些状态大致有多常见。**
+> **当系统按照策略 <span class="math">\\(\pi\\)</span> 执行时，它会访问到哪些状态，以及这些状态大致有多常见。**
 
 请注意，这里不必一上来把它当成某种严格推导出来的神秘分布。对本章来说，你可以先把它理解为：
 
-> “策略 $\pi$ 在环境里跑起来之后，状态出现的经验分布。”
+> “策略 <span class="math">\\(\pi\\)</span> 在环境里跑起来之后，状态出现的经验分布。”
 
 更详细的概率论解释，会在附录里展开。
 
@@ -132,23 +132,23 @@ Behavior Cloning 的训练方式很朴素：
 
 1. **专家状态分布**
 
-$$
- d^{\pi_E}(s) \tag{3.1}$$
+<div class="math">\[
+ d^{\pi_E}(s) \tag{3.1}\]</div>
 
 这里：
 
-- $\pi_E$ 是专家策略；
-- $d^{\pi_E}(s)$ 表示专家运行时访问到的状态分布。
+- <span class="math">\\(\pi\_E\\)</span> 是专家策略；
+- <span class="math">\\(d^{\pi\_E}(s)\\)</span> 表示专家运行时访问到的状态分布。
 
 2. **学习策略状态分布**
 
-$$
- d^{\pi_\theta}(s) \tag{3.2}$$
+<div class="math">\[
+ d^{\pi_\theta}(s) \tag{3.2}\]</div>
 
 这里：
 
-- $\pi_\theta$ 是我们训练得到的策略；
-- $d^{\pi_\theta}(s)$ 表示模型自己执行时访问到的状态分布。
+- <span class="math">\\(\pi\_\theta\\)</span> 是我们训练得到的策略；
+- <span class="math">\\(d^{\pi\_\theta}(s)\\)</span> 表示模型自己执行时访问到的状态分布。
 
 下面这张图很关键，它把这两者的区别画出来了。
 
@@ -157,7 +157,7 @@ $$
 **图3-1 说明**：
 - 左边是训练阶段的专家状态分布：车大多数时间都在车道中心附近，所以数据集中常见的是“正常画面”；
 - 右边是执行阶段的学习策略状态分布：只要模型有一点偏差，后续访问的状态区域就会变宽，甚至进入训练数据中很少见的状态；
-- 中间那句“训练分布 $\neq$ 执行分布”，就是本章的灵魂所在。
+- 中间那句“训练分布 <span class="math">\\(\neq\\)</span> 执行分布”，就是本章的灵魂所在。
 
 ---
 
@@ -169,49 +169,49 @@ $$
 
 Behavior Cloning 通常在专家数据上最小化某种单步损失。抽象写法是：
 
-$$
+<div class="math">\[
 \mathcal{L}_{\mathrm{BC}}(\theta)
 =
-\mathbb{E}_{s \sim d^{\pi_E}}\big[\, \ell\big(\pi_\theta(s), \pi_E(s)\big) \,\big] \tag{3.3}$$
+\mathbb{E}_{s \sim d^{\pi_E}}\big[\, \ell\big(\pi_\theta(s), \pi_E(s)\big) \,\big] \tag{3.3}\]</div>
 
-如果你更习惯用观测 $o$ 而不是状态 $s$，也完全可以写成：
+如果你更习惯用观测 <span class="math">\\(o\\)</span> 而不是状态 <span class="math">\\(s\\)</span>，也完全可以写成：
 
-$$
+<div class="math">\[
 \mathcal{L}_{\mathrm{BC}}(\theta)
 =
-\mathbb{E}_{o \sim d^{\pi_E}}\big[\, \ell\big(\pi_\theta(o), \pi_E(o)\big) \,\big] \tag{3.4}$$
+\mathbb{E}_{o \sim d^{\pi_E}}\big[\, \ell\big(\pi_\theta(o), \pi_E(o)\big) \,\big] \tag{3.4}\]</div>
 
-这里为了突出“状态分布”这个概念，我们先使用 $s$。
+这里为了突出“状态分布”这个概念，我们先使用 <span class="math">\\(s\\)</span>。
 
 #### 公式拆解：训练目标为什么长这样？
 
 公式：
 
-$$
+<div class="math">\[
 \mathcal{L}_{\mathrm{BC}}(\theta)
 =
-\mathbb{E}_{s \sim d^{\pi_E}}\big[\, \ell\big(\pi_\theta(s), \pi_E(s)\big) \,\big] \tag{3.5}$$
+\mathbb{E}_{s \sim d^{\pi_E}}\big[\, \ell\big(\pi_\theta(s), \pi_E(s)\big) \,\big] \tag{3.5}\]</div>
 
-**它要解决的问题**：  
+**它要解决的问题**：
 给定专家访问过的状态，希望模型在这些状态上尽量做出和专家相似的动作。
 
 **符号解释**：
-- $\mathcal{L}_{\mathrm{BC}}(\theta)$：行为克隆的总体训练损失；
-- $\theta$：模型参数；
-- $s \sim d^{\pi_E}$：状态 $s$ 来自专家状态分布；
-- $\pi_\theta(s)$：学习策略在状态 $s$ 下的输出；
-- $\pi_E(s)$：专家在状态 $s$ 下的动作或决策；
-- $\ell(\cdot,\cdot)$：比较二者差异的损失函数，例如交叉熵、MSE 或负对数似然。
+- <span class="math">\\(\mathcal{L}\_{\mathrm{BC}}(\theta)\\)</span>：行为克隆的总体训练损失；
+- <span class="math">\\(\theta\\)</span>：模型参数；
+- <span class="math">\\(s \sim d^{\pi\_E}\\)</span>：状态 <span class="math">\\(s\\)</span> 来自专家状态分布；
+- <span class="math">\\(\pi\_\theta(s)\\)</span>：学习策略在状态 <span class="math">\\(s\\)</span> 下的输出；
+- <span class="math">\\(\pi\_E(s)\\)</span>：专家在状态 <span class="math">\\(s\\)</span> 下的动作或决策；
+- <span class="math">\\(\ell(\cdot,\cdot)\\)</span>：比较二者差异的损失函数，例如交叉熵、MSE 或负对数似然。
 
-**直觉理解**：  
+**直觉理解**：
 这就是在说：
 
 > “请在专家常走的路上，尽量学得像专家。”
 
-**机器人案例**：  
+**机器人案例**：
 在车道保持任务里，训练数据中的图像大多对应“车在车道中心附近”的状态，所以模型主要在这些画面上学会模仿方向盘操作。
 
-**常见误解**：  
+**常见误解**：
 很多人看到这个目标，会误以为“既然 loss 很低，说明模型整体就很好”。其实这个式子只保证：
 
 > 在专家访问过的状态上，模型单步预测可能不错。
@@ -224,13 +224,13 @@ $$
 
 但一旦模型自己执行，我们真正关心的其实是：
 
-$$
-\mathbb{E}_{s \sim d^{\pi_\theta}}\big[\, \ell\big(\pi_\theta(s), \pi_E(s)\big) \,\big] \tag{3.6}$$
+<div class="math">\[
+\mathbb{E}_{s \sim d^{\pi_\theta}}\big[\, \ell\big(\pi_\theta(s), \pi_E(s)\big) \,\big] \tag{3.6}\]</div>
 
 请仔细看，这个式子和前一个式子的区别只有一个地方：
 
-- 前者是 $s \sim d^{\pi_E}$；
-- 现在变成了 $s \sim d^{\pi_\theta}$。
+- 前者是 <span class="math">\\(s \sim d^{\pi\_E}\\)</span>；
+- 现在变成了 <span class="math">\\(s \sim d^{\pi\_\theta}\\)</span>。
 
 但就是这一个变化，足以让事情从“看着挺稳”变成“闭环翻车”。
 
@@ -238,25 +238,25 @@ $$
 
 公式：
 
-$$
-\mathbb{E}_{s \sim d^{\pi_\theta}}\big[\, \ell\big(\pi_\theta(s), \pi_E(s)\big) \,\big] \tag{3.7}$$
+<div class="math">\[
+\mathbb{E}_{s \sim d^{\pi_\theta}}\big[\, \ell\big(\pi_\theta(s), \pi_E(s)\big) \,\big] \tag{3.7}\]</div>
 
-**它要解决的问题**：  
+**它要解决的问题**：
 评估模型在“它自己真正会遇到的状态”上，决策是否还接近专家。
 
 **符号解释**：
-- $d^{\pi_\theta}(s)$：模型自己执行时产生的状态分布；
+- <span class="math">\\(d^{\pi\_\theta}(s)\\)</span>：模型自己执行时产生的状态分布；
 - 其余符号与上式相同。
 
-**直觉理解**：  
+**直觉理解**：
 这句话其实在问：
 
 > “当模型不再活在专家给它安排好的舒服环境里，而是要自己开、自己走、自己纠错时，它还像不像专家？”
 
-**工程意义**：  
+**工程意义**：
 这比训练集损失更接近真实系统表现。因为实车、实机、真实闭环控制，看重的从来不是“你在老师给的样本上答得好不好”，而是“你自己跑起来稳不稳”。
 
-**常见误解**：  
+**常见误解**：
 有些人把训练目标和执行目标混在一起讲，好像差不多。其实差很多，差到足以决定一个方法能不能在真实系统里站住脚。
 
 ---
@@ -270,8 +270,8 @@ $$
 
 在模仿学习里，它具体表现为：
 
-$$
- d^{\pi_E}(s) \neq d^{\pi_\theta}(s) \tag{3.8}$$
+<div class="math">\[
+ d^{\pi_E}(s) \neq d^{\pi_\theta}(s) \tag{3.8}\]</div>
 
 这条式子很短，但它的威力很大。
 
@@ -279,24 +279,24 @@ $$
 
 公式：
 
-$$
- d^{\pi_E}(s) \neq d^{\pi_\theta}(s) \tag{3.9}$$
+<div class="math">\[
+ d^{\pi_E}(s) \neq d^{\pi_\theta}(s) \tag{3.9}\]</div>
 
-**它要解决的问题**：  
+**它要解决的问题**：
 说明训练数据覆盖的状态集合，与模型自己执行时访问的状态集合不一致。
 
 **符号解释**：
-- $d^{\pi_E}(s)$：专家状态分布；
-- $d^{\pi_\theta}(s)$：学习策略状态分布；
-- $\neq$：表示两者并不相同。
+- <span class="math">\\(d^{\pi\_E}(s)\\)</span>：专家状态分布；
+- <span class="math">\\(d^{\pi\_\theta}(s)\\)</span>：学习策略状态分布；
+- <span class="math">\\(\neq\\)</span>：表示两者并不相同。
 
-**直觉理解**：  
+**直觉理解**：
 专家开车时，基本一直在正道上；模型开车时，可能很快就开到了“正道边上”，后面看到的世界已经不是专家示范里那个世界了。
 
-**机器人案例**：  
+**机器人案例**：
 在机械臂抓取里，专家末端通常会对准目标逐步靠近；模型如果稍微偏一点，下一帧视觉观测中目标相对位置就变了，它接下来是在“偏了之后的世界”里继续决策。
 
-**常见误解**：  
+**常见误解**：
 分布偏移不是数据集太小才会发生。就算数据集很大，只要数据主要来自专家“正常运行区间”，而模型执行时会进入“异常偏离区间”，问题仍然存在。
 
 ---
@@ -334,35 +334,35 @@ $$
 
 在模仿学习文献中，常会出现一个经典结论：
 
-> 如果在专家状态分布下，每一步的平均错误率是 $\varepsilon$，那么在长度为 $T$ 的轨迹上，闭环累计误差在最坏情况下可能增长到 **$O(T^2 \varepsilon)$** 量级。
+> 如果在专家状态分布下，每一步的平均错误率是 <span class="math">\\(\varepsilon\\)</span>，那么在长度为 <span class="math">\\(T\\)</span> 的轨迹上，闭环累计误差在最坏情况下可能增长到 **<span class="math">\\(O(T^2 \varepsilon)\\)</span>** 量级。
 
 我们把这个结论写出来：
 
-$$
-\text{worst-case cumulative error} = O(T^2 \varepsilon) \tag{3.10}$$
+<div class="math">\[
+\text{worst-case cumulative error} = O(T^2 \varepsilon) \tag{3.10}\]</div>
 
-#### 公式拆解：这个 $O(T^2 \varepsilon)$ 到底在说什么？
+#### 公式拆解：这个 <span class="math">\\(O(T^2 \varepsilon)\\)</span> 到底在说什么？
 
-**它要解决的问题**：  
+**它要解决的问题**：
 说明“单步误差很小”并不自动意味着“整条轨迹误差也小”。
 
 **符号解释**：
-- $T$：轨迹长度或决策步数；
-- $\varepsilon$：在训练分布或专家状态分布上的单步平均误差；
-- $O(T^2 \varepsilon)$：表示在最坏情况下，总体误差可能随 $T^2$ 级别增长。
+- <span class="math">\\(T\\)</span>：轨迹长度或决策步数；
+- <span class="math">\\(\varepsilon\\)</span>：在训练分布或专家状态分布上的单步平均误差；
+- <span class="math">\\(O(T^2 \varepsilon)\\)</span>：表示在最坏情况下，总体误差可能随 <span class="math">\\(T^2\\)</span> 级别增长。
 
-**直觉理解**：  
+**直觉理解**：
 如果你把每一步的小错误看成轻微偏航，那么越往后，系统越可能跑到更陌生的位置，而每一步错误都在给后面“加难度”。于是轨迹越长，坏事越有机会滚雪球。
 
-**工程意义**：  
+**工程意义**：
 这解释了为什么长时域任务尤其脆弱：
 - 长时间车道保持；
 - 长轨迹泊车；
 - 多步操作和装配；
 - 双臂长序列 manipulation。
 
-**重要提醒**：  
-这个结论是一个最坏情形的理论量级，不是说所有系统都会精确地按 $T^2$ 增长。你可以把它理解为一个警钟：
+**重要提醒**：
+这个结论是一个最坏情形的理论量级，不是说所有系统都会精确地按 <span class="math">\\(T^2\\)</span> 增长。你可以把它理解为一个警钟：
 
 > “不要因为单步 loss 好看，就对长时闭环行为过于乐观。”
 
@@ -523,22 +523,22 @@ BC 仍然是非常重要的起点。但你必须知道它的边界：
 本章的核心结论可以压缩成 8 句话：
 
 1. Behavior Cloning 训练时主要在专家状态分布上学习；
-2. 专家状态分布记作 $d^{\pi_E}(s)$；
-3. 学习策略执行时访问的状态分布记作 $d^{\pi_\theta}(s)$；
+2. 专家状态分布记作 <span class="math">\\(d^{\pi\_E}(s)\\)</span>；
+3. 学习策略执行时访问的状态分布记作 <span class="math">\\(d^{\pi\_\theta}(s)\\)</span>；
 4. 分布偏移的本质是：
 
-$$
- d^{\pi_E}(s) \neq d^{\pi_\theta}(s) \tag{3.11}$$
+<div class="math">\[
+ d^{\pi_E}(s) \neq d^{\pi_\theta}(s) \tag{3.11}\]</div>
 
 5. BC 优化的往往是：
 
-$$
-\mathbb E_{s\sim d^{\pi_E}}[\ell(\pi_\theta(s),\pi_E(s))] \tag{3.12}$$
+<div class="math">\[
+\mathbb{E}_{s\sim d^{\pi_E}}[\ell(\pi_\theta(s),\pi_E(s))] \tag{3.12}\]</div>
 
 6. 但真正执行时更关心的是：
 
-$$
-\mathbb E_{s\sim d^{\pi_\theta}}[\ell(\pi_\theta(s),\pi_E(s))] \tag{3.13}$$
+<div class="math">\[
+\mathbb{E}_{s\sim d^{\pi_\theta}}[\ell(\pi_\theta(s),\pi_E(s))] \tag{3.13}\]</div>
 
 7. 单步小误差会通过“状态偏离 → 观测变化 → 后续更难预测”的链条累积；
 8. 因此 open-loop 指标通常比 closed-loop 表现乐观，闭环成功率才更接近真实能力。
@@ -557,9 +557,9 @@ $$
 
 本章需要记住的核心概念有：
 
-- **状态分布 $d^\pi(s)$**：策略 $\pi$ 运行时访问状态的分布；
-- **专家状态分布 $d^{\pi_E}(s)$**：专家访问到的状态分布；
-- **学习策略状态分布 $d^{\pi_\theta}(s)$**：模型自己执行时访问到的状态分布；
+- **状态分布 <span class="math">\\(d^\pi(s)\\)</span>**：策略 <span class="math">\\(\pi\\)</span> 运行时访问状态的分布；
+- **专家状态分布 <span class="math">\\(d^{\pi\_E}(s)\\)</span>**：专家访问到的状态分布；
+- **学习策略状态分布 <span class="math">\\(d^{\pi\_\theta}(s)\\)</span>**：模型自己执行时访问到的状态分布；
 - **分布偏移**：训练分布与执行分布不一致；
 - **误差累积**：小误差通过闭环状态转移逐步放大；
 - **open-loop 评测**：模型动作不影响后续输入；
@@ -575,25 +575,25 @@ $$
 
 1. **Behavior Cloning 在专家分布上的训练目标**
 
-$$
+<div class="math">\[
 \mathcal{L}_{\mathrm{BC}}(\theta)
 =
-\mathbb{E}_{s \sim d^{\pi_E}}\big[\, \ell\big(\pi_\theta(s), \pi_E(s)\big) \,\big] \tag{3.14}$$
+\mathbb{E}_{s \sim d^{\pi_E}}\big[\, \ell\big(\pi_\theta(s), \pi_E(s)\big) \,\big] \tag{3.14}\]</div>
 
 2. **真正执行时更关心的闭环目标**
 
-$$
-\mathbb{E}_{s \sim d^{\pi_\theta}}\big[\, \ell\big(\pi_\theta(s), \pi_E(s)\big) \,\big] \tag{3.15}$$
+<div class="math">\[
+\mathbb{E}_{s \sim d^{\pi_\theta}}\big[\, \ell\big(\pi_\theta(s), \pi_E(s)\big) \,\big] \tag{3.15}\]</div>
 
 3. **分布偏移的核心表达**
 
-$$
- d^{\pi_E}(s) \neq d^{\pi_\theta}(s) \tag{3.16}$$
+<div class="math">\[
+ d^{\pi_E}(s) \neq d^{\pi_\theta}(s) \tag{3.16}\]</div>
 
 4. **误差累积的经典最坏情形量级**
 
-$$
-\text{worst-case cumulative error} = O(T^2 \varepsilon) \tag{3.17}$$
+<div class="math">\[
+\text{worst-case cumulative error} = O(T^2 \varepsilon) \tag{3.17}\]</div>
 
 ---
 
@@ -608,16 +608,16 @@ $$
   - 重点看：条件概率、分布、期望的基础解释。
 
 - **附录 F：强化学习与序列决策基础**
-  - 重点看：MDP、策略、状态分布 $d^\pi(s)$、occupancy measure 的直觉。
+  - 重点看：MDP、策略、状态分布 <span class="math">\\(d^\pi(s)\\)</span>、occupancy measure 的直觉。
 
-如果你对 $O(T^2\varepsilon)$ 这样的量级表达还不熟，可以顺带结合附录 A 中的“大 O 记号解释”阅读。
+如果你对 <span class="math">\\(O(T^2\varepsilon)\\)</span> 这样的量级表达还不熟，可以顺带结合附录 A 中的“大 O 记号解释”阅读。
 
 ---
 
 ## 15. 思考题
 
 1. 为什么说 Behavior Cloning 训练时主要学习的是专家状态分布，而不是学习策略自己的状态分布？
-2. 请用你自己的话解释：$d^{\pi_E}(s)$ 和 $d^{\pi_\theta}(s)$ 分别表示什么？
+2. 请用你自己的话解释：<span class="math">\\(d^{\pi\_E}(s)\\)</span> 和 <span class="math">\\(d^{\pi\_\theta}(s)\\)</span> 分别表示什么？
 3. 为什么单步误差很小，闭环执行仍然可能失败？
 4. 你能否举一个机械臂任务中的分布偏移例子？尽量说明“偏差 → 新观测 → 更大偏差”的链条。
 5. 为什么 open-loop loss 和 closed-loop success rate 不能互相替代？
@@ -632,9 +632,9 @@ $$
 
 ---
 
-> **给下一章留个钩子**：  
-> 既然分布偏移的根源在于：模型执行时会访问到训练时没覆盖好的状态，  
-> 那么最自然的想法就是：  
-> **能不能让训练数据也包含这些“模型自己会访问到的状态”？**  
-> 这正是第4章 DAgger 的核心思想。它的潜台词很接地气：  
+> **给下一章留个钩子**：
+> 既然分布偏移的根源在于：模型执行时会访问到训练时没覆盖好的状态，
+> 那么最自然的想法就是：
+> **能不能让训练数据也包含这些“模型自己会访问到的状态”？**
+> 这正是第4章 DAgger 的核心思想。它的潜台词很接地气：
 > **别只在标准答案上学，得在你快跑偏的时候，也让老师教你一把。**

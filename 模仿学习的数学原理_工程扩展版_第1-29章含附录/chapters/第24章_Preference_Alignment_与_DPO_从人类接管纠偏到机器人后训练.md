@@ -48,16 +48,16 @@
 
 BC 的基本目标是模仿专家动作：
 
-$$
+<div class="math">\[
 \mathcal{L}_{\mathrm{BC}}(\theta)=-\mathbb{E}_{(o,a)\sim\mathcal{D}}\left[\log \pi_\theta(a\mid o)\right]
 \tag{24.1}
-$$
+\]</div>
 
 ### 公式拆解
 
 **动机**：如果数据里有专家动作，最大化专家动作概率是最直接的学习方式。
 
-**符号**：$\mathcal{D}$ 是示范数据；$o$ 是观测；$a$ 是专家动作；$\pi_\theta$ 是策略。
+**符号**：<span class="math">\\(\mathcal{D}\\)</span> 是示范数据；<span class="math">\\(o\\)</span> 是观测；<span class="math">\\(a\\)</span> 是专家动作；<span class="math">\\(\pi\_\theta\\)</span> 是策略。
 
 **直觉**：专家怎么做，模型就尽量怎么做。
 
@@ -67,12 +67,12 @@ $$
 
 偏好学习要用的数据不是单点动作，而是成对比较：
 
-$$
+<div class="math">\[
 \mathcal{D}_{\mathrm{pref}}=\{(x,y^+,y^-)\}
 \tag{24.2}
-$$
+\]</div>
 
-其中 $x$ 是上下文，$y^+$ 是更偏好的行为，$y^-$ 是较差行为。
+其中 <span class="math">\\(x\\)</span> 是上下文，<span class="math">\\(y^+\\)</span> 是更偏好的行为，<span class="math">\\(y^-\\)</span> 是较差行为。
 
 ---
 
@@ -82,18 +82,18 @@ $$
 
 1. **高层计划**：先抓哪个物体、走哪条路线、是否先清理障碍；
 2. **子目标**：末端先对齐到哪里、目标放置点选在哪里；
-3. **动作块**：未来 $H$ 步动作序列；
+3. **动作块**：未来 <span class="math">\\(H\\)</span> 步动作序列；
 4. **完整轨迹**：一次任务从开始到结束的行为；
 5. **安全投影后的执行动作**：策略原始动作和安全层修正动作之间的比较。
 
 可以把机器人偏好对写成：
 
-$$
+<div class="math">\[
 x=(o_t,h_t,g_t), \quad y=A_{t:t+H-1}\ \text{或}\ \tau_{t:t+H}
 \tag{24.3}
-$$
+\]</div>
 
-其中 $h_t$ 是历史摘要，$g_t$ 是任务目标，$y$ 可以是动作块或轨迹片段。
+其中 <span class="math">\\(h\_t\\)</span> 是历史摘要，<span class="math">\\(g\_t\\)</span> 是任务目标，<span class="math">\\(y\\)</span> 可以是动作块或轨迹片段。
 
 举例：机械臂抓取中，模型原始动作块让夹爪从偏左位置闭合，导致物体被推歪；人类接管后先重新对齐，再慢速下探。于是可以构造：
 
@@ -111,30 +111,30 @@ x：接管前观测和任务上下文
 
 偏好学习常用 Bradley-Terry 形式描述两段行为的相对好坏：
 
-$$
+<div class="math">\[
 P(y^+\succ y^-\mid x)=\sigma\left(r(x,y^+)-r(x,y^-)\right)
 \tag{24.4}
-$$
+\]</div>
 
-其中 $r(x,y)$ 是行为 $y$ 在上下文 $x$ 下的奖励或偏好分数，$\sigma$ 是 sigmoid。
+其中 <span class="math">\\(r(x,y)\\)</span> 是行为 <span class="math">\\(y\\)</span> 在上下文 <span class="math">\\(x\\)</span> 下的奖励或偏好分数，<span class="math">\\(\sigma\\)</span> 是 sigmoid。
 
 传统 RLHF 会先学奖励模型，再优化策略：
 
-$$
+<div class="math">\[
 \max_{\pi}\ \mathbb{E}_{y\sim\pi(\cdot\mid x)}[r(x,y)]-\beta D_{\mathrm{KL}}(\pi(\cdot\mid x)\|\pi_{\mathrm{ref}}(\cdot\mid x))
 \tag{24.5}
-$$
+\]</div>
 
 这个目标说：策略既要拿高奖励，又不能偏离参考策略太远。DPO 的关键是把奖励模型和策略优化合并，直接用偏好对优化策略。由 KL 正则化最优解可以得到一个关系：
 
-$$
+<div class="math">\[
 r(x,y)=\beta\log\frac{\pi^*(y\mid x)}{\pi_{\mathrm{ref}}(y\mid x)} + \beta\log Z(x)
 \tag{24.6}
-$$
+\]</div>
 
-把这个关系代回偏好概率，归一化项 $Z(x)$ 在成对差分中抵消，得到 DPO 损失：
+把这个关系代回偏好概率，归一化项 <span class="math">\\(Z(x)\\)</span> 在成对差分中抵消，得到 DPO 损失：
 
-$$
+<div class="math">\[
 \mathcal{L}_{\mathrm{DPO}}(\theta)=
 -\mathbb{E}_{(x,y^+,y^-)\sim\mathcal{D}_{\mathrm{pref}}}
 \log\sigma\left(\beta\left[
@@ -142,19 +142,19 @@ $$
 \log\frac{\pi_\theta(y^-\mid x)}{\pi_{\mathrm{ref}}(y^-\mid x)}
 \right]\right)
 \tag{24.7}
-$$
+\]</div>
 
 ### 公式拆解
 
-**动机**：我们希望偏好行为 $y^+$ 在当前策略下相对参考策略的概率提升，差行为 $y^-$ 的相对概率降低。
+**动机**：我们希望偏好行为 <span class="math">\\(y^+\\)</span> 在当前策略下相对参考策略的概率提升，差行为 <span class="math">\\(y^-\\)</span> 的相对概率降低。
 
-**符号**：$\pi_\theta$ 是待训练策略；$\pi_{\mathrm{ref}}$ 是参考策略，通常是 SFT/BC 后的模型；$\beta$ 控制偏离参考策略的强度；$y^+$ 是被偏好的行为，$y^-$ 是较差行为。
+**符号**：<span class="math">\\(\pi\_\theta\\)</span> 是待训练策略；<span class="math">\\(\pi\_{\mathrm{ref}}\\)</span> 是参考策略，通常是 SFT/BC 后的模型；<span class="math">\\(\beta\\)</span> 控制偏离参考策略的强度；<span class="math">\\(y^+\\)</span> 是被偏好的行为，<span class="math">\\(y^-\\)</span> 是较差行为。
 
 **公式**：方括号里是“当前策略相对参考策略，对好行为和坏行为的偏移差”。如果好行为提升更多、坏行为提升更少，loss 就小。
 
 **直觉**：DPO 不直接学一个奖励函数，而是直接告诉策略：在这个上下文下，把好片段排到坏片段前面。
 
-**工程含义**：机器人后训练时，$y$ 可以是动作块、轨迹片段或高层计划。只要能计算 $\log\pi(y\mid x)$，就可以尝试 DPO 类目标。
+**工程含义**：机器人后训练时，<span class="math">\\(y\\)</span> 可以是动作块、轨迹片段或高层计划。只要能计算 <span class="math">\\(\log\pi(y\mid x)\\)</span>，就可以尝试 DPO 类目标。
 
 **常见误解**：DPO 不是万能奖励学习。它依赖偏好对质量，也依赖策略概率建模是否合理。
 
@@ -162,31 +162,31 @@ $$
 
 ## 5. 从语言 token 到机器人连续动作：对象发生了什么变化？
 
-语言模型中，$y$ 是 token 序列，$\log\pi(y\mid x)$ 是每个 token 概率的和。机器人中，$y$ 往往是连续动作轨迹，因此更准确地说是概率密度：
+语言模型中，<span class="math">\\(y\\)</span> 是 token 序列，<span class="math">\\(\log\pi(y\mid x)\\)</span> 是每个 token 概率的和。机器人中，<span class="math">\\(y\\)</span> 往往是连续动作轨迹，因此更准确地说是概率密度：
 
-$$
+<div class="math">\[
 \log \pi_\theta(y\mid x)=\sum_{i=0}^{H-1}\log p_\theta(a_{t+i}\mid x,a_{t:t+i-1})
 \tag{24.8}
-$$
+\]</div>
 
 如果动作头是高斯分布：
 
-$$
+<div class="math">\[
 \log p_\theta(a\mid x)=
 -\frac{1}{2}(a-\mu_\theta(x))^T\Sigma_\theta(x)^{-1}(a-\mu_\theta(x))
 -\frac{1}{2}\log |2\pi\Sigma_\theta(x)|
 \tag{24.9}
-$$
+\]</div>
 
 ### 公式拆解
 
 **动机**：DPO 需要比较好行为和坏行为的 log probability。连续动作没有离散 token 概率，必须用概率密度或生成过程 likelihood 的近似。
 
-**符号**：$p_\theta$ 是连续动作密度；$\mu_\theta$ 是均值；$\Sigma_\theta$ 是协方差。
+**符号**：<span class="math">\\(p\_\theta\\)</span> 是连续动作密度；<span class="math">\\(\mu\_\theta\\)</span> 是均值；<span class="math">\\(\Sigma\_\theta\\)</span> 是协方差。
 
 **直觉**：离散 token 是“选哪个词”，连续动作是“在连续空间里落在哪个位置”。概率密度数值会受动作尺度影响，所以动作归一化非常重要。
 
-**工程含义**：如果策略是 ACT 的 CVAE、Diffusion Policy 或 Flow Matching，$\log\pi(y\mid x)$ 可能没有简单闭式，需要使用变分下界、噪声预测路径概率、flow likelihood 或替代打分。不能生搬硬套语言 DPO。
+**工程含义**：如果策略是 ACT 的 CVAE、Diffusion Policy 或 Flow Matching，<span class="math">\\(\log\pi(y\mid x)\\)</span> 可能没有简单闭式，需要使用变分下界、噪声预测路径概率、flow likelihood 或替代打分。不能生搬硬套语言 DPO。
 
 **常见误解**：连续动作 DPO 不是把动作离散成几个 bin 就完事。离散化会引入分辨率、安全和控制精度问题，需要谨慎设计。
 
@@ -196,17 +196,17 @@ $$
 
 对于动作块策略，可以写成：
 
-$$
+<div class="math">\[
 \log\pi_\theta(A_t\mid x_t)=\log p_\theta(a_t,\ldots,a_{t+H-1}\mid x_t)
 \tag{24.10}
-$$
+\]</div>
 
 对于完整轨迹：
 
-$$
+<div class="math">\[
 \log\pi_\theta(\tau\mid x)=\sum_{t=0}^{T-1}\log\pi_\theta(a_t\mid o_t,h_t,g_t)
 \tag{24.11}
-$$
+\]</div>
 
 这两个公式看起来简单，但工程含义不同：
 
@@ -217,12 +217,12 @@ $$
 
 如果动作经过安全层投影：
 
-$$
+<div class="math">\[
 \tilde{a}_t=\Pi_{\mathcal{S}}(a_t)
 \tag{24.12}
-$$
+\]</div>
 
-那么偏好对象可以是原始动作 $a_t$、投影动作 $\tilde{a}_t$，也可以是“被投影幅度”。如果某个动作经常被安全层大幅修正，它本身就是后训练的重要负样本。
+那么偏好对象可以是原始动作 <span class="math">\\(a\_t\\)</span>、投影动作 <span class="math">\\(\tilde{a}\_t\\)</span>，也可以是“被投影幅度”。如果某个动作经常被安全层大幅修正，它本身就是后训练的重要负样本。
 
 ---
 
@@ -237,19 +237,19 @@ $$
 
 可以把数据构造写成：
 
-$$
+<div class="math">\[
 \mathcal{D}_{\mathrm{pref}}=\mathrm{PairBuilder}(\mathcal{D}_{\mathrm{takeover}},\mathcal{D}_{\mathrm{success}},\mathcal{D}_{\mathrm{safety}})
 \tag{24.13}
-$$
+\]</div>
 
-其中 $\mathcal{D}_{\mathrm{takeover}}$ 是接管数据，$\mathcal{D}_{\mathrm{success}}$ 是成功/失败对比，$\mathcal{D}_{\mathrm{safety}}$ 是安全层日志。
+其中 <span class="math">\\(\mathcal{D}\_{\mathrm{takeover}}\\)</span> 是接管数据，<span class="math">\\(\mathcal{D}\_{\mathrm{success}}\\)</span> 是成功/失败对比，<span class="math">\\(\mathcal{D}\_{\mathrm{safety}}\\)</span> 是安全层日志。
 
 为了防止后训练破坏基础能力，常常加入 supervised anchor：
 
-$$
+<div class="math">\[
 \mathcal{L}=\mathcal{L}_{\mathrm{DPO}}+\lambda\mathcal{L}_{\mathrm{BC-anchor}}
 \tag{24.14}
-$$
+\]</div>
 
 **工程含义**：DPO 让模型向偏好方向移动，BC anchor 防止模型忘掉原本会做的基本技能。对机器人来说，这比语言模型更关键，因为动作策略一旦偏离太远，可能直接造成硬件风险。
 
@@ -279,7 +279,7 @@ $$
 
 第三，**安全不能只靠偏好优化**。碰撞检测、速度限幅、工作空间约束、力控保护、急停和传统控制器仍然必须存在。
 
-第四，**连续动作 DPO 需要额外建模注意事项**。动作尺度、概率密度、协方差、动作块 likelihood、生成模型隐变量都会影响 $\log\pi(y\mid x)$。
+第四，**连续动作 DPO 需要额外建模注意事项**。动作尺度、概率密度、协方差、动作块 likelihood、生成模型隐变量都会影响 <span class="math">\\(\log\pi(y\mid x)\\)</span>。
 
 第五，**后训练要防止能力遗忘**。偏好数据往往集中在失败场景，如果只用这些数据训练，模型可能在正常场景变差。因此需要 anchor loss、混合数据和严格评估。
 
