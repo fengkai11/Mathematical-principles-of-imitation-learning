@@ -1,6 +1,6 @@
 window.hypothesisConfig = function () {
   return {
-    openSidebar: false
+    openSidebar: true
   };
 };
 
