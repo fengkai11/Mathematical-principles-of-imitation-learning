@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
+  <rect width="1200" height="620" fill="#ffffff"/>
+  <text x="600" y="42" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#222">图1-1 视觉引导机械臂抓取与放置任务总览</text>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <!-- cameras -->
+  <g font-family="Arial, sans-serif" fill="#222">
+    <rect x="205" y="80" width="130" height="55" rx="12" fill="#eef5ff" stroke="#3b73c4" stroke-width="2"/>
+    <text x="270" y="113" text-anchor="middle" font-size="17" font-weight="700">顶部相机</text>
+    <line x1="270" y1="135" x2="370" y2="285" stroke="#3b73c4" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+
+    <rect x="850" y="115" width="130" height="55" rx="12" fill="#eef5ff" stroke="#3b73c4" stroke-width="2"/>
+    <text x="915" y="149" text-anchor="middle" font-size="17" font-weight="700">侧视相机</text>
+    <line x1="850" y1="165" x2="705" y2="300" stroke="#3b73c4" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- table -->
+  <rect x="130" y="380" width="940" height="42" rx="12" fill="#e5e0d8" stroke="#9b8f7d" stroke-width="2"/>
+  <rect x="160" y="420" width="36" height="110" fill="#b9ad9b"/>
+  <rect x="1000" y="420" width="36" height="110" fill="#b9ad9b"/>
+  <text x="600" y="452" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#666">工作台</text>
+
+  <!-- object and slot -->
+  <g font-family="Arial, sans-serif">
+    <ellipse cx="430" cy="350" rx="42" ry="18" fill="#dcecff" stroke="#3b73c4" stroke-width="2"/>
+    <rect x="388" y="305" width="84" height="48" rx="8" fill="#eef5ff" stroke="#3b73c4" stroke-width="2"/>
+    <text x="430" y="292" text-anchor="middle" font-size="17" font-weight="700" fill="#222">待抓物体</text>
+
+    <rect x="765" y="304" width="110" height="70" rx="12" fill="#f0f7ea" stroke="#5a9c36" stroke-width="2"/>
+    <rect x="790" y="325" width="60" height="28" rx="6" fill="#ffffff" stroke="#5a9c36" stroke-width="1.5" stroke-dasharray="5 5"/>
+    <text x="820" y="292" text-anchor="middle" font-size="17" font-weight="700" fill="#222">目标槽位/容器</text>
+  </g>
+
+  <!-- robot arm base and links -->
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <rect x="210" y="350" width="95" height="32" rx="10" fill="#f7f7f7" stroke="#777" stroke-width="2"/>
+    <circle cx="257" cy="343" r="28" fill="#f7f7f7" stroke="#777" stroke-width="3"/>
+    <line x1="257" y1="343" x2="340" y2="250" stroke="#777" stroke-width="18"/>
+    <circle cx="340" cy="250" r="24" fill="#f7f7f7" stroke="#777" stroke-width="3"/>
+    <line x1="340" y1="250" x2="500" y2="260" stroke="#777" stroke-width="16"/>
+    <circle cx="500" cy="260" r="21" fill="#f7f7f7" stroke="#777" stroke-width="3"/>
+    <line x1="500" y1="260" x2="585" y2="318" stroke="#777" stroke-width="13"/>
+    <circle cx="585" cy="318" r="18" fill="#f7f7f7" stroke="#777" stroke-width="3"/>
+    <line x1="585" y1="318" x2="620" y2="345" stroke="#777" stroke-width="8"/>
+    <path d="M620 345 L650 330" stroke="#d28a20" stroke-width="6"/>
+    <path d="M620 345 L646 366" stroke="#d28a20" stroke-width="6"/>
+  </g>
+
+  <!-- arrows of task -->
+  <path d="M470 314 C555 250, 680 250, 785 318" fill="none" stroke="#d28a20" stroke-width="3" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+  <text x="625" y="238" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#d28a20">抓取后移动到目标槽位</text>
+
+  <!-- observation/action labels -->
+  <g font-family="Arial, sans-serif" font-size="17" fill="#222">
+    <rect x="105" y="545" width="280" height="45" rx="12" fill="#eef5ff" stroke="#3b73c4" stroke-width="2"/>
+    <text x="245" y="573" text-anchor="middle">观测：图像 + 关节 + 夹爪状态</text>
+
+    <rect x="460" y="545" width="275" height="45" rx="12" fill="#fff7e8" stroke="#d28a20" stroke-width="2"/>
+    <text x="598" y="573" text-anchor="middle">动作：末端增量 + 夹爪命令</text>
+
+    <rect x="810" y="545" width="275" height="45" rx="12" fill="#f0f7ea" stroke="#5a9c36" stroke-width="2"/>
+    <text x="947" y="573" text-anchor="middle">目标：抓起并放入指定位置</text>
+  </g>
+
+  <text x="600" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" fill="#333">本书主线：让策略根据当前观测连续输出动作，完成从抓取到放置的闭环任务。</text>
+</svg>
