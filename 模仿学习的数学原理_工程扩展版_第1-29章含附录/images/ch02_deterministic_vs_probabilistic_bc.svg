@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
+  <rect width="1200" height="620" fill="#ffffff"/>
+  <text x="600" y="46" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="28" font-weight="700" fill="#111827">图2-2 确定性 BC 与概率 BC 的区别</text>
+
+  <rect x="70" y="110" width="470" height="390" rx="22" fill="#f9fafb" stroke="#374151" stroke-width="2"/>
+  <text x="305" y="150" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="22" font-weight="700" fill="#111827">确定性策略</text>
+  <text x="305" y="185" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="17" fill="#374151">同一个观测，只输出一个动作</text>
+  <rect x="160" y="230" width="120" height="70" rx="14" fill="#eef2ff" stroke="#4b5563"/>
+  <text x="220" y="270" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" fill="#111827">观测 o</text>
+  <path d="M290 265 L360 265" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+  <rect x="370" y="230" width="120" height="70" rx="14" fill="#ecfdf5" stroke="#4b5563"/>
+  <text x="430" y="270" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" fill="#111827">动作 â</text>
+  <text x="305" y="355" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#374151">常用损失：MSE</text>
+  <text x="305" y="388" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#374151">适合：单峰、连续、较稳定的动作</text>
+  <text x="305" y="430" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" fill="#7c2d12">风险：多种合理动作会被平均成一个尴尬动作</text>
+
+  <rect x="660" y="110" width="470" height="390" rx="22" fill="#f9fafb" stroke="#374151" stroke-width="2"/>
+  <text x="895" y="150" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="22" font-weight="700" fill="#111827">概率策略</text>
+  <text x="895" y="185" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="17" fill="#374151">同一个观测，输出动作分布</text>
+  <rect x="735" y="230" width="120" height="70" rx="14" fill="#eef2ff" stroke="#4b5563"/>
+  <text x="795" y="270" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="18" fill="#111827">观测 o</text>
+  <path d="M865 265 L930 265" stroke="#111827" stroke-width="3" marker-end="url(#arrow)"/>
+  <rect x="940" y="215" width="145" height="100" rx="14" fill="#ecfdf5" stroke="#4b5563"/>
+  <text x="1012" y="250" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="17" fill="#111827">πθ(a | o)</text>
+  <circle cx="980" cy="285" r="7" fill="#111827"/>
+  <circle cx="1012" cy="275" r="10" fill="#111827"/>
+  <circle cx="1048" cy="292" r="6" fill="#111827"/>
+  <text x="895" y="355" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#374151">常用损失：负对数似然 NLL</text>
+  <text x="895" y="388" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="16" fill="#374151">适合：离散动作或多模态动作</text>
+  <text x="895" y="430" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="15" fill="#7c2d12">优势：能表达“不止一个正确答案”</text>
+
+  <rect x="250" y="535" width="700" height="48" rx="14" fill="#fff7ed" stroke="#9a3412"/>
+  <text x="600" y="565" text-anchor="middle" font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="17" fill="#7c2d12">选择哪种 BC，取决于动作空间与专家行为是否多模态</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#111827"/>
+    </marker>
+  </defs>
+</svg>
