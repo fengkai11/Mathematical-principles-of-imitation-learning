@@ -21,7 +21,7 @@ git-repository-icon = "fa-github"
 edit-url-template = "https://github.com/fengkai11/Mathematical-principles-of-imitation-learning/edit/master/{path}"
 site-url = "/Mathematical-principles-of-imitation-learning/"
 mathjax-support = false
-additional-js = ["mathjax-config.js", "mathjax/tex-chtml.js", "mermaid.min.js", "mermaid-init.js"]
+additional-js = ["mathjax-config.js", "mathjax/tex-chtml.js", "mermaid.min.js", "mermaid-init.js", "hypothesis.js"]
 copy-fonts = true
 no-section-label = false
 
