@@ -26,6 +26,9 @@ jobs:
         with:
           tool: mdbook@0.4.43
 
+      - name: Install mdBook Mermaid
+        run: cargo install mdbook-mermaid --version 0.13.0 --locked
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
         with:

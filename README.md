@@ -1,6 +1,8 @@
-# 模仿学习的数学原理
+# 模仿学习的数学原理：工程扩展版
 
-一本面向机器人模仿学习的数学原理教程，从 Behavior Cloning、DAgger、MDP 到 ACT、Diffusion Policy、Decision Transformer、VLA 与工程落地。
+一本面向机器人模仿学习的数学原理教程，从 Behavior Cloning、DAgger、MDP 到 ACT、Diffusion Policy、Flow Matching、Decision Transformer、VLA、世界模型、后训练与工程部署。
+
+![《模仿学习的数学原理》全书内容关联地图](模仿学习的数学原理_工程扩展版_第1-29章含附录/images/全书内容关联地图_新版29章.png)
 
 ## 在线阅读
 
@@ -10,9 +12,9 @@ https://fengkai11.github.io/Mathematical-principles-of-imitation-learning/
 
 ## 内容结构
 
-- 正文：第 1-20 章，覆盖模仿学习基础、分布偏移、序列决策、隐变量策略、生成式策略、Transformer 策略与实机部署。
+- 正文：8 篇 29 章，覆盖模仿学习基础、分布偏移、序列决策、隐变量策略、生成式策略、长序列架构、世界模型、后训练、Sim-to-Real、OPE、C4/ADR 与数据闭环。
 - 附录：数学符号、概率论、最大似然与 KL、连续动作回归、优化基础、强化学习、生成模型、实验与代码基础。
-- 配图：章节配图统一放在 `模仿学习的数学原理_终稿校验整理版/images/`。
+- 配图：章节配图统一放在 `模仿学习的数学原理_工程扩展版_第1-29章含附录/images/`。
 
 ## 本地构建
 

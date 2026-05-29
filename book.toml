@@ -1,24 +1,27 @@
 [book]
-title = "模仿学习的数学原理"
+title = "模仿学习的数学原理：工程扩展版"
 authors = ["kai feng"]
-description = "一本面向机器人模仿学习的数学原理教程：从 Behavior Cloning、DAgger、MDP 到 ACT、Diffusion Policy、VLA 与工程落地。"
+description = "一本面向机器人模仿学习的数学原理教程：从 Behavior Cloning、DAgger、MDP 到 ACT、Diffusion Policy、Flow Matching、VLA、世界模型、后训练与工程部署。"
 language = "zh-CN"
 multilingual = false
-src = "模仿学习的数学原理_终稿校验整理版"
+src = "模仿学习的数学原理_工程扩展版_第1-29章含附录"
 
 [build]
 build-dir = "book"
 create-missing = false
+
+[preprocessor.mermaid]
+command = "scripts/mdbook-mermaid.sh"
 
 [output.html]
 default-theme = "light"
 preferred-dark-theme = "navy"
 git-repository-url = "https://github.com/fengkai11/Mathematical-principles-of-imitation-learning"
 git-repository-icon = "fa-github"
-edit-url-template = "https://github.com/fengkai11/Mathematical-principles-of-imitation-learning/edit/main/{path}"
+edit-url-template = "https://github.com/fengkai11/Mathematical-principles-of-imitation-learning/edit/master/{path}"
 site-url = "/Mathematical-principles-of-imitation-learning/"
 mathjax-support = false
-additional-js = ["mathjax-config.js", "mathjax/tex-chtml.js"]
+additional-js = ["mathjax-config.js", "mathjax/tex-chtml.js", "mermaid.min.js", "mermaid-init.js"]
 copy-fonts = true
 no-section-label = false
 
