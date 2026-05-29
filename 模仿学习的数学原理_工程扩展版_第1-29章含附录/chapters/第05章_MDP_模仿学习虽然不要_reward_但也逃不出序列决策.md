@@ -1027,16 +1027,32 @@ MDP 是强大的建模框架，但工程里使用它时要警惕几个风险。
 3. **图5-3 单步动作和长期结果的区别**：解释动作如何通过状态转移影响整条轨迹；
 4. **图5-4 模仿学习与强化学习的关系**：说明二者共享 MDP 地基，但监督信号不同。
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Richard S. Sutton and Andrew G. Barto, *Reinforcement Learning: An Introduction, 2nd Edition*, MIT Press, 2018. <https://mitpress.mit.edu/9780262039246/reinforcement-learning/>
-- Martin L. Puterman, *Markov Decision Processes: Discrete Stochastic Dynamic Programming*, Wiley, 1994.
-- Dimitri P. Bertsekas, *Dynamic Programming and Optimal Control*, Athena Scientific.
+本章要补齐 MDP 的最低必要背景。读者不需要先成为强化学习专家，但必须理解状态、动作、转移、策略和轨迹分布之间的关系。
 
-### 推荐深入阅读
+### 推荐材料
 
-- Sutton & Barto 第3章是 MDP 的最低必读材料，建议和本章公式逐项对照。
-- Puterman 更偏数学严谨，适合想深入理解 Bellman 方程、策略评估和最优性的读者。
-- 工程读者可以先抓住五元组、rollout、policy-induced distribution，不必一开始陷入完整动态规划推导。
+1. **Sutton and Barto, “Reinforcement Learning: An Introduction”, 2nd Edition**
+   - 类型：A 类基础教材。
+   - 链接：http://incompleteideas.net/book/the-book-2nd.html
+   - 阅读目的：建立 MDP、policy、value、return 的基本语言。
+   - 重点看：Chapter 3 MDP，先不必深读后面的 TD 和 policy gradient。
+
+2. **Puterman, 1994, “Markov Decision Processes: Discrete Stochastic Dynamic Programming”**
+   - 类型：B 类理论教材。
+   - 阅读目的：作为 MDP 严格数学定义的源头型教材。
+   - 重点看：状态转移、策略、贝尔曼方程的形式化定义。
+
+3. **Bertsekas, “Dynamic Programming and Optimal Control”**
+   - 类型：B 类控制视角。
+   - 阅读目的：把 MDP 和控制/动态规划联系起来。
+   - 对应本章：有助于工程读者把“机器人控制序列”看成动态系统问题。
+
+### 阅读提示
+
+建议只读到能回答这三个问题为止：`s_t` 和 `o_t` 有什么区别？`P(s_{t+1}|s_t,a_t)` 在模仿学习里为什么仍然重要？策略 `\pi(a|o)` 为什么会诱导出轨迹分布？
+
+---

@@ -531,3 +531,32 @@ closed-loop 还应记录：
 5. 请设计一个 rollout 评估表，至少包含成功率、失败原因、耗时和 fallback 次数。
 
 6. 为什么失败样本加入训练集前需要 reviewed？
+
+## 推荐阅读与深入材料
+
+### 推荐材料
+
+1. **PyTorch 官方教程**
+   - 链接：https://pytorch.org/tutorials/
+   - 阅读目的：掌握 tensor、autograd、dataset、dataloader、training loop。
+
+2. **Hydra documentation**
+   - 链接：https://hydra.cc/
+   - 阅读目的：学习实验配置管理，避免配置不可复现。
+
+3. **Weights & Biases / TensorBoard 文档**
+   - 阅读目的：理解实验追踪、指标曲线和模型版本管理。
+
+4. **RoboMimic codebase**
+   - 链接：https://github.com/ARISE-Initiative/robomimic
+   - 阅读目的：学习机器人模仿学习实验如何组织数据、模型、训练和评估。
+
+5. **RoboSuite codebase**
+   - 链接：https://github.com/ARISE-Initiative/robosuite
+   - 阅读目的：学习仿真任务、机器人环境和 benchmark 的组织方式。
+
+### 阅读提示
+
+附录H最值得强调的是可复现。每次实验至少记录：数据版本、模型版本、随机种子、训练配置、评估脚本、成功/失败视频和异常日志。
+
+---

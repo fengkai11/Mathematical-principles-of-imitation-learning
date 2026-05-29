@@ -390,3 +390,24 @@ CVAE、Diffusion、机器人策略训练中常见多项 loss：
 4. 一个模型训练 loss 下降但 rollout 成功率不上升，可能有哪些原因？
 
 5. 多项 loss 中的权重 <span class="math">\\(\lambda\\)</span> 或 <span class="math">\\(\beta\\)</span> 改变后，为什么模型行为会变？
+
+## 推荐阅读与深入材料
+
+### 推荐材料
+
+1. **Boyd and Vandenberghe, “Convex Optimization”**
+   - 链接：https://web.stanford.edu/~boyd/cvxbook/
+   - 阅读目的：理解凸优化、拉格朗日、对偶和约束优化的基本语言。
+
+2. **Goodfellow et al., “Deep Learning”, Optimization chapters**
+   - 阅读目的：理解 SGD、Adam、梯度消失/爆炸和非凸优化的深度学习实践。
+
+3. **Kingma and Ba, 2014, “Adam: A Method for Stochastic Optimization”**
+   - 链接：https://arxiv.org/abs/1412.6980
+   - 阅读目的：理解本书实验中最常见优化器的基本动机。
+
+### 阅读提示
+
+附录E读到能理解“优化目标、参数、梯度、约束、正则项”即可。对 DPO、最大熵 IRL、Flow Matching 来说，最关键的是看懂 loss 在优化什么。
+
+---

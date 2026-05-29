@@ -1961,16 +1961,41 @@ VLA 仍然可能不知道：
 
 > VLA 让机器人开始听懂人话、看懂场景并输出动作；世界模型要解决的是，机器人是否知道自己的动作会让世界变成什么样。
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Anthony Brohan et al., “RT-1: Robotics Transformer for Real-World Control at Scale,” arXiv:2212.06817, 2022. <https://arxiv.org/abs/2212.06817>
-- Anthony Brohan et al., “RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control,” arXiv:2307.15818, 2023. <https://arxiv.org/abs/2307.15818>
-- Octo Model Team, “Octo: An Open-Source Generalist Robot Policy,” arXiv:2405.12213, 2024. <https://arxiv.org/abs/2405.12213>
+本章要把 VLA 理解成条件策略模型：视觉负责看见世界，语言负责给任务意图，动作 head 负责变成可执行控制。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 读 RT-1 重点看大规模真实机器人数据和动作 tokenization；读 RT-2 重点看 VLM 预训练知识如何迁移到动作。
-- 阅读 Octo 可以理解开源 generalist robot policy 的数据、接口和评估方式。
-- 工程上必须区分语言理解、视觉定位、动作控制和安全执行，VLA 只是把它们放进统一条件策略框架。
+1. **Brohan et al., 2023, “RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control”**
+   - 类型：A 类 VLA 核心论文。
+   - 链接：https://arxiv.org/abs/2307.15818
+   - 阅读目的：理解 web-scale VLM 知识如何迁移到机器人控制。
+
+2. **Driess et al., 2023, “PaLM-E: An Embodied Multimodal Language Model”**
+   - 类型：A/B 类多模态 embodied model。
+   - 链接：https://arxiv.org/abs/2303.03378
+   - 阅读目的：理解语言模型、视觉输入和机器人状态如何进入统一 token 空间。
+
+3. **Kim et al., 2024, “OpenVLA: An Open-Source Vision-Language-Action Model”**
+   - 类型：A/C 类开放模型材料。
+   - 链接：https://arxiv.org/abs/2406.09246
+   - 阅读目的：理解开源 VLA、Open X-Embodiment 数据、微调和部署。
+
+4. **Team et al., 2024, “Octo: An Open-Source Generalist Robot Policy”**
+   - 类型：C 类通用机器人策略材料。
+   - 链接：https://arxiv.org/abs/2405.12213
+   - 阅读目的：理解通用策略如何跨任务、跨机器人形态训练。
+
+5. **Padalkar et al. / Open X-Embodiment Collaboration, 2023, “Open X-Embodiment: Robotic Learning Datasets and RT-X Models”**
+   - 类型：C 类数据基础设施材料。
+   - 链接：https://arxiv.org/abs/2310.08864
+   - 阅读目的：理解 VLA 为什么需要跨机器人、跨任务的大规模数据。
+
+### 阅读提示
+
+读 VLA 论文时，建议单独整理 action representation：动作是离散化 token、连续向量、动作块，还是 flow/diffusion action head？这是把 VLA 落到实机的关键。
+
+---

@@ -1562,16 +1562,38 @@ P_\theta(u_t|z_{t-H+1:t},u_{t-H+1:t-1},g_{\mathrm{slot}}) \tag{18.60}\]</div>
 
 > VLA 不是“把 ChatGPT 接上机械臂”。它更像是把视觉、语言和动作放进同一套条件策略学习框架里。至于能不能干活，还要看数据、控制、安全和部署工程能不能跟上。
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Ashish Vaswani et al., “Attention Is All You Need,” NeurIPS 2017. <https://arxiv.org/abs/1706.03762>
-- Tom B. Brown et al., “Language Models are Few-Shot Learners,” NeurIPS 2020. <https://arxiv.org/abs/2005.14165>
-- Anthony Brohan et al., “RT-1: Robotics Transformer for Real-World Control at Scale,” arXiv:2212.06817, 2022. <https://arxiv.org/abs/2212.06817>
+本章要把 Transformer 从“万能模型”还原成“条件序列建模器”。重点是 attention 如何建模历史、观测、语言、动作之间的依赖。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 先掌握 Transformer 的 attention、position encoding、mask 和 tokenization，再讨论机器人策略结构。
-- 阅读 RT-1 时重点看动作离散化、数据规模、任务多样性和 real-world rollout 评估。
-- 对工程落地，建议把 Transformer Policy 看成条件建模器，不要把它当作自动解决控制、安全和数据覆盖的万能模块。
+1. **Vaswani et al., 2017, “Attention Is All You Need”**
+   - 类型：A 类基础论文。
+   - 链接：https://arxiv.org/abs/1706.03762
+   - 阅读目的：理解 self-attention、position encoding、causal mask 的基本机制。
+   - 对应本章：帮助读者看懂后续 DT、RT-1、VLA、DiT 等模型。
+
+2. **Reed et al., 2022, “A Generalist Agent” / Gato**
+   - 类型：B 类通用序列建模材料。
+   - 链接：https://arxiv.org/abs/2205.06175
+   - 阅读目的：理解把多种任务统一成 token 序列的早期通用 agent 尝试。
+
+3. **Brohan et al., 2022, “RT-1: Robotics Transformer for Real-World Control at Scale”**
+   - 类型：A/C 类机器人材料。
+   - 链接：https://arxiv.org/abs/2212.06817
+   - 阅读目的：理解 Transformer 如何用于大规模真实机器人数据上的策略学习。
+
+4. **Peebles and Xie, 2022, “Scalable Diffusion Models with Transformers” / DiT**
+   - 类型：B 类架构扩展。
+   - 链接：https://arxiv.org/abs/2212.09748
+   - 阅读目的：理解 Transformer 作为生成模型 backbone 的可扩展性。
+   - 对应本章：为第14–15章动作生成模型的 Transformer 化做铺垫。
+
+### 阅读提示
+
+阅读 Transformer Policy 时，不要只问模型有多大。更应该问：token 是什么？时序信息如何编码？动作是离散 token 还是连续回归？注意力窗口能覆盖多长历史？
+
+---

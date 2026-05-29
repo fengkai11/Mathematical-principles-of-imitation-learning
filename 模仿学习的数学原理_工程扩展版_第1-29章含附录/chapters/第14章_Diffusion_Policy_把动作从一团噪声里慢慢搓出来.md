@@ -1298,16 +1298,39 @@ A^k=\sqrt{\bar\alpha_k}A^0+\sqrt{1-\bar\alpha_k}\epsilon,
 
 ---
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Cheng Chi et al., “Diffusion Policy: Visuomotor Policy Learning via Action Diffusion,” RSS 2023 / IJRR 2025. <https://arxiv.org/abs/2303.04137>
-- Jonathan Ho, Ajay Jain, and Pieter Abbeel, “Denoising Diffusion Probabilistic Models,” NeurIPS 2020. <https://arxiv.org/abs/2006.11239>
-- Calvin Luo, “Understanding Diffusion Models: A Unified Perspective,” arXiv:2208.11970, 2022. <https://arxiv.org/abs/2208.11970>
+本章要讲清楚 Diffusion Policy 的核心：给定观测条件，通过迭代去噪生成一个动作序列，而不是只回归一个均值动作。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 先读 DDPM 的正向加噪和反向去噪，再读 Diffusion Policy 如何把图像生成思路迁移到动作序列。
-- Diffusion Policy 原文重点看 receding horizon control、action sequence denoising 和视觉条件编码。
-- 工程上建议重点测推理延迟、采样步数、动作归一化、安全过滤和闭环成功率。
+1. **Chi et al., 2023/2024, “Diffusion Policy: Visuomotor Policy Learning via Action Diffusion”**
+   - 类型：A/C 类本章核心论文。
+   - 链接：https://arxiv.org/abs/2303.04137
+   - 阅读目的：理解 diffusion 如何用于机器人动作生成。
+   - 重点看：action sequence diffusion、receding horizon control、visual conditioning、benchmark 对比。
+
+2. **Ho, Jain, and Abbeel, 2020, “Denoising Diffusion Probabilistic Models”**
+   - 类型：A/B 类生成模型基础。
+   - 链接：https://arxiv.org/abs/2006.11239
+   - 阅读目的：理解正向加噪和反向去噪的基本数学。
+   - 对应本章：为公式推导提供 DDPM 原型。
+
+3. **Song et al., 2021, “Score-Based Generative Modeling through Stochastic Differential Equations”**
+   - 类型：B 类深入材料。
+   - 链接：https://arxiv.org/abs/2011.13456
+   - 阅读目的：理解 score、SDE、概率流 ODE 等更统一的生成视角。
+   - 对应本章：为第15章 Flow Matching 铺垫。
+
+4. **Karras et al., 2022, “Elucidating the Design Space of Diffusion-Based Generative Models”**
+   - 类型：B 类采样与工程材料。
+   - 链接：https://arxiv.org/abs/2206.00364
+   - 阅读目的：理解采样步数、噪声调度和数值稳定性为什么是工程核心。
+
+### 阅读提示
+
+阅读 Diffusion Policy 时，不要把它只当图像生成模型的迁移。关键问题是：`o_t` 如何作为条件？生成的是单步动作还是动作块？采样步数是否能满足控制频率？
+
+---

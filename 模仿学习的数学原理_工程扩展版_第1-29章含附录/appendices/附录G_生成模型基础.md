@@ -447,3 +447,33 @@ p_\theta(A_t|o_t) \tag{G.33}\]</div>
 4. 为什么 ACT 要生成动作块，而不是单步动作？
 
 5. Diffusion Policy 中，为什么训练目标可以写成预测噪声的 MSE？
+
+## 推荐阅读与深入材料
+
+### 推荐材料
+
+1. **Kingma and Welling, 2013, VAE**
+   - 链接：https://arxiv.org/abs/1312.6114
+   - 阅读目的：理解 latent variable generative model 和 ELBO。
+
+2. **Goodfellow et al., 2014, GAN**
+   - 链接：https://arxiv.org/abs/1406.2661
+   - 阅读目的：理解生成器—判别器博弈，为 GAIL 做背景。
+
+3. **Dinh et al., 2016, “Density Estimation using Real NVP”**
+   - 链接：https://arxiv.org/abs/1605.08803
+   - 阅读目的：理解 normalizing flow 和可逆变换。
+
+4. **Ho et al., 2020, DDPM**
+   - 链接：https://arxiv.org/abs/2006.11239
+   - 阅读目的：理解 diffusion 的基本训练和采样。
+
+5. **Lipman et al., 2022, Flow Matching**
+   - 链接：https://arxiv.org/abs/2210.02747
+   - 阅读目的：理解 continuous flow / velocity field 生成。
+
+### 阅读提示
+
+附录G建议按“VAE → GAN → Diffusion → Flow Matching”读。每读一个模型，都问：它如何表示概率分布？如何训练？如何采样？如何用于连续动作？
+
+---

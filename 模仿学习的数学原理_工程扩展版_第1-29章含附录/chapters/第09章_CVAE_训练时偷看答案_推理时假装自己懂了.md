@@ -1386,16 +1386,33 @@ D_{\mathrm{KL}}(q_\phi(z\mid x,a)\|p(z)) \tag{9.91}\]</div>
 
 ---
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Kihyuk Sohn, Honglak Lee, and Xinchen Yan, “Learning Structured Output Representation using Deep Conditional Generative Models,” NeurIPS 2015. <https://arxiv.org/abs/1506.05770>
-- Diederik P. Kingma and Max Welling, “Auto-Encoding Variational Bayes,” arXiv:1312.6114, 2013.
-- Tianhe Yu et al., “One-Shot Imitation from Observing Humans via Domain-Adaptive Meta-Learning,” RSS 2018.
+本章要讲清楚 CVAE 的关键矛盾：训练时 encoder 可以看见未来动作或完整轨迹，推理时只能从 prior 中采样。这对 ACT 和很多机器人动作块模型非常重要。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 先掌握 VAE 的 ELBO，再看 CVAE 如何把条件变量加入 encoder 和 decoder。
-- 阅读结构化输出 CVAE 论文时，重点看它如何处理一个输入对应多个输出的问题。
-- 对工程实现，建议重点检查 posterior collapse、KL 权重、采样温度和动作反归一化。
+1. **Sohn, Lee, and Yan, 2015, “Learning Structured Output Representation using Deep Conditional Generative Models”**
+   - 类型：A 类 CVAE 原始材料。
+   - 链接：https://papers.nips.cc/paper/2015/hash/8d55a249e6baa5c06772297520da2051-Abstract.html
+   - 阅读目的：理解 conditional VAE 如何处理一个输入对应多个合理输出。
+   - 重点看：condition、latent variable、reconstruction、KL 项。
+
+2. **Kingma and Welling, 2013, “Auto-Encoding Variational Bayes”**
+   - 类型：A 类数学基础。
+   - 链接：https://arxiv.org/abs/1312.6114
+   - 阅读目的：补齐 ELBO、重参数化技巧和 posterior/prior 的关系。
+
+3. **Zhao et al., 2023, “Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware”**
+   - 类型：C 类机器人核心应用。
+   - 链接：https://arxiv.org/abs/2304.13705
+   - 阅读目的：看 ACT 如何把 CVAE 用在 action chunk 生成中。
+   - 对应本章：建议重点读方法部分中 CVAE 和 temporal ensemble 的设置。
+
+### 阅读提示
+
+阅读 CVAE 时，请把 `q_\phi(z|x,y)` 和 `p_\theta(y|x,z)` 分开看。工程里很多错误来自把训练时 posterior 的能力误认为推理时 prior 的能力。
+
+---

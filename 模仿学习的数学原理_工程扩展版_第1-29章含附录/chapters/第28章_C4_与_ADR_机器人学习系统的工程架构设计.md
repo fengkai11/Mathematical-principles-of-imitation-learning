@@ -409,16 +409,41 @@ C4 和 ADR 的作用，是把“算法模型”放回“系统架构”中。
 
 如果没有 C4 和 ADR，团队很容易在模型效果、实时性、安全性、可观测性和可回滚性之间做隐性权衡，最后变成不可维护的工程泥潭。
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Simon Brown, “The C4 model for visualising software architecture.” <https://c4model.com/>
-- Michael Nygard, “Documenting Architecture Decisions,” 2011. <https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions>
-- Len Bass, Paul Clements, and Rick Kazman, *Software Architecture in Practice*, Addison-Wesley.
+本章要帮助读者把机器人学习系统从“算法脚本”升级为“可协作、可审计、可演进的工程系统”。推荐阅读以软件架构、架构决策和 ML 系统债务为主。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 先用 C4 的 Context / Container / Component 三层画出现有机器人学习系统，而不是从工具或模板开始。
-- ADR 建议记录“为什么选择这个方案”和“放弃了什么方案”，不要只写最终结论。
-- 对策略系统，架构图必须画出数据闭环、模型注册、评估门禁、部署回滚和安全监控。
+1. **Simon Brown, “The C4 Model for Visualising Software Architecture”**
+   - 类型：A/C 类架构表达材料。
+   - 链接：https://c4model.com/
+   - 阅读目的：理解 Context、Container、Component、Code 四层图如何帮助团队沟通。
+   - 对应本章：适合直接作为 C4 图画法参考。
+
+2. **Michael Nygard, “Documenting Architecture Decisions” / ADR**
+   - 类型：A/C 类架构决策材料。
+   - 链接：https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions
+   - 阅读目的：理解为什么要记录“为什么这样设计”，而不是只记录最终代码。
+
+3. **Martin Fowler, “Architecture Decision Records”**
+   - 类型：A/C 类实践材料。
+   - 链接：https://martinfowler.com/articles/2023-06-26-architecture-decisions.html
+   - 阅读目的：学习团队如何在工程演进中维护 ADR。
+
+4. **Kleppmann, 2017, “Designing Data-Intensive Applications”**
+   - 类型：B/C 类系统设计教材。
+   - 阅读目的：理解数据系统、日志、流处理、一致性和可恢复性。
+   - 对应本章：对第29章数据闭环平台尤其有帮助。
+
+5. **Sculley et al., 2015, “Hidden Technical Debt in Machine Learning Systems”**
+   - 类型：A/C 类 ML 系统材料。
+   - 阅读目的：理解 ML 系统中数据依赖、配置债务、实验债务和监控债务。
+
+### 阅读提示
+
+读 C4/ADR 材料时，建议不要停留在“图好不好看”。真正的问题是：新人能否看懂系统边界？出了问题能否追溯决策？模型更新能否安全回滚？
+
+---

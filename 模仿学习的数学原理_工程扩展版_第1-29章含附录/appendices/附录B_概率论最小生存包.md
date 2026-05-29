@@ -406,3 +406,23 @@ p(a_t|h_t) \tag{B.31}\]</div>
 4. 在 CVAE 中，为什么需要 <span class="math">\\(q\_\phi(z|o,a)\\)</span>？它和 <span class="math">\\(p(z)\\)</span> 有什么区别？
 
 5. 请解释“训练数据支持集”和“OOD 状态”的关系。
+
+## 推荐阅读与深入材料
+
+### 推荐材料
+
+1. **Blitzstein and Hwang, “Introduction to Probability”**
+   - 阅读目的：补齐随机变量、条件概率、期望、贝叶斯公式。
+
+2. **Bishop, “Pattern Recognition and Machine Learning”**
+   - 阅读目的：理解概率建模、最大似然、贝叶斯推断和 latent variable。
+
+3. **Murphy, “Probabilistic Machine Learning: An Introduction”**
+   - 链接：https://probml.github.io/pml-book/book1.html
+   - 阅读目的：建立现代机器学习中的概率建模视角。
+
+### 阅读提示
+
+本书读者只需要先掌握四个对象：随机变量、条件分布、期望、KL。不要为了读模仿学习先陷入完整概率论教材。
+
+---

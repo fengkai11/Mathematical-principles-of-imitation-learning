@@ -1490,16 +1490,34 @@ GAIL 通过判别器给策略提供隐式奖励，让策略的 occupancy measure
 
 下一章，我们就来拆这个“专家到底在优化什么”的谜题。
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Jonathan Ho and Stefano Ermon, “Generative Adversarial Imitation Learning,” NeurIPS 2016. <https://arxiv.org/abs/1606.03476>
-- Ian Goodfellow et al., “Generative Adversarial Nets,” NeurIPS 2014. <https://arxiv.org/abs/1406.2661>
-- Pieter Abbeel and Andrew Y. Ng, “Apprenticeship Learning via Inverse Reinforcement Learning,” ICML 2004.
+本章要讲清楚 GAIL 的桥梁作用：它把 occupancy measure matching、GAN 判别器和 imitation policy learning 接在一起。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 读 GAIL 原文时重点看 occupancy measure、IRL 对偶形式和 GAN 类比，不要只把它看成“加了个判别器”。
-- 回看 GAN 原文的 min-max 目标，有助于理解判别器信号为什么可以变成策略优化信号。
-- 如果没有可靠仿真器和安全约束，不建议直接把 GAIL 放到真实机器人上在线探索。
+1. **Ho and Ermon, 2016, “Generative Adversarial Imitation Learning”**
+   - 类型：A 类必读。
+   - 链接：https://arxiv.org/abs/1606.03476
+   - 阅读目的：理解 GAIL 如何绕开显式 reward learning，直接让策略轨迹分布接近专家。
+   - 重点看：判别器、policy update、occupancy measure。
+
+2. **Goodfellow et al., 2014, “Generative Adversarial Nets”**
+   - 类型：A/B 类背景材料。
+   - 链接：https://arxiv.org/abs/1406.2661
+   - 阅读目的：理解判别器和生成器的二人博弈。
+   - 对应本章：把 GAN 中“真假样本”迁移到 GAIL 中“专家轨迹/策略轨迹”。
+
+3. **Fu, Luo, and Levine, 2018, “Learning Robust Rewards with Adversarial Inverse Reinforcement Learning”**
+   - 类型：B 类深入材料。
+   - 链接：https://arxiv.org/abs/1710.11248
+   - 阅读目的：理解 AIRL 如何让学到的 reward 更可迁移。
+   - 重点看：reward 结构化分解和 dynamics 变化下的泛化。
+
+### 阅读提示
+
+读 GAIL 时建议把判别器输出解释成“像不像专家”，而不要直接把它理解成真实 reward。GAIL 的强项是分布匹配，弱点是训练代价、交互需求和稳定性。
+
+---

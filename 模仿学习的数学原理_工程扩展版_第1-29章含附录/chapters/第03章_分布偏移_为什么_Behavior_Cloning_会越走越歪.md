@@ -639,16 +639,33 @@ BC 仍然是非常重要的起点。但你必须知道它的边界：
 > 这正是第4章 DAgger 的核心思想。它的潜台词很接地气：
 > **别只在标准答案上学，得在你快跑偏的时候，也让老师教你一把。**
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Stéphane Ross, Geoffrey J. Gordon, and J. Andrew Bagnell, “A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning,” AISTATS 2011. <https://proceedings.mlr.press/v15/ross11a.html>
-- Stéphane Ross and J. Andrew Bagnell, “Efficient Reductions for Imitation Learning,” AISTATS 2010.
-- Alexandre Dadashi et al., “Primal Wasserstein Imitation Learning,” ICLR 2021. 可作为分布匹配视角的延伸阅读。
+本章核心是 compounding error：训练时模型只见专家状态，部署时却会进入自己造成的新状态。推荐阅读要帮助读者建立“闭环 rollout”视角。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 优先精读 DAgger 论文中关于 covariate shift 和 compounding error 的部分。
-- 读离线 RL 综述中关于 distribution shift / extrapolation error 的讨论，理解它和 BC 问题的共性。
-- 做一个小实验：只在专家状态训练 BC，再在闭环 rollout 中统计访问状态偏移，通常比只看训练 loss 更有启发。
+1. **Ross and Bagnell, 2010, “Efficient Reductions for Imitation Learning”**
+   - 类型：A 类理论材料。
+   - 链接：http://proceedings.mlr.press/v9/ross10a/ross10a.pdf
+   - 阅读目的：理解模仿学习中的错误累积为什么不是普通监督学习误差。
+   - 重点看：horizon、error bound、state distribution mismatch。
+
+2. **Ross, Gordon, and Bagnell, 2011, “A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning”**
+   - 类型：A 类核心论文。
+   - 链接：https://arxiv.org/abs/1011.0686
+   - 阅读目的：理解 DAgger 为什么能缓解 BC 的分布偏移。
+   - 重点看：dataset aggregation 的问题定义，不必一开始深究 no-regret 证明。
+
+3. **Kelly et al., 2019, “HG-DAgger: Interactive Imitation Learning with Human Experts”**
+   - 类型：C 类工程扩展。
+   - 阅读目的：理解真实系统里专家不一定每时每刻在线标注，如何用人类接管和风险触发来采集纠偏数据。
+   - 对应本章：为第24章“人类接管数据形成偏好对”和第29章“数据闭环”铺垫。
+
+### 阅读提示
+
+阅读时请把每个论文里的“training distribution”和“deployment distribution”用两种颜色标出来。只要这两个分布不一样，BC 的单步准确率就不能直接代表实机成功率。
+
+---

@@ -550,16 +550,32 @@ D_i = D_{i-1} \cup \{(s, \pi_E(s)) : s \sim d^{\pi_i}\} \tag{4.7}\]</div>
 > **为什么这些问题会如此顽固？为什么机器人学习不是普通的静态监督学习，而是一个序列决策问题？**
 > 这就是下一章——**模仿学习中的序列决策问题**——要真正搭起来的数学地基。
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Stéphane Ross, Geoffrey J. Gordon, and J. Andrew Bagnell, “A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning,” AISTATS 2011. <https://proceedings.mlr.press/v15/ross11a.html>
-- Stéphane Ross and J. Andrew Bagnell, “Efficient Reductions for Imitation Learning,” AISTATS 2010.
-- Brenna D. Argall et al., “A Survey of Robot Learning from Demonstration,” *Robotics and Autonomous Systems*, 2009.
+本章要讲清楚 DAgger 的意义：不是换了一个模型，而是改变了数据分布的采集方式。它是后续接管纠偏、主动采样、数据闭环的原型。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 精读 DAgger 的算法框，重点看“roll in 当前策略、查询专家、聚合数据”三步。
-- 对机器人任务，建议把 DAgger 和安全接管日志一起理解：专家不是离线标签机，而是闭环纠偏来源。
-- 如果要落地，继续读第29章的数据闭环，把 DAgger 看成闭环数据平台的一种早期形态。
+1. **Ross, Gordon, and Bagnell, 2011, DAgger 原论文**
+   - 类型：A 类必读。
+   - 链接：https://arxiv.org/abs/1011.0686
+   - 阅读目的：理解“让当前策略去跑，再让专家给当前策略遇到的状态打标签”的基本思想。
+   - 重点看：算法框架、聚合数据集、策略迭代过程。
+
+2. **Zhang and Cho, 2016, “Query-Efficient Imitation Learning for End-to-End Autonomous Driving” / SafeDAgger 相关工作**
+   - 类型：B/C 类扩展。
+   - 阅读目的：理解为什么专家标注昂贵，需要只在风险状态请求专家。
+   - 重点看：什么时候查询专家、如何判断当前策略不可靠。
+
+3. **Sun et al., 2017, “Deeply AggreVaTeD: Differentiable Imitation Learning for Sequential Prediction”**
+   - 类型：B 类理论扩展。
+   - 阅读目的：理解从 DAgger 到更一般序列决策优化的过渡。
+   - 重点看：cost-to-go、sequence-level imitation。
+
+### 阅读提示
+
+读 DAgger 不要只看算法伪代码，要结合工程流程想：专家在哪里？接管如何记录？哪些状态值得标注？这些问题会在第24章和第29章重新出现。
+
+---

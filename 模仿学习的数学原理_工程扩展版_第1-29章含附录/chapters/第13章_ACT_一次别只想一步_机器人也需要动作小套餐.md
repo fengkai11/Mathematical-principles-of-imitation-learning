@@ -1195,16 +1195,32 @@ q_\phi(z\mid x_t,a_{t:t+H}) \tag{13.53}\]</div>
 
 ---
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Tony Z. Zhao et al., “Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware,” RSS 2023. <https://arxiv.org/abs/2304.13705>
-- Ashish Vaswani et al., “Attention Is All You Need,” NeurIPS 2017. <https://arxiv.org/abs/1706.03762>
-- robomimic documentation and examples. <https://robomimic.github.io/>
+本章要解释 action chunk 的价值：降低有效决策频率，缓解高频控制中的误差累积，并让模型学习一小段连续动作的结构。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 读 ACT/ALOHA 论文时重点看 action chunking、temporal ensemble 和低成本硬件数据采集。
-- 回看 Transformer 原文，只需先掌握 self-attention、positional encoding 和 causal/非 causal 区别。
-- 工程复现时优先关注动作频率、chunk 长度、延迟和执行平滑性，而不是只调网络规模。
+1. **Zhao et al., 2023, “Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware”**
+   - 类型：A/C 类本章核心论文。
+   - 链接：https://arxiv.org/abs/2304.13705
+   - 阅读目的：理解 ACT、CVAE、Transformer、temporal ensemble 如何组合。
+   - 重点看：action chunk、latent style、overlapping chunks、temporal aggregation。
+
+2. **ALOHA project website and code**
+   - 类型：C 类工程材料。
+   - 链接：https://tonyzhaozh.github.io/aloha/
+   - 阅读目的：理解低成本硬件、遥操作采集和实机任务设置。
+   - 对应本章：可以帮助读者把“公式中的 action chunk”对应到真实机械臂控制频率。
+
+3. **Mobile ALOHA, 2024, “Learning Bimanual Mobile Manipulation with Low-Cost Whole-Body Teleoperation”**
+   - 类型：C 类扩展材料。
+   - 阅读目的：理解 ACT 类方法如何从桌面双臂扩展到移动操作。
+
+### 阅读提示
+
+读 ACT 时要重点看三件事：chunk 长度怎么选？推理时如何重叠平均？任务是否需要细粒度接触反馈？这些问题会影响 ACT 与 Diffusion/Flow 的工程选型。
+
+---

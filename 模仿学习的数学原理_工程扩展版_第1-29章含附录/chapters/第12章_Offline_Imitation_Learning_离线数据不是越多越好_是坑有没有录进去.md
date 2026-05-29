@@ -1665,16 +1665,38 @@ P(a_t|s_{\le t},a_{<t},R_{\le t}) \tag{12.57}\]</div>
 
 下一章我们会看到，Decision Transformer 的优雅之处在于序列建模，麻烦之处也在于序列数据。它把“我要达到多高回报”作为条件输入，让策略像续写文本一样续写动作。问题是，机器人不是写小说。小说写歪了可以删稿，机器人动作写歪了可能会撞桌子。
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Sergey Levine et al., “Offline Reinforcement Learning: Tutorial, Review, and Perspectives on Open Problems,” arXiv:2005.01643, 2020. <https://arxiv.org/abs/2005.01643>
-- Justin Fu et al., “D4RL: Datasets for Deep Data-Driven Reinforcement Learning,” arXiv:2004.07219, 2020. <https://arxiv.org/abs/2004.07219>
-- Aviral Kumar et al., “Conservative Q-Learning for Offline Reinforcement Learning,” NeurIPS 2020. <https://arxiv.org/abs/2006.04779>
+本章要让读者理解离线数据的覆盖性、失败数据、恢复数据和 OOD 动作风险。推荐阅读应和 offline RL、离线评估、数据闭环衔接。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 先读 Offline RL 综述的 distribution shift 和 extrapolation error 部分，再回看离线模仿学习的数据覆盖问题。
-- D4RL 适合用来理解数据集质量、混合策略数据和评测协议为什么重要。
-- 对实机项目，建议把离线数据按任务阶段、失败类型、操作者、设备版本和场景标签分层审计。
+1. **Levine et al., 2020, “Offline Reinforcement Learning: Tutorial, Review, and Perspectives on Open Problems”**
+   - 类型：A/B 类综述。
+   - 链接：https://arxiv.org/abs/2005.01643
+   - 阅读目的：理解离线策略学习为什么难，尤其是分布外动作估计问题。
+   - 对应本章：帮助解释“数据多，但关键失败状态没有录进去”仍然不够。
+
+2. **Kumar et al., 2020, “Conservative Q-Learning for Offline Reinforcement Learning”**
+   - 类型：B 类 offline RL 核心论文。
+   - 链接：https://arxiv.org/abs/2006.04779
+   - 阅读目的：理解保守性如何缓解 OOD action 过估计。
+   - 对应本章：虽然本书讲 IL，但 CQL 的保守思想可用于解释离线安全边界。
+
+3. **Kostrikov et al., 2021, “Offline Reinforcement Learning with Implicit Q-Learning”**
+   - 类型：B 类深入材料。
+   - 链接：https://arxiv.org/abs/2110.06169
+   - 阅读目的：理解不显式查询 OOD action 的离线学习思路。
+
+4. **Mandlekar et al., 2021, “What Matters in Learning from Offline Human Demonstrations for Robot Manipulation” / RoboMimic**
+   - 类型：C 类机器人实践。
+   - 链接：https://arxiv.org/abs/2108.03298
+   - 阅读目的：理解离线机器人模仿中数据质量、任务难度、模型选择和评估设置。
+
+### 阅读提示
+
+读第12章对应材料时，建议建立一个表：成功轨迹、失败轨迹、接管轨迹、恢复轨迹分别提供了什么信息。不要只统计 episode 数量。
+
+---

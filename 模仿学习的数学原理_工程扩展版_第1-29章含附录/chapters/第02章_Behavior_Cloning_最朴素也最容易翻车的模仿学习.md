@@ -749,16 +749,40 @@ MSE 常用，但不是放之四海而皆准。
 >
 > 这就引出了第3章：**分布偏移——为什么模型会越走越歪。**
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Dean A. Pomerleau, “ALVINN: An Autonomous Land Vehicle in a Neural Network,” 1989.
-- Mariusz Bojarski et al., “End to End Learning for Self-Driving Cars,” arXiv:1604.07316, 2016. <https://arxiv.org/abs/1604.07316>
-- Stéphane Ross and J. Andrew Bagnell, “Efficient Reductions for Imitation Learning,” AISTATS 2010.
+本章要让读者理解 BC 的本质：把专家数据中的 `(o_t, a_t)` 当成监督学习样本。但机器人不是静态分类器，单步预测误差会在闭环执行中被放大。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 读 Bojarski et al. 时重点看输入、输出、数据采集与闭环验证，而不是只看网络结构。
-- 结合本章重新阅读附录 C 和 D，把交叉熵、负对数似然、MSE 与行为克隆损失对应起来。
-- 工程实践建议阅读 robomimic 的 BC 配置和训练流程，理解 policy checkpoint 与 rollout 评估如何衔接。
+1. **Pomerleau, 1989, “ALVINN: An Autonomous Land Vehicle in a Neural Network”**
+   - 类型：A 类经典案例。
+   - 阅读目的：理解早期端到端驾驶中的行为克隆雏形。
+   - 重点看：输入图像到转向控制的监督学习形式。
+   - 对应本章：可以作为“BC 很直观，但闭环风险很早就存在”的历史案例。
+
+2. **Codevilla et al., 2018, “End-to-End Driving via Conditional Imitation Learning”**
+   - 类型：B/C 类工程案例。
+   - 链接：https://arxiv.org/abs/1710.02410
+   - 阅读目的：理解为什么同一个观测下，不同高层命令会对应不同动作。
+   - 重点看：conditional command 如何解决路口左转/右转/直行的多解问题。
+   - 对应本章：可用来解释“观测不完整时，BC 会把多个意图平均掉”。
+
+3. **Florence et al., 2021, “Implicit Behavioral Cloning”**
+   - 类型：B 类深入阅读。
+   - 阅读目的：理解连续动作、多峰动作分布下，简单 MSE BC 为什么容易学出“平均动作”。
+   - 重点看：implicit energy-based policy 如何表达多峰分布。
+   - 对应本章：和第7章概率策略、第14章 Diffusion Policy 可形成前后呼应。
+
+4. **Levine et al., 2016, “End-to-End Training of Deep Visuomotor Policies”**
+   - 类型：C 类机器人案例。
+   - 阅读目的：理解视觉输入到控制动作的端到端策略训练。
+   - 重点看：视觉特征、动作输出、数据采集和训练稳定性。
+
+### 阅读提示
+
+读 BC 相关材料时，建议特别标注论文中的损失函数。如果是 MSE，就问：这个任务的专家动作是否单峰？如果不是，平均动作会不会变成坏动作？这正是第7–9章要继续解决的问题。
+
+---

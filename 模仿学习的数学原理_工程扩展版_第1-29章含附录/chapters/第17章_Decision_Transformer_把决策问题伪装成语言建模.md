@@ -1464,16 +1464,32 @@ r_t+\gamma\max_{a'}Q(s_{t+1},a') \tag{17.54}\]</div>
 
 第18章我们就来拆这根“超大号条件建模器”：它到底解决了什么，又把哪些问题原封不动地留给了工程师。
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Lili Chen et al., “Decision Transformer: Reinforcement Learning via Sequence Modeling,” NeurIPS 2021. <https://arxiv.org/abs/2106.01345>
-- Ashish Vaswani et al., “Attention Is All You Need,” NeurIPS 2017. <https://arxiv.org/abs/1706.03762>
-- Michael Janner, Qiyang Li, and Sergey Levine, “Offline Reinforcement Learning as One Big Sequence Modeling Problem,” NeurIPS 2021. <https://arxiv.org/abs/2106.02039>
+本章要帮助读者理解：Decision Transformer 不是传统 value-based RL，而是把轨迹 token 化，用序列建模预测动作。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 读 Decision Transformer 时重点看 return-to-go、trajectory tokenization 和 causal masking。
-- 和 Trajectory Transformer 对比阅读，理解“直接预测动作”和“建模整条轨迹分布”的差异。
-- 工程上要特别注意离线数据质量、目标 return 标定和长序列推理成本。
+1. **Chen et al., 2021, “Decision Transformer: Reinforcement Learning via Sequence Modeling”**
+   - 类型：A 类本章核心论文。
+   - 链接：https://arxiv.org/abs/2106.01345
+   - 阅读目的：理解 return-conditioned sequence modeling。
+   - 重点看：return-to-go、state/action/return token 排列、causal Transformer。
+
+2. **Janner et al., 2021, “Offline Reinforcement Learning as One Big Sequence Modeling Problem” / Trajectory Transformer**
+   - 类型：B 类对照材料。
+   - 链接：https://arxiv.org/abs/2106.02039
+   - 阅读目的：理解把整条轨迹作为 token 序列建模的另一种路线。
+
+3. **Emmons et al., 2021, “Rvs: What is Essential for Offline RL via Supervised Learning?”**
+   - 类型：B 类方法反思。
+   - 链接：https://arxiv.org/abs/2112.10751
+   - 阅读目的：理解什么时候 offline RL 可以退化成条件监督学习。
+
+### 阅读提示
+
+读 Decision Transformer 时，建议关注“条件是什么”。是目标回报、目标状态、语言指令，还是历史上下文？这会直接影响第18章 Transformer Policy 和第20章 VLA。
+
+---

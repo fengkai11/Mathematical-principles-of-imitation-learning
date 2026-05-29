@@ -407,3 +407,24 @@ Offline Learning 中常说 behavior policy：
 4. occupancy measure 和 state distribution 有什么区别？
 
 5. 请设计一个 open-loop 指标和一个 closed-loop 指标，并说明二者为什么都需要。
+
+## 推荐阅读与深入材料
+
+### 推荐材料
+
+1. **Sutton and Barto, “Reinforcement Learning: An Introduction”**
+   - 链接：http://incompleteideas.net/book/the-book-2nd.html
+   - 阅读目的：MDP、value function、policy、return 的基础入口。
+
+2. **OpenAI Spinning Up in Deep RL**
+   - 链接：https://spinningup.openai.com/
+   - 阅读目的：用工程化解释理解 policy gradient、actor-critic、PPO、SAC。
+
+3. **Achiam, “Spinning Up: Key Papers in Deep RL”**
+   - 阅读目的：快速建立 RL 方法谱系。
+
+### 阅读提示
+
+本书不是 RL 教材。附录F建议服务于三个问题：什么是策略？什么是 rollout？为什么一个动作会改变后续状态分布？
+
+---

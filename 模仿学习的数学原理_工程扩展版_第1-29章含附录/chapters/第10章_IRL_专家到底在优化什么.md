@@ -1677,16 +1677,36 @@ IRL 让我们从专家行为追问背后的 reward。但在真实机器人和自
 
 > 离线数据不是越多越好，是关键的坑、失败、恢复和边界状态有没有录进去。
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Andrew Y. Ng and Stuart Russell, “Algorithms for Inverse Reinforcement Learning,” ICML 2000.
-- Pieter Abbeel and Andrew Y. Ng, “Apprenticeship Learning via Inverse Reinforcement Learning,” ICML 2004.
-- Brian D. Ziebart et al., “Maximum Entropy Inverse Reinforcement Learning,” AAAI 2008. <https://www.cs.cmu.edu/~bziebart/publications/maximum-entropy-inverse-reinforcement-learning.html>
+本章的核心是从“直接模仿动作”转到“反推专家背后的偏好/代价/奖励”。推荐阅读要服务于理解 reward ambiguity 和 maximum entropy 的必要性。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 先读 Ng & Russell 论文，理解 IRL 的基本问题：从行为反推 reward 本身是不适定的。
-- 再读 MaxEnt IRL，重点理解为什么引入熵可以处理多条合理轨迹。
-- 工程上不要把 IRL 学到的 reward 当成“专家真实心理目标”，更应把它看成解释和泛化行为的建模工具。
+1. **Ng and Russell, 2000, “Algorithms for Inverse Reinforcement Learning”**
+   - 类型：A 类奠基论文。
+   - 阅读目的：理解 IRL 的原始问题：给定专家行为，反推 reward。
+   - 重点看：为什么 reward 不唯一。
+
+2. **Abbeel and Ng, 2004, “Apprenticeship Learning via Inverse Reinforcement Learning”**
+   - 类型：A/B 类经典论文。
+   - 阅读目的：理解 feature expectation matching。
+   - 对应本章：可用二维点机器人“离障碍远、路径短、靠近目标”等特征解释。
+
+3. **Ziebart et al., 2008, “Maximum Entropy Inverse Reinforcement Learning”**
+   - 类型：A/B 类核心论文。
+   - 阅读目的：理解最大熵为什么能缓解多个 reward 都能解释专家的问题。
+   - 重点看：轨迹概率 `p(\tau) \propto \exp(R(\tau))` 的直觉。
+
+4. **Finn, Levine, and Abbeel, 2016, “Guided Cost Learning”**
+   - 类型：B/C 类深度 IRL 材料。
+   - 链接：https://arxiv.org/abs/1603.00448
+   - 阅读目的：理解复杂连续控制任务中如何学习 cost/reward。
+
+### 阅读提示
+
+读 IRL 时不要把 reward 当成客观真理。更合理的理解是：reward 是一个能解释专家行为、并能指导策略泛化的工程假设。
+
+---

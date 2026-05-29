@@ -375,16 +375,45 @@ Flow Matching 的局限可以从五个角度看。
 - **附录G：生成模型基础**：把 Diffusion、Flow 和隐变量生成放在同一张地图里。
 - **附录I：熵、最大熵与 Score Matching**：帮助理解 Diffusion/Flow 与分布建模之间的关系。
 
-## 参考文献与推荐深入阅读
+## 推荐阅读与深入材料
 
-### 参考文献
+### 阅读目的
 
-- Yaron Lipman et al., “Flow Matching for Generative Modeling,” ICLR 2023. <https://arxiv.org/abs/2210.02747>
-- Xingchao Liu, Chengyue Gong, and Qiang Liu, “Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow,” ICLR 2023. <https://arxiv.org/abs/2209.03003>
-- Ricky T. Q. Chen et al., “Neural Ordinary Differential Equations,” NeurIPS 2018. <https://arxiv.org/abs/1806.07366>
+本章要把读者从“逐步去噪”带到“学习速度场”。推荐阅读重点是 probability path、velocity field、ODE sampling，以及它们如何服务于连续动作块生成。
 
-### 推荐深入阅读
+### 推荐材料
 
-- 先理解 continuous normalizing flow 和 Neural ODE，再看 Flow Matching 的向量场回归目标。
-- 对比 DDPM 和 Flow Matching：一个强调逐步去噪，一个强调沿连续路径学习速度场。
-- 在机器人动作生成中，重点关注采样步数、轨迹平滑性、约束投影和实时性。
+1. **Lipman et al., 2022, “Flow Matching for Generative Modeling”**
+   - 类型：A/B 类本章核心论文。
+   - 链接：https://arxiv.org/abs/2210.02747
+   - 阅读目的：理解 Flow Matching 如何通过回归速度场训练连续 normalizing flow。
+   - 重点看：conditional probability path、vector field regression、ODE sampling。
+
+2. **Lipman et al., 2024, “Flow Matching Guide and Code”**
+   - 类型：A/B 类教程材料。
+   - 链接：https://arxiv.org/abs/2412.06264
+   - 阅读目的：作为 Flow Matching 数学和代码的系统教程。
+   - 对应本章：适合补充 probability path、OT path、diffusion path 的区别。
+
+3. **Liu et al., 2022, “Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow”**
+   - 类型：B 类深入材料。
+   - 链接：https://arxiv.org/abs/2209.03003
+   - 阅读目的：理解为什么更直的生成路径可能减少采样步数。
+   - 对应本章：可用于解释 Flow Matching 相对 Diffusion 的效率动机。
+
+4. **Black et al., 2024, “π0: A Vision-Language-Action Flow Model for General Robot Control”**
+   - 类型：A/C 类机器人前沿材料。
+   - 链接：https://arxiv.org/abs/2410.24164
+   - 阅读目的：理解 flow matching action expert 如何嵌入 VLA，生成连续动作块。
+   - 重点看：VLM 条件、动作专家、flow matching loss、实时控制约束。
+
+5. **Ma et al., 2024, “SiT: Exploring Flow and Diffusion-based Generative Models with Scalable Interpolant Transformers”**
+   - 类型：B 类扩展材料。
+   - 链接：https://arxiv.org/abs/2401.08740
+   - 阅读目的：理解 diffusion 与 flow 在更统一的 interpolant 框架下的关系。
+
+### 阅读提示
+
+读本章材料时，建议固定一个问题：给定观测 `o_t`，怎样从噪声动作块 `A_0` 流到专家动作块 `A_1`？如果论文讲的是图像生成，请主动把 image sample 替换成 action chunk。
+
+---

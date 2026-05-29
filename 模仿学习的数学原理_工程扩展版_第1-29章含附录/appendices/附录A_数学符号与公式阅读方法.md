@@ -437,3 +437,25 @@ R(\tau)
 3. 看到 <span class="math">\\(\arg\min\_\theta\\)</span> 时，你应该立刻问哪两个问题？
 
 4. 请从本书任意一章找一个公式，按“五步法”读一遍。
+
+## 推荐阅读与深入材料
+
+### 推荐材料
+
+1. **Deisenroth, Faisal, and Ong, “Mathematics for Machine Learning”**
+   - 链接：https://mml-book.github.io/
+   - 阅读目的：补齐线性代数、概率、优化的机器学习常用语言。
+
+2. **The Matrix Cookbook**
+   - 链接：https://www.math.uwaterloo.ca/~hwolkowi/matrixcookbook.pdf
+   - 阅读目的：查矩阵求导、二次型、迹运算等公式。
+
+3. **Goodfellow, Bengio, and Courville, “Deep Learning”**
+   - 链接：https://www.deeplearningbook.org/
+   - 阅读目的：作为深度学习数学符号和反向传播背景教材。
+
+### 阅读提示
+
+附录A不建议一次性通读。更适合在正文遇到公式卡住时回查，尤其是期望、log probability、KL、梯度和矩阵范数。
+
+---

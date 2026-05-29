@@ -361,3 +361,22 @@ Diffusion 的训练目标常写成预测噪声的 MSE：
 4. 模型输出方差有什么好处？有什么风险？
 
 5. Diffusion Policy 中预测噪声的 MSE 和行为克隆中回归动作的 MSE 有什么区别？
+
+## 推荐阅读与深入材料
+
+### 推荐材料
+
+1. **Murphy, “Machine Learning: A Probabilistic Perspective” / “Probabilistic Machine Learning”**
+   - 阅读目的：理解高斯分布、协方差、条件高斯和回归。
+
+2. **Bishop, “Pattern Recognition and Machine Learning”, Gaussian distribution chapters**
+   - 阅读目的：从概率模型角度理解 MSE 为什么对应固定方差高斯似然。
+
+3. **Florence et al., “Implicit Behavioral Cloning”**
+   - 阅读目的：理解为什么固定高斯 + MSE 不适合多峰连续动作。
+
+### 阅读提示
+
+附录D最重要的问题是：MSE 等价于什么概率假设？当动作多峰、方差不均匀、接触状态突变时，这个假设是否还成立？
+
+---
