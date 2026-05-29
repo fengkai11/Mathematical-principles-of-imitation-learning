@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="360" viewBox="0 0 1100 360">
+  <rect width="1100" height="360" fill="#ffffff"/>
+  <text x="550" y="36" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#222">图1-1 一条机械臂示范轨迹：观测与动作交替出现</text>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#555"/>
+    </marker>
+  </defs>
+  <g font-family="Arial, sans-serif" font-size="18" fill="#222">
+    <rect x="40" y="105" width="145" height="80" rx="14" fill="#eef5ff" stroke="#3b73c4" stroke-width="2"/>
+    <text x="112" y="137" text-anchor="middle" font-weight="700">观测 o1</text>
+    <text x="112" y="164" text-anchor="middle" font-size="15">物体在桌面上</text>
+
+    <line x1="185" y1="145" x2="245" y2="145" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="250" y="105" width="145" height="80" rx="14" fill="#fff7e8" stroke="#d28a20" stroke-width="2"/>
+    <text x="322" y="137" text-anchor="middle" font-weight="700">动作 a1</text>
+    <text x="322" y="164" text-anchor="middle" font-size="15">靠近目标</text>
+
+    <line x1="395" y1="145" x2="455" y2="145" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="460" y="105" width="145" height="80" rx="14" fill="#eef5ff" stroke="#3b73c4" stroke-width="2"/>
+    <text x="532" y="137" text-anchor="middle" font-weight="700">观测 o2</text>
+    <text x="532" y="164" text-anchor="middle" font-size="15">夹爪更接近</text>
+
+    <line x1="605" y1="145" x2="665" y2="145" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="670" y="105" width="145" height="80" rx="14" fill="#fff7e8" stroke="#d28a20" stroke-width="2"/>
+    <text x="742" y="137" text-anchor="middle" font-weight="700">动作 a2</text>
+    <text x="742" y="164" text-anchor="middle" font-size="15">调整姿态</text>
+
+    <line x1="815" y1="145" x2="875" y2="145" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+    <rect x="880" y="105" width="180" height="80" rx="14" fill="#eef5ff" stroke="#3b73c4" stroke-width="2"/>
+    <text x="970" y="137" text-anchor="middle" font-weight="700">后续观测与动作</text>
+    <text x="970" y="164" text-anchor="middle" font-size="15">闭合、抬起、放置</text>
+  </g>
+  <text x="550" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#333">轨迹不是单个动作，而是一段按时间组织的“观测 → 动作 → 新观测 → 新动作”过程。</text>
+  <text x="550" y="292" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" fill="#666">本章重点：轨迹是训练材料，最终要学习的是能根据新观测继续决策的策略。</text>
+</svg>
