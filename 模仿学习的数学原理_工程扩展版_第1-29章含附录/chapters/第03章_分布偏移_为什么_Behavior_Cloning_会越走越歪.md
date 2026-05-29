@@ -638,3 +638,17 @@ BC 仍然是非常重要的起点。但你必须知道它的边界：
 > **能不能让训练数据也包含这些“模型自己会访问到的状态”？**
 > 这正是第4章 DAgger 的核心思想。它的潜台词很接地气：
 > **别只在标准答案上学，得在你快跑偏的时候，也让老师教你一把。**
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Stéphane Ross, Geoffrey J. Gordon, and J. Andrew Bagnell, “A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning,” AISTATS 2011. <https://proceedings.mlr.press/v15/ross11a.html>
+- Stéphane Ross and J. Andrew Bagnell, “Efficient Reductions for Imitation Learning,” AISTATS 2010.
+- Alexandre Dadashi et al., “Primal Wasserstein Imitation Learning,” ICLR 2021. 可作为分布匹配视角的延伸阅读。
+
+### 推荐深入阅读
+
+- 优先精读 DAgger 论文中关于 covariate shift 和 compounding error 的部分。
+- 读离线 RL 综述中关于 distribution shift / extrapolation error 的讨论，理解它和 BC 问题的共性。
+- 做一个小实验：只在专家状态训练 BC，再在闭环 rollout 中统计访问状态偏移，通常比只看训练 loss 更有启发。

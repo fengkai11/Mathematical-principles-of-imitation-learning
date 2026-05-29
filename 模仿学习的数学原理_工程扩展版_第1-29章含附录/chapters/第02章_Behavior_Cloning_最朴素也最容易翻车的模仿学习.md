@@ -748,3 +748,17 @@ MSE 常用，但不是放之四海而皆准。
 > 很遗憾，通常不是。
 >
 > 这就引出了第3章：**分布偏移——为什么模型会越走越歪。**
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Dean A. Pomerleau, “ALVINN: An Autonomous Land Vehicle in a Neural Network,” 1989.
+- Mariusz Bojarski et al., “End to End Learning for Self-Driving Cars,” arXiv:1604.07316, 2016. <https://arxiv.org/abs/1604.07316>
+- Stéphane Ross and J. Andrew Bagnell, “Efficient Reductions for Imitation Learning,” AISTATS 2010.
+
+### 推荐深入阅读
+
+- 读 Bojarski et al. 时重点看输入、输出、数据采集与闭环验证，而不是只看网络结构。
+- 结合本章重新阅读附录 C 和 D，把交叉熵、负对数似然、MSE 与行为克隆损失对应起来。
+- 工程实践建议阅读 robomimic 的 BC 配置和训练流程，理解 policy checkpoint 与 rollout 评估如何衔接。

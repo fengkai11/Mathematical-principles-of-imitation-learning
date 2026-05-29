@@ -1463,3 +1463,17 @@ r_t+\gamma\max_{a'}Q(s_{t+1},a') \tag{17.54}\]</div>
 > Transformer 不是魔法棒。它能扩大条件建模能力，但不能自动解决数据、控制、安全和真实物理交互问题。
 
 第18章我们就来拆这根“超大号条件建模器”：它到底解决了什么，又把哪些问题原封不动地留给了工程师。
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Lili Chen et al., “Decision Transformer: Reinforcement Learning via Sequence Modeling,” NeurIPS 2021. <https://arxiv.org/abs/2106.01345>
+- Ashish Vaswani et al., “Attention Is All You Need,” NeurIPS 2017. <https://arxiv.org/abs/1706.03762>
+- Michael Janner, Qiyang Li, and Sergey Levine, “Offline Reinforcement Learning as One Big Sequence Modeling Problem,” NeurIPS 2021. <https://arxiv.org/abs/2106.02039>
+
+### 推荐深入阅读
+
+- 读 Decision Transformer 时重点看 return-to-go、trajectory tokenization 和 causal masking。
+- 和 Trajectory Transformer 对比阅读，理解“直接预测动作”和“建模整条轨迹分布”的差异。
+- 工程上要特别注意离线数据质量、目标 return 标定和长序列推理成本。

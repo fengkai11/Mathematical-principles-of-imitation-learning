@@ -1385,3 +1385,17 @@ D_{\mathrm{KL}}(q_\phi(z\mid x,a)\|p(z)) \tag{9.91}\]</div>
 4. **图9-4 latent z 控制动作风格示意图**：展示同一条件 <span class="math">\\(x\\)</span> 下，不同 <span class="math">\\(z\\)</span> 对应不同动作峰，避免平均动作。
 
 ---
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Kihyuk Sohn, Honglak Lee, and Xinchen Yan, “Learning Structured Output Representation using Deep Conditional Generative Models,” NeurIPS 2015. <https://arxiv.org/abs/1506.05770>
+- Diederik P. Kingma and Max Welling, “Auto-Encoding Variational Bayes,” arXiv:1312.6114, 2013.
+- Tianhe Yu et al., “One-Shot Imitation from Observing Humans via Domain-Adaptive Meta-Learning,” RSS 2018.
+
+### 推荐深入阅读
+
+- 先掌握 VAE 的 ELBO，再看 CVAE 如何把条件变量加入 encoder 和 decoder。
+- 阅读结构化输出 CVAE 论文时，重点看它如何处理一个输入对应多个输出的问题。
+- 对工程实现，建议重点检查 posterior collapse、KL 权重、采样温度和动作反归一化。

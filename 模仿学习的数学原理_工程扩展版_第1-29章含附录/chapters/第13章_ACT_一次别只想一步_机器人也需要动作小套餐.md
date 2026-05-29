@@ -1194,3 +1194,17 @@ q_\phi(z\mid x_t,a_{t:t+H}) \tag{13.53}\]</div>
 4. **图13-4 低频决策高频执行示意图**：解释 receding execution，强调 ACT 不是预测完一段就开环执行到底。
 
 ---
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Tony Z. Zhao et al., “Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware,” RSS 2023. <https://arxiv.org/abs/2304.13705>
+- Ashish Vaswani et al., “Attention Is All You Need,” NeurIPS 2017. <https://arxiv.org/abs/1706.03762>
+- robomimic documentation and examples. <https://robomimic.github.io/>
+
+### 推荐深入阅读
+
+- 读 ACT/ALOHA 论文时重点看 action chunking、temporal ensemble 和低成本硬件数据采集。
+- 回看 Transformer 原文，只需先掌握 self-attention、positional encoding 和 causal/非 causal 区别。
+- 工程复现时优先关注动作频率、chunk 长度、延迟和执行平滑性，而不是只调网络规模。

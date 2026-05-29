@@ -1960,3 +1960,17 @@ VLA 仍然可能不知道：
 一句话预告：
 
 > VLA 让机器人开始听懂人话、看懂场景并输出动作；世界模型要解决的是，机器人是否知道自己的动作会让世界变成什么样。
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Anthony Brohan et al., “RT-1: Robotics Transformer for Real-World Control at Scale,” arXiv:2212.06817, 2022. <https://arxiv.org/abs/2212.06817>
+- Anthony Brohan et al., “RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control,” arXiv:2307.15818, 2023. <https://arxiv.org/abs/2307.15818>
+- Octo Model Team, “Octo: An Open-Source Generalist Robot Policy,” arXiv:2405.12213, 2024. <https://arxiv.org/abs/2405.12213>
+
+### 推荐深入阅读
+
+- 读 RT-1 重点看大规模真实机器人数据和动作 tokenization；读 RT-2 重点看 VLM 预训练知识如何迁移到动作。
+- 阅读 Octo 可以理解开源 generalist robot policy 的数据、接口和评估方式。
+- 工程上必须区分语言理解、视觉定位、动作控制和安全执行，VLA 只是把它们放进统一条件策略框架。

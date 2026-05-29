@@ -374,3 +374,17 @@ Flow Matching 的局限可以从五个角度看。
 - **附录E：优化基础**：理解速度场回归损失如何被梯度下降优化。
 - **附录G：生成模型基础**：把 Diffusion、Flow 和隐变量生成放在同一张地图里。
 - **附录I：熵、最大熵与 Score Matching**：帮助理解 Diffusion/Flow 与分布建模之间的关系。
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Yaron Lipman et al., “Flow Matching for Generative Modeling,” ICLR 2023. <https://arxiv.org/abs/2210.02747>
+- Xingchao Liu, Chengyue Gong, and Qiang Liu, “Flow Straight and Fast: Learning to Generate and Transfer Data with Rectified Flow,” ICLR 2023. <https://arxiv.org/abs/2209.03003>
+- Ricky T. Q. Chen et al., “Neural Ordinary Differential Equations,” NeurIPS 2018. <https://arxiv.org/abs/1806.07366>
+
+### 推荐深入阅读
+
+- 先理解 continuous normalizing flow 和 Neural ODE，再看 Flow Matching 的向量场回归目标。
+- 对比 DDPM 和 Flow Matching：一个强调逐步去噪，一个强调沿连续路径学习速度场。
+- 在机器人动作生成中，重点关注采样步数、轨迹平滑性、约束投影和实时性。

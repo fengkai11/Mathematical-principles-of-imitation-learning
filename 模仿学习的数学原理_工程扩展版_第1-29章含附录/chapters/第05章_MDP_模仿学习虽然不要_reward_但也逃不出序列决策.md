@@ -1026,3 +1026,17 @@ MDP 是强大的建模框架，但工程里使用它时要警惕几个风险。
 2. **图5-2 状态转移概率不是一条死路**：解释 <span class="math">\\(P(s\_{t+1}\mid s\_t,a\_t)\\)</span> 的概率含义；
 3. **图5-3 单步动作和长期结果的区别**：解释动作如何通过状态转移影响整条轨迹；
 4. **图5-4 模仿学习与强化学习的关系**：说明二者共享 MDP 地基，但监督信号不同。
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Richard S. Sutton and Andrew G. Barto, *Reinforcement Learning: An Introduction, 2nd Edition*, MIT Press, 2018. <https://mitpress.mit.edu/9780262039246/reinforcement-learning/>
+- Martin L. Puterman, *Markov Decision Processes: Discrete Stochastic Dynamic Programming*, Wiley, 1994.
+- Dimitri P. Bertsekas, *Dynamic Programming and Optimal Control*, Athena Scientific.
+
+### 推荐深入阅读
+
+- Sutton & Barto 第3章是 MDP 的最低必读材料，建议和本章公式逐项对照。
+- Puterman 更偏数学严谨，适合想深入理解 Bellman 方程、策略评估和最优性的读者。
+- 工程读者可以先抓住五元组、rollout、policy-induced distribution，不必一开始陷入完整动态规划推导。

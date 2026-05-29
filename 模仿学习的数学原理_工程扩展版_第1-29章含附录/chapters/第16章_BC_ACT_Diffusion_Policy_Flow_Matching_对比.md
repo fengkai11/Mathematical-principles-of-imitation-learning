@@ -1425,3 +1425,18 @@ C_{\mathrm{diffusion}}\approx K C_\epsilon \tag{16.53}\]</div>
 第11章将介绍 GAIL。它会把判别器请进模仿学习现场，让模型不只看某个动作像不像专家，而是比较整条行为分布是否像专家。这一步会把我们从“动作监督学习”推进到“占用度量、对抗训练和隐式奖励”的世界。
 
 别紧张，判别器不会咬人。它只是会让公式看起来更像在开会。
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Stéphane Ross et al., “A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning,” AISTATS 2011.
+- Tony Z. Zhao et al., “Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware,” RSS 2023.
+- Cheng Chi et al., “Diffusion Policy: Visuomotor Policy Learning via Action Diffusion,” RSS 2023 / IJRR 2025.
+- Yaron Lipman et al., “Flow Matching for Generative Modeling,” ICLR 2023.
+
+### 推荐深入阅读
+
+- 建议把四类方法按“建模对象、动作时域、推理成本、多模态表达、闭环风险”重画一张自己的对比表。
+- 实验上不要只比较 validation loss，应同时比较 rollout 成功率、失败类型、延迟和安全约束触发次数。
+- 如果任务强依赖几何精度或硬安全边界，应把学习策略和传统控制/规则约束一起评估。

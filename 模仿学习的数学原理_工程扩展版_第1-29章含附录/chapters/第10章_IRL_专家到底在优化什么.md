@@ -1676,3 +1676,17 @@ IRL 让我们从专家行为追问背后的 reward。但在真实机器人和自
 第12章会进入 Offline Imitation Learning。我们会讨论离线数据、behavior policy、support mismatch、OOD action、保守学习和离线评估。请先记住一句工程味很重的话：
 
 > 离线数据不是越多越好，是关键的坑、失败、恢复和边界状态有没有录进去。
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Andrew Y. Ng and Stuart Russell, “Algorithms for Inverse Reinforcement Learning,” ICML 2000.
+- Pieter Abbeel and Andrew Y. Ng, “Apprenticeship Learning via Inverse Reinforcement Learning,” ICML 2004.
+- Brian D. Ziebart et al., “Maximum Entropy Inverse Reinforcement Learning,” AAAI 2008. <https://www.cs.cmu.edu/~bziebart/publications/maximum-entropy-inverse-reinforcement-learning.html>
+
+### 推荐深入阅读
+
+- 先读 Ng & Russell 论文，理解 IRL 的基本问题：从行为反推 reward 本身是不适定的。
+- 再读 MaxEnt IRL，重点理解为什么引入熵可以处理多条合理轨迹。
+- 工程上不要把 IRL 学到的 reward 当成“专家真实心理目标”，更应把它看成解释和泛化行为的建模工具。

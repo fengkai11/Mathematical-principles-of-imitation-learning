@@ -454,3 +454,17 @@ L(\pi_{new}) > U(\pi_{old}) - \epsilon
 OPE 的核心价值是把机器人策略迭代从“盲目上机试错”推进到“有置信度的离线评估”。
 
 但本章也要提醒：OPE 不是万能保证。连续动作、长时域、生成式策略、未知行为策略都会让估计变难。工程上最稳妥的方式，是把 OPE、日志回放、shadow mode、小流量灰度和实机安全监控组合起来。
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Philip S. Thomas and Emma Brunskill, “Data-Efficient Off-Policy Policy Evaluation for Reinforcement Learning,” ICML 2016. <https://arxiv.org/abs/1604.00923>
+- Nan Jiang and Lihong Li, “Doubly Robust Off-policy Value Evaluation for Reinforcement Learning,” ICML 2016. <https://arxiv.org/abs/1511.03722>
+- Sergey Levine et al., “Offline Reinforcement Learning: Tutorial, Review, and Perspectives on Open Problems,” arXiv:2005.01643, 2020.
+
+### 推荐深入阅读
+
+- 先理解 importance sampling、weighted IS、per-decision IS，再看 doubly robust 为什么能结合模型估计和采样校正。
+- 对连续动作机器人，OPE 往往比离散动作推荐系统更难，必须关注行为策略估计和动作密度支持。
+- 实机上线决策不要只靠 OPE，应把 OPE、仿真回放、影子模式和小流量灰度组合使用。

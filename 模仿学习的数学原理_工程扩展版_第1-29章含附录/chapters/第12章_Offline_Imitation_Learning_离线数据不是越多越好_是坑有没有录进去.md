@@ -1664,3 +1664,17 @@ P(a_t|s_{\le t},a_{<t},R_{\le t}) \tag{12.57}\]</div>
 > Transformer 可以更强地建模离线轨迹，却不能凭空补齐离线数据没有覆盖的世界。
 
 下一章我们会看到，Decision Transformer 的优雅之处在于序列建模，麻烦之处也在于序列数据。它把“我要达到多高回报”作为条件输入，让策略像续写文本一样续写动作。问题是，机器人不是写小说。小说写歪了可以删稿，机器人动作写歪了可能会撞桌子。
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Sergey Levine et al., “Offline Reinforcement Learning: Tutorial, Review, and Perspectives on Open Problems,” arXiv:2005.01643, 2020. <https://arxiv.org/abs/2005.01643>
+- Justin Fu et al., “D4RL: Datasets for Deep Data-Driven Reinforcement Learning,” arXiv:2004.07219, 2020. <https://arxiv.org/abs/2004.07219>
+- Aviral Kumar et al., “Conservative Q-Learning for Offline Reinforcement Learning,” NeurIPS 2020. <https://arxiv.org/abs/2006.04779>
+
+### 推荐深入阅读
+
+- 先读 Offline RL 综述的 distribution shift 和 extrapolation error 部分，再回看离线模仿学习的数据覆盖问题。
+- D4RL 适合用来理解数据集质量、混合策略数据和评测协议为什么重要。
+- 对实机项目，建议把离线数据按任务阶段、失败类型、操作者、设备版本和场景标签分层审计。

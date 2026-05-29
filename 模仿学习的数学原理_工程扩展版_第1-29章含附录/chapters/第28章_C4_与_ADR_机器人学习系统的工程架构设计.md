@@ -408,3 +408,17 @@ C4 和 ADR 的作用，是把“算法模型”放回“系统架构”中。
 ```
 
 如果没有 C4 和 ADR，团队很容易在模型效果、实时性、安全性、可观测性和可回滚性之间做隐性权衡，最后变成不可维护的工程泥潭。
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Simon Brown, “The C4 model for visualising software architecture.” <https://c4model.com/>
+- Michael Nygard, “Documenting Architecture Decisions,” 2011. <https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions>
+- Len Bass, Paul Clements, and Rick Kazman, *Software Architecture in Practice*, Addison-Wesley.
+
+### 推荐深入阅读
+
+- 先用 C4 的 Context / Container / Component 三层画出现有机器人学习系统，而不是从工具或模板开始。
+- ADR 建议记录“为什么选择这个方案”和“放弃了什么方案”，不要只写最终结论。
+- 对策略系统，架构图必须画出数据闭环、模型注册、评估门禁、部署回滚和安全监控。

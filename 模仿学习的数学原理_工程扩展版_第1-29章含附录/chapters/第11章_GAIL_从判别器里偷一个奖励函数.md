@@ -1489,3 +1489,17 @@ GAIL 通过判别器给策略提供隐式奖励，让策略的 occupancy measure
 第10章会进入 IRL：Inverse Reinforcement Learning。它不满足于让行为看起来像专家，而是进一步追问专家行为背后的 reward。这个问题更野，也更难。因为专家不会把自己的目标函数贴在脑门上，真实世界也不会在日志里写一句：本次动作由 0.3 安全 + 0.4 舒适 + 0.3 效率驱动。
 
 下一章，我们就来拆这个“专家到底在优化什么”的谜题。
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Jonathan Ho and Stefano Ermon, “Generative Adversarial Imitation Learning,” NeurIPS 2016. <https://arxiv.org/abs/1606.03476>
+- Ian Goodfellow et al., “Generative Adversarial Nets,” NeurIPS 2014. <https://arxiv.org/abs/1406.2661>
+- Pieter Abbeel and Andrew Y. Ng, “Apprenticeship Learning via Inverse Reinforcement Learning,” ICML 2004.
+
+### 推荐深入阅读
+
+- 读 GAIL 原文时重点看 occupancy measure、IRL 对偶形式和 GAN 类比，不要只把它看成“加了个判别器”。
+- 回看 GAN 原文的 min-max 目标，有助于理解判别器信号为什么可以变成策略优化信号。
+- 如果没有可靠仿真器和安全约束，不建议直接把 GAIL 放到真实机器人上在线探索。

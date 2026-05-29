@@ -1297,3 +1297,17 @@ A^k=\sqrt{\bar\alpha_k}A^0+\sqrt{1-\bar\alpha_k}\epsilon,
 4. **图14-4 Diffusion Policy 与 BC / ACT 对比图**：对比三类方法的动作建模对象、优势和工程风险。
 
 ---
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Cheng Chi et al., “Diffusion Policy: Visuomotor Policy Learning via Action Diffusion,” RSS 2023 / IJRR 2025. <https://arxiv.org/abs/2303.04137>
+- Jonathan Ho, Ajay Jain, and Pieter Abbeel, “Denoising Diffusion Probabilistic Models,” NeurIPS 2020. <https://arxiv.org/abs/2006.11239>
+- Calvin Luo, “Understanding Diffusion Models: A Unified Perspective,” arXiv:2208.11970, 2022. <https://arxiv.org/abs/2208.11970>
+
+### 推荐深入阅读
+
+- 先读 DDPM 的正向加噪和反向去噪，再读 Diffusion Policy 如何把图像生成思路迁移到动作序列。
+- Diffusion Policy 原文重点看 receding horizon control、action sequence denoising 和视觉条件编码。
+- 工程上建议重点测推理延迟、采样步数、动作归一化、安全过滤和闭环成功率。

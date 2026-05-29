@@ -549,3 +549,17 @@ D_i = D_{i-1} \cup \{(s, \pi_E(s)) : s \sim d^{\pi_i}\} \tag{4.7}\]</div>
 > 但还有一个更底层的问题必须正面回答：
 > **为什么这些问题会如此顽固？为什么机器人学习不是普通的静态监督学习，而是一个序列决策问题？**
 > 这就是下一章——**模仿学习中的序列决策问题**——要真正搭起来的数学地基。
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Stéphane Ross, Geoffrey J. Gordon, and J. Andrew Bagnell, “A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning,” AISTATS 2011. <https://proceedings.mlr.press/v15/ross11a.html>
+- Stéphane Ross and J. Andrew Bagnell, “Efficient Reductions for Imitation Learning,” AISTATS 2010.
+- Brenna D. Argall et al., “A Survey of Robot Learning from Demonstration,” *Robotics and Autonomous Systems*, 2009.
+
+### 推荐深入阅读
+
+- 精读 DAgger 的算法框，重点看“roll in 当前策略、查询专家、聚合数据”三步。
+- 对机器人任务，建议把 DAgger 和安全接管日志一起理解：专家不是离线标签机，而是闭环纠偏来源。
+- 如果要落地，继续读第29章的数据闭环，把 DAgger 看成闭环数据平台的一种早期形态。

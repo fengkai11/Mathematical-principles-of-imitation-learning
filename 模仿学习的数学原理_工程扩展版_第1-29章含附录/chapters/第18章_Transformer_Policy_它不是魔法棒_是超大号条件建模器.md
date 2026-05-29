@@ -1561,3 +1561,17 @@ P_\theta(u_t|z_{t-H+1:t},u_{t-H+1:t-1},g_{\mathrm{slot}}) \tag{18.60}\]</div>
 一句话预告：
 
 > VLA 不是“把 ChatGPT 接上机械臂”。它更像是把视觉、语言和动作放进同一套条件策略学习框架里。至于能不能干活，还要看数据、控制、安全和部署工程能不能跟上。
+
+## 参考文献与推荐深入阅读
+
+### 参考文献
+
+- Ashish Vaswani et al., “Attention Is All You Need,” NeurIPS 2017. <https://arxiv.org/abs/1706.03762>
+- Tom B. Brown et al., “Language Models are Few-Shot Learners,” NeurIPS 2020. <https://arxiv.org/abs/2005.14165>
+- Anthony Brohan et al., “RT-1: Robotics Transformer for Real-World Control at Scale,” arXiv:2212.06817, 2022. <https://arxiv.org/abs/2212.06817>
+
+### 推荐深入阅读
+
+- 先掌握 Transformer 的 attention、position encoding、mask 和 tokenization，再讨论机器人策略结构。
+- 阅读 RT-1 时重点看动作离散化、数据规模、任务多样性和 real-world rollout 评估。
+- 对工程落地，建议把 Transformer Policy 看成条件建模器，不要把它当作自动解决控制、安全和数据覆盖的万能模块。
