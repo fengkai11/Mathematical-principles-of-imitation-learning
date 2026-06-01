@@ -1,76 +1,55 @@
 # 第10章：IRL：专家到底在优化什么
 
-> **新版布局位置**：本章属于 **第三篇：经典模仿学习的分布匹配与奖励视角**。本章编号、公式编号与交叉引用已按新版八篇结构统一调整。
+> **新版布局位置**：本章属于 **第三篇：经典模仿学习的分布匹配与奖励视角**。
 
-
-> **本章一句话导读**：本章从专家轨迹出发追问背后的 reward，说明 IRL 如何把“专家怎么做”推进到“专家在优化什么”。
-
-
-
-
-> 本章先问一个更根本的问题：专家行为背后是否存在某种隐式目标函数？如果存在，这个目标函数到底是什么？IRL 试图从专家轨迹反推出 reward。听起来很诱人，但也很危险，因为同一条专家轨迹往往可以被很多 reward 解释。第11章的 GAIL 会在此基础上换一个角度：不再显式恢复 reward，而是直接让策略的行为分布接近专家分布。
+> **本章一句话导读**：第二篇已经说明策略会诱导轨迹分布，单步动作损失不能完全代表闭环任务成功。本章继续追问：专家为什么选择这些轨迹？IRL 试图从专家轨迹中反推出 reward，但 reward ambiguity 决定了这件事不是“找标准答案”，而是在学习一种能解释专家行为的偏好结构。
 
 ---
 
-## 1. 本章开场：从“他怎么做”追问“他为什么这么做”
+## 1. 从第二篇留下的问题出发
 
-前面几章，我们一直在围绕一个问题打转：
+前面几章已经把模仿学习从“监督学习式动作拟合”推进到了“闭环序列决策”。
 
-> 专家在某个状态下做了什么动作，模型应该怎样学？
+第一篇说明：BC 在专家数据分布上训练，但部署后策略会进入自己诱导出来的状态分布，因此会出现分布偏移和误差累积。
 
-第2章的 BC 直接拟合专家动作；第3—4章解释了这种拟合为什么会在闭环中产生分布偏移，并用 DAgger 修复一部分问题。后续第13章的 ACT 会把单步动作扩展成动作块，第14章的 Diffusion Policy 会把动作块写成生成式分布，第11章的 GAIL 则会绕开显式奖励，直接匹配专家与策略的状态—动作访问分布。
+第二篇进一步说明：策略不是被动预测器。策略输出动作，动作改变环境，环境再返回新的状态或观测。于是策略会诱导出轨迹分布 $p_\pi(\tau)$，真正的任务成功也往往是轨迹级目标，而不是某一步动作误差。
 
-这些方法都很重要。但它们大多还停留在一个层面：
+到第9章 CVAE 时，我们又看到一个新问题：专家动作可能是多模态的。同一个状态下，向左绕、向右绕、先调整姿态再抓取，都可能是合理动作。动作不是唯一标准答案。
 
-> 专家做了什么。
+于是第10章要追问一个更深的问题：
 
-IRL，Inverse Reinforcement Learning，逆强化学习，问的是另一个更“刨根问底”的问题：
+> 如果专家行为不是简单的单步标签，那么专家到底在优化什么？
 
-> 专家为什么这样做？
+在机械臂抓取与放置任务中，老师傅的一条轨迹背后可能包含很多隐式偏好：
 
-这句话听起来像哲学问题，实际上是机器人学习中的硬核数学问题。
+- 接近工件时不要太快；
+- 夹爪闭合前姿态要对齐；
+- 放入治具时宁愿慢一点，也不要硬插；
+- 避免碰撞、划伤、卡死；
+- 在成功率、节拍、动作平顺性之间做权衡。
 
-举几个例子。
+BC 只问：
 
-自动驾驶场景里，人类司机在高速上保持较大车距。你只看动作，可以说专家在“轻踩油门、偶尔制动”。但更深层的解释可能是：
+> 这个状态下专家动作是什么？
 
-- 他在优化安全性；
-- 他在优化舒适性；
-- 他在遵守交通规则；
-- 他在避免频繁加减速；
-- 他在权衡到达时间和风险。
+IRL，Inverse Reinforcement Learning，逆强化学习，问的是：
 
-机械臂装配场景里，老师傅靠近孔位时动作变慢。你只看轨迹，可以说专家速度下降。可是背后的目标可能是：
+> 什么样的 reward 会让专家愿意这样做？
 
-- 减小碰撞冲击；
-- 避免划伤工件；
-- 提高插入成功率；
-- 给视觉或力控留出反应时间；
-- 夹具刚性不够，只能慢一点。
+这就是本章的核心转变：
 
-泊车场景里，老司机倒车入库时保持车身居中，方向盘变化平顺，最后车轮尽量回正。你只看控制量，可以拟合方向盘角和速度。但工程上真正想知道的是：
+```text
+从“专家做了什么”
+→ 到“专家为什么这样做”
+→ 到“什么 reward 能解释专家行为”
+```
 
-- 他是不是在惩罚离边线太近；
-- 他是不是在惩罚大幅打方向；
-- 他是不是在惩罚停车后姿态不正；
-- 他是不是在惩罚距离障碍物太近；
-- 他是不是在隐式优化“乘客不要被晃吐”。
-
-IRL 的野心就在这里：
-
-> 从专家轨迹中反推出一个 reward，使得专家行为看起来像是在优化这个 reward。
-
-这比 BC 更深，也比 GAIL 更解释性一些。BC 说：“照着专家动作学。”GAIL 说：“让整体行为分布像专家。”IRL 说：“我想知道专家行为背后的目标函数。”
-
-但这条路有个大坑，坑上还立着一块牌子：
-
-> 同一条专家轨迹，可能被无数个 reward 解释。
-
-这就是本章要拆开的核心难点：**reward ambiguity**。
+但这条路一开始就有一个大坑：同一批专家轨迹，往往可以被很多 reward 解释。这就是本章必须讲清楚的 **reward ambiguity**。
 
 ![图10-1 RL 与 IRL 方向对比图](../images/图10-1_RL与IRL方向对比图.png)
 
 **图10-1 说明**：
+
 - 普通 RL 的方向是：给定 reward，求一个能最大化回报的策略；
 - IRL 的方向反过来：给定专家轨迹，反推什么 reward 能解释专家行为；
 - IRL 得到 reward 后，通常还要通过 RL、规划或策略优化得到策略；
@@ -78,1635 +57,563 @@ IRL 的野心就在这里：
 
 ---
 
-## 2. 本章要解决的核心问题
+## 2. 本章在全书数学主线中的位置
 
-本章围绕以下 18 个问题展开：
+本章承接第二篇和第9章，而不是孤立介绍一个经典算法。
 
-1. 普通 RL 和 IRL 的方向到底有什么区别？
-2. 为什么说 IRL 是“从行为反推目标”？
-3. reward ambiguity 是什么？为什么同一条轨迹可以对应很多 reward？
-4. 为什么“专家做了这条轨迹”不等于“只有这条轨迹奖励最高”？
-5. 线性 reward <span class="math">\\(r\_w(s,a)=w^\top f(s,a)\\)</span> 为什么常用？
-6. feature expectation <span class="math">\\(\mu(\pi)\\)</span> 表示什么？
-7. 为什么匹配 feature expectation 可以看成匹配专家偏好？
-8. maximum entropy IRL 为什么要引入熵？
-9. 轨迹概率 <span class="math">\\(p\_w(\tau)\propto \exp(R\_w(\tau))\\)</span> 到底是什么意思？
-10. partition function <span class="math">\\(Z(w)\\)</span> 为什么出现？它在归一化什么？
-11. maximum entropy IRL 的最大似然目标怎么读？
-12. 为什么梯度会变成“专家特征期望 - 模型特征期望”？
-13. IRL 和 GAIL 是什么关系？
-14. IRL 和 BC、ACT、Diffusion Policy 的区别是什么？
-15. IRL 在自动驾驶、泊车和机器人任务中有什么工程价值？
-16. 为什么真实工程里很少直接把 IRL 当成万能方案？
-17. IRL 的 reward 能不能直接上线？
-18. 为什么第12章要继续讨论 offline imitation learning？
+```text
+第6章：策略闭环执行会诱导轨迹分布 p_pi(tau)
+第7章：策略可以是确定性的，也可以是概率性的
+第8章：隐变量可以表达不同动作风格
+第9章：CVAE 用概率建模处理多模态动作
+第10章：IRL 追问多种专家行为背后的 reward 或偏好结构
+第11章：GAIL 将绕开显式 reward，直接匹配 occupancy measure
+第12章：Offline IL 将讨论离线数据覆盖与 OOD 风险
+```
 
-本章会反复使用以下符号：
+本章要解决的问题不是“IRL 有哪些算法变体”，而是下面四个数学问题：
 
-- 状态：<span class="math">\\(s\\)</span>；
-- 动作：<span class="math">\\(a\\)</span>；
-- 轨迹：<span class="math">\\(\tau=(s\_0,a\_0,s\_1,a\_1,\dots,s\_T)\\)</span>；
-- 专家数据集：<span class="math">\\(\mathcal{D}\_E=\{\tau\_i^E\}\_{i=1}^{N}\\)</span>；
-- 奖励函数：<span class="math">\\(r(s,a)\\)</span> 或 <span class="math">\\(r\_\phi(s,a)\\)</span>；
-- 策略：<span class="math">\\(\pi(a|s)\\)</span>；
-- 特征函数：<span class="math">\\(f(s,a)\\)</span>；
-- 线性 reward 权重：<span class="math">\\(w\\)</span>；
-- 轨迹回报：<span class="math">\\(R(\tau)=\sum\_t r(s\_t,a\_t)\\)</span>；
-- 最大熵轨迹分布：<span class="math">\\(p\_w(\tau)=\frac{1}{Z(w)}\exp(R\_w(\tau))\\)</span>；
-- 配分函数 / partition function：<span class="math">\\(Z(w)\\)</span>。
-
-先给一个全章最重要的对照：
-
-
-a. 普通强化学习：
-
-<div class="math">\[
-r(s,a) \longrightarrow \pi^* \tag{10.1}\]</div>
-
-意思是：给定 reward，求最优策略。
-
-b. 逆强化学习：
-
-<div class="math">\[
-\pi_E \;\text{或}\; \mathcal{D}_E \longrightarrow r(s,a) \tag{10.2}\]</div>
-
-意思是：给定专家策略或专家轨迹，反推 reward。
-
-这就是 IRL 名字里 inverse 的来源。
+1. reward 如何把单步状态—动作关系提升到轨迹级偏好？
+2. 为什么从专家轨迹反推 reward 是不唯一的？
+3. feature expectation 为什么能表达专家偏好？
+4. maximum entropy IRL 为什么会得到“专家特征期望 - 模型特征期望”的梯度？
 
 ---
 
+## 3. 本章新增数学对象
 
-### 主线定位与统一例子
-
-为了让本章不变成孤立知识点，读本章时请始终把公式落回两个统一例子：
-
-- **二维点机器人跟随专家轨迹**：状态可写成位置/速度，动作可写成二维控制量，适合观察状态分布、轨迹分布和误差累积。
-- **机械臂末端运动/抓取轨迹模仿**：观测包含图像或本体状态，动作包含末端位姿增量或关节控制量，适合理解连续动作、多模态动作、动作块和实机闭环。
-
-- **承接前文**：承接第11章的行为分布匹配，同时回到更经典的 IRL 问题。
-- **本章推进**：解释为什么只模仿动作不够时，需要追问专家背后的 reward 或偏好结构。
-- **铺垫后文**：为第12章离线数据覆盖、support 与 OOD 风险提供 reward/trajectory 层视角。
-- **公式阅读抓手**：IRL 的难点不是“拟合一个奖励函数”，而是奖励歧义和轨迹概率假设。
-- **建议同步回看**：附录 C、F、I。
-
-## 3. 直觉解释：IRL 到底想干什么
-
-### 3.1 RL 是“给 KPI 找员工”，IRL 是“看员工表现猜 KPI”
-
-普通强化学习很像公司先写好 KPI，然后让员工去卷：
-
-- 完成任务加分；
-- 撞障碍扣分；
-- 动作太猛扣分；
-- 时间太长扣分；
-- 成功装配加大分。
-
-有了这个 reward，RL 算法去找策略：
-
-> 怎样做，累计得分最高？
-
-IRL 的处境相反。它手里没有 KPI 表，只有一堆专家行为记录。它看到专家这样做、那样做，于是推测：
-
-> 什么样的 KPI 会让一个理性的专家愿意这么干？
-
-这就像你观察一个老师傅调机台。他没有告诉你目标函数，但你看得出他很在意：
-
-- 不让工件划伤；
-- 不让夹具冲击过大；
-- 不让节拍太慢；
-- 不让位置误差超界；
-- 宁愿多走一点，也不冒险卡死。
-
-IRL 想把这些偏好写成一个 reward。
-
-### 3.2 为什么不直接用 BC？
-
-你可能会问：既然有专家轨迹，直接 BC 不就好了？为什么还要反推 reward？
-
-答案是：BC 学的是输入到动作的映射，而 reward 更像任务偏好的压缩描述。
-
-BC 关注：
-
-<div class="math">\[
-\pi_\theta(a|s) \approx \pi_E(a|s) \tag{10.3}\]</div>
-
-IRL 关注：
-
-<div class="math">\[
-r_\phi(s,a) \;\text{能不能解释专家为什么偏好某些行为？} \tag{10.4}\]</div>
-
-如果 reward 学得合理，它可能带来几个好处：
-
-1. **更强的解释性**：你可以看到模型认为哪些状态—动作值得奖励，哪些应该惩罚。
-2. **可以和规划结合**：得到 reward 后，可以用规划器或 RL 在新环境中重新求解策略。
-3. **可以表达任务偏好**：比如安全、舒适、效率、能耗、距离边界等权衡。
-4. **可以辅助调参与诊断**：如果 reward 学出“贴障碍物也高分”，工程师立刻知道数据或特征有问题。
-
-但这里必须诚实：IRL 不是免费午餐。它通常比 BC 更难训练，对环境模型、特征设计、轨迹覆盖和优化稳定性要求更高。很多机器人项目里，BC/ACT/Diffusion Policy 是主力，IRL 更像“解释偏好、辅助 reward 设计、研究行为目标”的工具。
-
-### 3.3 IRL 的一句话直觉
-
-如果只用一句话概括 IRL：
-
-> IRL 假设专家不是随机乱动，而是在某个未知 reward 下表现得比较好；我们希望从专家行为中把这个 reward 反推出去。
-
-这里有三个关键词。
-
-第一，**假设专家有目标**。如果专家数据本身很混乱，或者来自很多风格完全不同的人，却没有任务标注和上下文区分，那么 IRL 会非常难。
-
-第二，**未知 reward**。这个 reward 不是环境直接给出的，需要从数据中学习。
-
-第三，**比较好**。专家不一定绝对最优。人类会犯错，遥操作会抖，自动驾驶司机会分心，机械臂示教员也可能今天手感不好。所以现代 IRL 往往不会假设专家是唯一最优轨迹，而是用概率方式表达：专家轨迹更可能是高 reward 轨迹。
-
-这正是 maximum entropy IRL 的出发点。
+| 数学对象 | 符号 | 一句话含义 | 工程对应物 | 后续作用 |
+|---|---|---|---|---|
+| 奖励函数 | $r(s,a)$ | 描述状态—动作好坏的标量函数 | 安全、平顺、成功率、碰撞风险等偏好 | IRL、RL、后训练 |
+| 轨迹回报 | $R(\tau)$ | 一条轨迹累计得到的 reward | 一次抓取、放置或泊车全过程质量 | 连接轨迹目标 |
+| 特征函数 | $f(s,a)$ | 从状态—动作中提取任务相关统计量 | 距离、速度、姿态误差、接触状态 | 线性 reward 建模 |
+| 轨迹特征 | $F(\tau)$ | 一条轨迹上的特征累计 | 整段操作中的安全距离、平顺性、成功状态 | 特征期望推导 |
+| 特征期望 | $\mu(\pi)$ | 策略执行后平均访问到的轨迹特征 | 一批 rollout 的任务质量统计 | IRL 特征匹配 |
+| 最大熵轨迹分布 | $p_w(\tau)$ | 用 reward 给轨迹分配概率 | 专家更可能选择高 reward 轨迹 | MaxEnt IRL |
+| 配分函数 | $Z(w)$ | 让轨迹概率归一化的常数 | 所有可能轨迹的总权重 | 最大似然推导 |
 
 ---
 
-## 4. 数学建模：变量、轨迹、reward 与策略
+## 4. 本章公式主线
 
-### 4.1 从 MDP 重新看 reward
+本章公式主线如下：
 
-第5章讲过，MDP 可以写成：
-
-<div class="math">\[
-(\mathcal{S},\mathcal{A},P,R,\gamma) \tag{10.5}\]</div>
-
-其中：
-
-- <span class="math">\\(\mathcal{S}\\)</span>：状态空间；
-- <span class="math">\\(\mathcal{A}\\)</span>：动作空间；
-- <span class="math">\\(P(s'|s,a)\\)</span>：状态转移概率；
-- <span class="math">\\(R\\)</span> 或 <span class="math">\\(r(s,a)\\)</span>：奖励函数；
-- <span class="math">\\(\gamma\\)</span>：折扣因子。
-
-普通 RL 通常默认 reward 已知。给定 reward 后，策略的目标是最大化期望回报：
-
-<div class="math">\[
-J(\pi)
-=
-\mathbb{E}_{\tau\sim p_\pi(\tau)}
-\left[
-\sum_{t=0}^{T}\gamma^t r(s_t,a_t)
-\right] \tag{10.6}\]</div>
-
-最优策略可以写成：
-
-<div class="math">\[
-\pi^*
-=
-\arg\max_\pi J(\pi) \tag{10.7}\]</div>
-
-IRL 中，麻烦的地方在于：<span class="math">\\(r(s,a)\\)</span> 不知道。
-
-我们只有专家轨迹：
-
-<div class="math">\[
-\mathcal{D}_E
-=
-\{\tau_i^E\}_{i=1}^{N} \tag{10.8}\]</div>
-
-每条专家轨迹是：
-
-<div class="math">\[
-\tau_i^E
-=
-(s_0^i,a_0^i,s_1^i,a_1^i,\dots,s_T^i,a_T^i) \tag{10.9}\]</div>
-
-IRL 要做的是从 <span class="math">\\(\mathcal{D}\_E\\)</span> 中学习一个 reward：
-
-<div class="math">\[
-r_\phi(s,a) \tag{10.10}\]</div>
-
-让专家轨迹在这个 reward 下显得“合理”。
-
-### 公式拆解：普通 RL 的目标函数
-
-公式：
-
-<div class="math">\[
-J(\pi)
-=
-\mathbb{E}_{\tau\sim p_\pi(\tau)}
-\left[
-\sum_{t=0}^{T}\gamma^t r(s_t,a_t)
-\right] \tag{10.11}\]</div>
-
-它要解决的问题：
-
-描述一个策略在环境中执行后，平均能获得多少累计 reward。
-
-符号解释：
-
-- <span class="math">\\(J(\pi)\\)</span>：策略 <span class="math">\\(\pi\\)</span> 的性能指标；
-- <span class="math">\\(\tau\sim p\_\pi(\tau)\\)</span>：轨迹由策略 <span class="math">\\(\pi\\)</span> 和环境交互产生；
-- <span class="math">\\(r(s\_t,a\_t)\\)</span>：第 <span class="math">\\(t\\)</span> 步状态—动作得到的即时奖励；
-- <span class="math">\\(\gamma^t\\)</span>：时间折扣，越远的未来权重越小；
-- <span class="math">\\(\sum\_{t=0}^{T}\\)</span>：把整条轨迹上的奖励加起来；
-- <span class="math">\\(\mathbb{E}[\cdot]\\)</span>：对可能出现的轨迹求平均。
-
-直觉理解：
-
-策略不是只看眼前一步，而是在整段任务里尽量多拿分。一个动作当下看起来舒服，但如果导致后面撞上障碍，总回报就会很差。
-
-工程含义：
-
-在泊车、导航、装配任务中，reward 往往包含多种因素：任务成功、距离障碍、动作平滑、时间、能耗、接触力等。RL 的前提是这些因素已经被写进 reward。IRL 反过来问：这些因素能不能从专家数据里学出来？
-
-常见误解：
-
-不要把 <span class="math">\\(J(\pi)\\)</span> 理解成某条固定轨迹的得分。它是对策略可能产生的轨迹分布求期望。策略、环境随机性和初始状态都会影响这个期望。
-
-### 4.2 IRL 的目标不是唯一的
-
-理想情况下，我们希望找到一个 reward，使得专家策略满足：
-
-<div class="math">\[
-\pi_E
-\approx
-\arg\max_\pi
-\mathbb{E}_{\tau\sim p_\pi(\tau)}
-\left[
-\sum_{t=0}^{T}\gamma^t r(s_t,a_t)
-\right] \tag{10.12}\]</div>
-
-这句话很漂亮，但里面藏着麻烦。
-
-它的意思是：专家策略大概是某个 reward 下的最优或近似最优策略。
-
-问题是，满足这个条件的 reward 通常不止一个。
-
-例如，如果某个 reward 让专家最优，那么把 reward 乘以一个正数：
-
-<div class="math">\[
-r'(s,a)=\alpha r(s,a),\quad \alpha>0 \tag{10.13}\]</div>
-
-在很多情形下，最优策略不会改变。因为所有轨迹的得分只是被整体放大，排序没有变。
-
-再比如，加一个常数：
-
-<div class="math">\[
-r'(s,a)=r(s,a)+c \tag{10.14}\]</div>
-
-在固定长度任务中，所有轨迹都加了差不多同样的总量，轨迹排序也可能不变。
-
-更复杂的情况下，还有 potential-based reward shaping 这类变换，也可能不改变最优策略。
-
-所以 IRL 一上来就面对一个事实：
-
-> 从行为反推 reward 是一个不适定问题。专家行为不足以唯一决定 reward。
-
-这不是小瑕疵，而是 IRL 的核心困难。
-
-![图10-2 reward ambiguity 示例图](../images/图10-2_reward_ambiguity示例图.png)
-
-**图10-2 说明**：
-- 同一条专家轨迹可能有多种解释：安全、舒适、效率、规则约束；
-- 如果只观察轨迹，不加入额外假设，很难判断专家到底最在意哪一个因素；
-- reward ambiguity 不是算法实现问题，而是反问题本身的信息不足；
-- 工程上通常需要结合特征设计、任务知识、约束和评测指标来减少歧义。
-
-### 公式拆解：reward ambiguity 的简单例子
-
-公式：
-
-<div class="math">\[
-r'(s,a)=\alpha r(s,a),\quad \alpha>0 \tag{10.15}\]</div>
-
-它要解决的问题：
-
-说明即使两个 reward 数值不同，也可能诱导出相同的最优策略。
-
-符号解释：
-
-- <span class="math">\\(r(s,a)\\)</span>：原始奖励；
-- <span class="math">\\(r'(s,a)\\)</span>：变换后的奖励；
-- <span class="math">\\(\alpha\\)</span>：正的缩放系数；
-- <span class="math">\\(\alpha>0\\)</span>：保证奖励大小顺序不被反转。
-
-直觉理解：
-
-如果一条轨迹原来得 10 分，另一条得 5 分，把所有分数乘以 3 后，它们变成 30 分和 15 分。谁更好没有变。
-
-工程含义：
-
-IRL 学出来的 reward 数值大小未必有绝对意义。不要看到某个状态 reward 是 2.3、另一个是 1.1，就马上解释成真实世界里“前者好两倍”。更重要的是 reward 对行为排序、策略优化和安全约束的影响。
-
-常见误解：
-
-不要以为 IRL 能从数据中恢复专家内心真实 reward。它最多是在特定模型假设、特征表示和数据分布下，找到一个能解释专家行为的 reward。
+```text
+第二篇已有轨迹分布 p_pi(tau)
+→ 引入 reward r(s,a)
+→ 一条轨迹的回报 R(tau)=sum_t gamma^t r(s_t,a_t)
+→ IRL 希望找到 reward，使专家策略在该 reward 下表现得合理
+→ 但 reward 不唯一，出现 reward ambiguity
+→ 为了让 reward 可学习，常用线性 reward r_w(s,a)=w^T f(s,a)
+→ 线性 reward 下，策略比较可以转化为 feature expectation 比较
+→ MaxEnt IRL 用 p_w(tau) ∝ exp(R_w(tau)) 描述专家轨迹概率
+→ 最大似然梯度变成 expert feature expectation - model feature expectation
+→ 第11章自然转向：既然 reward 难恢复，能不能直接匹配 occupancy measure？
+```
 
 ---
 
-## 5. 线性 reward：先把专家偏好写成特征加权
+## 5. RL 与 IRL 的方向差异
 
-### 5.1 为什么从特征开始
+普通 RL 的问题是：reward 已知，要求策略。
 
-早期 IRL 中，一个常见做法是先设计特征：
+$$r(s,a) \longrightarrow \pi^* \tag{10.1}$$
 
-<div class="math">\[
-f(s,a) \tag{10.16}\]</div>
+它的目标通常写成：
 
-然后假设 reward 是这些特征的线性组合：
+$$J(\pi) = \mathbb{E}_{\tau \sim p_\pi(\tau)}\left[\sum_{t=0}^{T}\gamma^t r(s_t,a_t)\right] \tag{10.2}$$
 
-<div class="math">\[
-r_w(s,a)
-=
-w^\top f(s,a) \tag{10.17}\]</div>
+这里：
 
-这看起来有点朴素，但非常适合讲清楚 IRL 的核心逻辑。
+- $J(\pi)$ 是策略 $\pi$ 的期望回报；
+- $p_\pi(\tau)$ 是策略 $\pi$ 和环境闭环交互诱导出的轨迹分布；
+- $r(s_t,a_t)$ 是第 $t$ 步的即时奖励；
+- $\gamma$ 是折扣因子；
+- 求期望表示策略可能产生多条不同轨迹。
 
-举一个泊车任务。我们可以设计特征：
+在这个设定下，最优策略可以写成：
 
-<div class="math">\[
-f(s,a)
-=
-\begin{bmatrix}
-\text{距离车位中心误差}\\
-\text{车身 yaw 误差}\\
-\text{离障碍物最近距离}\\
-\text{方向盘变化率}\\
-\text{速度大小}\\
-\text{是否压线}
-\end{bmatrix} \tag{10.18}\]</div>
+$$\pi^* = \arg\max_\pi J(\pi) \tag{10.3}$$
 
-权重 <span class="math">\\(w\\)</span> 表示这些因素的重要性。比如：
+IRL 的方向反过来。我们手里没有 reward，只有专家轨迹数据：
 
-- 如果“离障碍物近”权重大，策略会更保守；
-- 如果“方向盘变化率”惩罚大，策略会更平顺；
-- 如果“时间”惩罚大，策略会更快完成；
-- 如果“压线”惩罚极大，策略会强烈避免越界。
+$$\mathcal{D}_E = \{\tau_i^E\}_{i=1}^{N} \tag{10.4}$$
 
-IRL 试图从专家行为中学出 <span class="math">\\(w\\)</span>。
+每条轨迹可以写成：
 
-### 5.2 线性 reward 的数学形式
+$$\tau_i^E = (s_0^i,a_0^i,s_1^i,a_1^i,\dots,s_T^i,a_T^i) \tag{10.5}$$
 
-线性 reward 写作：
+IRL 想学习一个 reward：
 
-<div class="math">\[
-r_w(s,a)
-=
-w^\top f(s,a) \tag{10.19}\]</div>
+$$\mathcal{D}_E \longrightarrow r(s,a) \tag{10.6}$$
 
-展开看就是：
+让专家轨迹在这个 reward 下显得合理。
 
-<div class="math">\[
-r_w(s,a)
-=
-\sum_{k=1}^{K} w_k f_k(s,a) \tag{10.20}\]</div>
+这里的“合理”很重要。它不等于专家绝对最优，也不等于世界上只有一条正确轨迹。现代 IRL 更常见的理解是：专家轨迹比随机轨迹、失败轨迹、低质量轨迹更可能来自某个高 reward 行为分布。
 
-其中：
+---
 
-- <span class="math">\\(K\\)</span>：特征数量；
-- <span class="math">\\(f\_k(s,a)\\)</span>：第 <span class="math">\\(k\\)</span> 个特征；
-- <span class="math">\\(w\_k\\)</span>：第 <span class="math">\\(k\\)</span> 个特征的权重。
+## 6. reward ambiguity：为什么专家轨迹不能唯一决定 reward
 
-如果某个特征代表“危险程度”，它的权重可能是负的；如果某个特征代表“任务进展”，它的权重可能是正的。
+IRL 听起来很诱人：看专家怎么做，然后反推出专家的目标函数。
 
-### 公式拆解：线性 reward 在表达什么
+但数学上，这件事通常是不适定的。
 
-公式：
+### 6.1 直观例子
 
-<div class="math">\[
-r_w(s,a)=w^\top f(s,a) \tag{10.21}\]</div>
+假设机械臂专家在放置工件时走了一条平滑轨迹。你可以用很多 reward 解释它：
 
-它要解决的问题：
+- 奖励末端离目标越来越近；
+- 惩罚速度突变；
+- 惩罚离治具边缘太近；
+- 惩罚接触力过大；
+- 奖励最终放置成功；
+- 同时考虑节拍、能耗和安全距离。
 
-把复杂的专家偏好表示成一组可解释特征的加权和。
+只看这条轨迹，很难判断专家真正最在意哪一个因素。
 
-符号解释：
+同样一条好轨迹，既可能是因为专家在优化“成功率”，也可能是因为专家在优化“平顺性 + 安全边界”，还可能只是因为这个场景太简单，很多 reward 都会给它高分。
 
-- <span class="math">\\(f(s,a)\\)</span>：状态—动作特征向量；
-- <span class="math">\\(w\\)</span>：特征权重向量；
-- <span class="math">\\(w^\top f(s,a)\\)</span>：向量内积，也就是每个特征乘以对应权重后相加；
-- <span class="math">\\(r\_w(s,a)\\)</span>：由权重 <span class="math">\\(w\\)</span> 定义的奖励。
+### 6.2 命题 10.1：专家行为不能唯一确定 reward
 
-直觉理解：
+> **命题 10.1：reward ambiguity**
+>
+> 给定有限专家轨迹数据 $\mathcal{D}_E$，通常不存在唯一的 reward $r(s,a)$ 能被这些轨迹确定。多个不同 reward 可能诱导出相同或近似相同的专家最优行为。
 
-专家行为像一道菜，特征是原材料，权重是调料比例。IRL 想从成品味道倒推“盐、糖、辣椒到底放了多少”。难点在于，不同配方可能尝起来差不多。
+**证明思路**：
 
-工程含义：
+只要说明存在不同 reward，它们对轨迹排序或最优策略没有本质影响，就可以说明 reward 不是唯一的。
 
-线性 reward 的优点是可解释、可调试。你可以看到模型是否把“离障碍物远”“动作平滑”“靠近目标”这些因素赋予合理权重。缺点是表达能力受特征限制。特征没设计出来，IRL 就学不到。
+**证明**：
 
-常见误解：
+假设某个 reward $r(s,a)$ 可以解释专家行为。先考虑正比例缩放：
 
-不要以为线性 reward 一定低级。很多工程问题中，可解释特征加权反而比黑盒 reward 更容易上线、调试和安全审查。复杂模型不是为了显得高级，而是为了表达确实无法用简单特征描述的偏好。
+$$r'(s,a) = \alpha r(s,a), \quad \alpha > 0 \tag{10.7}$$
 
-### 5.3 轨迹回报：从一步奖励到整条轨迹
+对于任意一条轨迹 $\tau$，原 reward 下的回报是：
 
-给定线性 reward，一条轨迹的总回报可以写成：
+$$R(\tau) = \sum_{t=0}^{T}\gamma^t r(s_t,a_t) \tag{10.8}$$
 
-<div class="math">\[
-R_w(\tau)
-=
-\sum_{t=0}^{T}\gamma^t r_w(s_t,a_t) \tag{10.22}\]</div>
+新 reward 下的回报是：
 
-代入 <span class="math">\\(r\_w(s,a)=w^\top f(s,a)\\)</span>：
+$$R'(\tau) = \sum_{t=0}^{T}\gamma^t r'(s_t,a_t) = \alpha \sum_{t=0}^{T}\gamma^t r(s_t,a_t) = \alpha R(\tau) \tag{10.9}$$
 
-<div class="math">\[
-R_w(\tau)
-=
-\sum_{t=0}^{T}\gamma^t w^\top f(s_t,a_t) \tag{10.23}\]</div>
+因为 $\alpha > 0$，所以如果轨迹 $\tau_1$ 的回报大于轨迹 $\tau_2$，那么缩放后仍然有：
 
-因为 <span class="math">\\(w\\)</span> 不随时间变化，可以提出去：
+$$R(\tau_1) > R(\tau_2) \quad \Rightarrow \quad R'(\tau_1) > R'(\tau_2) \tag{10.10}$$
 
-<div class="math">\[
-R_w(\tau)
-=
-w^\top
-\left(
-\sum_{t=0}^{T}\gamma^t f(s_t,a_t)
-\right) \tag{10.24}\]</div>
+轨迹排序没有变，最优轨迹集合也不会因为正比例缩放而改变。
 
-括号里的东西非常重要：它是一条轨迹累计下来的特征。
+再考虑固定长度任务中的常数平移：
 
-我们定义轨迹特征计数：
+$$r'(s,a) = r(s,a) + c \tag{10.11}$$
 
-<div class="math">\[
-F(\tau)
-=
-\sum_{t=0}^{T}\gamma^t f(s_t,a_t) \tag{10.25}\]</div>
+如果每条轨迹长度都是 $T+1$，且暂时忽略折扣差异，那么每条轨迹都会多出相同的常数项。更一般地，在固定 horizon 且折扣因子相同的情况下，多出的项与轨迹内容无关：
+
+$$R'(\tau) = R(\tau) + c\sum_{t=0}^{T}\gamma^t \tag{10.12}$$
+
+由于所有轨迹都加上同一个常数，轨迹之间的排序仍然不变。
+
+因此，仅凭专家轨迹，至少无法区分 $r(s,a)$、$\alpha r(s,a)$ 和 $r(s,a)+c$ 这类 reward。更复杂的 reward shaping 还会带来更多等价或近似等价的解释。
+
+**这个命题告诉我们什么？**
+
+IRL 学到的 reward 不是“专家内心真实目标”的唯一答案。它更像一种可以解释专家行为的偏好函数。
+
+**常见误解**：
+
+不要把 IRL 理解成“把专家脑子里的真实 reward 解码出来”。专家轨迹只提供约束，不提供唯一真相。
+
+---
+
+## 7. 线性 reward 与 feature expectation
+
+既然 reward 不唯一，为什么还要学 reward？
+
+因为即使 reward 不是唯一的，它仍然可以作为行为偏好的压缩描述。为了让问题可学习，经典 IRL 常常从线性 reward 开始：
+
+$$r_w(s,a) = w^T f(s,a) \tag{10.13}$$
+
+这里：
+
+- $f(s,a)$ 是特征函数；
+- $w$ 是特征权重；
+- $w^T f(s,a)$ 表示把多个特征加权求和。
+
+在机械臂任务中，$f(s,a)$ 可以包含：
+
+- 末端到目标的距离；
+- 姿态误差；
+- 速度或加速度大小；
+- 是否接近碰撞边界；
+- 接触力是否过大；
+- 是否最终放置成功。
+
+$w$ 则表示这些因素的重要程度。比如安全距离权重大，说明策略更保守；节拍权重大，说明策略更追求速度；姿态误差权重大，说明策略更重视放置精度。
+
+### 7.1 轨迹特征
+
+如果单步 reward 是线性特征组合，那么一条轨迹的累计特征可以写成：
+
+$$F(\tau) = \sum_{t=0}^{T}\gamma^t f(s_t,a_t) \tag{10.14}$$
+
+对应的轨迹回报为：
+
+$$R_w(\tau) = \sum_{t=0}^{T}\gamma^t r_w(s_t,a_t) \tag{10.15}$$
+
+把 $r_w(s,a) = w^T f(s,a)$ 代入：
+
+$$
+\begin{aligned}
+R_w(\tau) &= \sum_{t=0}^{T}\gamma^t w^T f(s_t,a_t) \\
+&= w^T \sum_{t=0}^{T}\gamma^t f(s_t,a_t) \\
+&= w^T F(\tau)
+\end{aligned}
+\tag{10.16}
+$$
+
+这说明：在线性 reward 下，一条轨迹的得分就是权重 $w$ 和轨迹特征 $F(\tau)$ 的内积。
+
+### 7.2 命题 10.2：线性 reward 下，策略比较可以转化为特征期望比较
+
+> **命题 10.2：线性 reward 与特征期望**
+>
+> 如果 reward 写成 $r_w(s,a)=w^T f(s,a)$，那么一个策略在该 reward 下的期望回报可以写成 $w^T\mu(\pi)$。其中 $\mu(\pi)$ 是策略 $\pi$ 诱导轨迹分布下的特征期望。
+
+**证明思路**：
+
+先把轨迹回报写成 $w^T F(\tau)$，再对策略诱导的轨迹分布求期望。
+
+**证明**：
+
+定义策略 $\pi$ 的特征期望：
+
+$$\mu(\pi) = \mathbb{E}_{\tau \sim p_\pi(\tau)}[F(\tau)] \tag{10.17}$$
+
+策略的期望回报为：
+
+$$
+\begin{aligned}
+J_w(\pi) &= \mathbb{E}_{\tau \sim p_\pi(\tau)}[R_w(\tau)] \\
+&= \mathbb{E}_{\tau \sim p_\pi(\tau)}[w^T F(\tau)] \\
+&= w^T \mathbb{E}_{\tau \sim p_\pi(\tau)}[F(\tau)] \\
+&= w^T \mu(\pi)
+\end{aligned}
+\tag{10.18}
+$$
+
+这就证明了：线性 reward 下，比较两个策略的期望回报，可以转化为比较它们的特征期望。
+
+**这个命题告诉我们什么？**
+
+如果专家策略和学习策略的特征期望接近，那么在很多线性 reward 下，它们的表现也会接近。
+
+工程上，这句话非常重要。机械臂策略不一定每一步都和专家动作完全一致，但如果它在一批轨迹上的安全距离、姿态误差、速度平滑性、最终成功率等统计量接近专家，那么它可能已经学到了专家的某些行为偏好。
+
+**常见误解**：
+
+feature expectation 不是单条轨迹上的某个特征值，而是策略在闭环执行中诱导出的轨迹分布统计。它已经比单步动作 loss 更接近“整体行为”。
+
+---
+
+## 8. maximum entropy IRL：为什么要给轨迹一个概率
+
+前面讲到，专家不一定唯一最优，人类也不总是走同一条轨迹。因此我们不希望模型只认为“最高 reward 的轨迹才可能出现”。
+
+maximum entropy IRL 的想法是：
+
+> reward 越高的轨迹越可能出现，但不是只有最高 reward 轨迹才可能出现。
+
+于是引入轨迹概率模型：
+
+$$p_w(\tau) = \frac{1}{Z(w)}\exp(R_w(\tau)) \tag{10.19}$$
+
+其中配分函数为：
+
+$$Z(w) = \sum_{\tau}\exp(R_w(\tau)) \tag{10.20}$$
+
+如果轨迹空间是连续的，可以把求和理解成对所有可能轨迹的积分。本章用求和写法，是为了让推导更直观。
+
+这个公式可以这样读：
+
+- $R_w(\tau)$ 越大，$\exp(R_w(\tau))$ 越大；
+- 高 reward 轨迹概率更高；
+- $Z(w)$ 负责把所有轨迹概率归一化；
+- 不是最高 reward 的轨迹，仍然可以有非零概率。
+
+这和机械臂示教很接近。同一个抓取任务，专家今天可以从左侧接近，明天可以从右侧接近；两条轨迹都合理，只是 reward 和概率可能不同。
+
+---
+
+## 9. maximum entropy IRL 的最大似然目标
+
+有了轨迹概率模型后，就可以用专家轨迹做最大似然。
+
+专家数据为：
+
+$$\mathcal{D}_E = \{\tau_i^E\}_{i=1}^{N} \tag{10.21}$$
+
+最大似然目标是让专家轨迹在模型 $p_w(\tau)$ 下概率尽量大：
+
+$$\mathcal{L}(w) = \sum_{i=1}^{N}\log p_w(\tau_i^E) \tag{10.22}$$
+
+把 $p_w(\tau)$ 代入：
+
+$$
+\begin{aligned}
+\mathcal{L}(w) &= \sum_{i=1}^{N}\log \frac{1}{Z(w)}\exp(R_w(\tau_i^E)) \\
+&= \sum_{i=1}^{N}R_w(\tau_i^E) - N\log Z(w)
+\end{aligned}
+\tag{10.23}
+$$
+
+这一步很关键。
+
+第一项 $\sum_i R_w(\tau_i^E)$ 会鼓励专家轨迹得高分。
+
+第二项 $N\log Z(w)$ 会惩罚“所有轨迹都被打高分”。如果没有这个归一化项，最简单的做法就是把所有 reward 都无限放大，模型就失去了区分能力。
+
+所以 MaxEnt IRL 不是简单地说“专家轨迹 reward 越高越好”，而是说：
+
+> 专家轨迹应该比其他可能轨迹更值得解释，但 reward 不能无约束地把所有轨迹都抬高。
+
+---
+
+## 10. 命题 10.3：MaxEnt IRL 梯度等于专家特征期望减模型特征期望
+
+> **命题 10.3：MaxEnt IRL 的梯度形式**
+>
+> 在线性 reward $R_w(\tau)=w^T F(\tau)$ 下，maximum entropy IRL 的平均 log likelihood 梯度可以写成专家特征期望减模型特征期望。
+
+为了让表达更清楚，定义专家特征期望：
+
+$$\mu_E = \frac{1}{N}\sum_{i=1}^{N}F(\tau_i^E) \tag{10.24}$$
+
+模型特征期望为：
+
+$$\mu_w = \mathbb{E}_{\tau \sim p_w(\tau)}[F(\tau)] \tag{10.25}$$
+
+平均 log likelihood 为：
+
+$$\bar{\mathcal{L}}(w) = \frac{1}{N}\mathcal{L}(w) \tag{10.26}$$
+
+那么有：
+
+$$\nabla_w \bar{\mathcal{L}}(w) = \mu_E - \mu_w \tag{10.27}$$
+
+**证明思路**：
+
+先对专家轨迹回报项求梯度，再对 $\log Z(w)$ 求梯度。难点只在 $\log Z(w)$ 这一项。
+
+**证明**：
+
+由式 (10.23) 得到：
+
+$$\bar{\mathcal{L}}(w) = \frac{1}{N}\sum_{i=1}^{N}R_w(\tau_i^E) - \log Z(w) \tag{10.28}$$
+
+因为 $R_w(\tau)=w^T F(\tau)$，所以：
+
+$$\nabla_w R_w(\tau) = F(\tau) \tag{10.29}$$
+
+第一项的梯度为：
+
+$$\nabla_w \frac{1}{N}\sum_{i=1}^{N}R_w(\tau_i^E) = \frac{1}{N}\sum_{i=1}^{N}F(\tau_i^E) = \mu_E \tag{10.30}$$
+
+接下来处理 $\log Z(w)$。
+
+由配分函数定义：
+
+$$Z(w) = \sum_{\tau}\exp(w^T F(\tau)) \tag{10.31}$$
+
+对 $Z(w)$ 求梯度：
+
+$$\nabla_w Z(w) = \sum_{\tau}\exp(w^T F(\tau))F(\tau) \tag{10.32}$$
+
+因此：
+
+$$
+\begin{aligned}
+\nabla_w \log Z(w) &= \frac{1}{Z(w)}\nabla_w Z(w) \\
+&= \frac{1}{Z(w)}\sum_{\tau}\exp(w^T F(\tau))F(\tau) \\
+&= \sum_{\tau}\frac{\exp(w^T F(\tau))}{Z(w)}F(\tau) \\
+&= \sum_{\tau}p_w(\tau)F(\tau) \\
+&= \mathbb{E}_{\tau \sim p_w(\tau)}[F(\tau)] \\
+&= \mu_w
+\end{aligned}
+\tag{10.33}
+$$
 
 于是：
 
-<div class="math">\[
-R_w(\tau)=w^\top F(\tau) \tag{10.26}\]</div>
+$$\nabla_w \bar{\mathcal{L}}(w) = \mu_E - \mu_w \tag{10.34}$$
 
-这说明：
+证明完成。
 
-> 在线性 reward 下，比较两条轨迹好不好，本质是在比较它们累计特征的加权和。
+**这个命题告诉我们什么？**
 
-泊车轨迹的累计特征可能包括：总 yaw 误差、总边界风险、总方向盘变化、总时间、最终位置误差。IRL 学的是这些累计特征应该如何加权。
+MaxEnt IRL 的学习方向非常直观：
 
----
+```text
+如果专家轨迹中某些特征出现得更多，
+而当前模型生成的轨迹中这些特征出现得更少，
+就提高这些特征对应的 reward 权重。
 
-## 6. feature expectation：专家到底经常“消费”哪些特征
-
-### 6.1 从单条轨迹到策略平均
-
-一条轨迹有累计特征：
-
-<div class="math">\[
-F(\tau)=\sum_{t=0}^{T}\gamma^t f(s_t,a_t) \tag{10.27}\]</div>
-
-但策略执行时可能产生很多轨迹。于是我们定义策略的 feature expectation：
-
-<div class="math">\[
-\mu(\pi)
-=
-\mathbb{E}_{\tau\sim p_\pi(\tau)}
-\left[
-\sum_{t=0}^{T}\gamma^t f(s_t,a_t)
-\right] \tag{10.28}\]</div>
-
-专家的 feature expectation 可以从专家数据中估计：
-
-<div class="math">\[
-\mu_E
-\approx
-\frac{1}{N}
-\sum_{i=1}^{N}
-\sum_{t=0}^{T}
-\gamma^t f(s_t^i,a_t^i) \tag{10.29}\]</div>
-
-这两个公式是 IRL 中非常重要的基础。
-
-它们表达的是：
-
-> 专家平均来说访问了多少安全特征、舒适特征、效率特征、目标进展特征。
-
-### 公式拆解：feature expectation
-
-公式：
-
-<div class="math">\[
-\mu(\pi)
-=
-\mathbb{E}_{\tau\sim p_\pi(\tau)}
-\left[
-\sum_{t=0}^{T}\gamma^t f(s_t,a_t)
-\right] \tag{10.30}\]</div>
-
-它要解决的问题：
-
-用一个向量描述策略在闭环执行中平均累计了多少任务相关特征。
-
-符号解释：
-
-- <span class="math">\\(\mu(\pi)\\)</span>：策略 <span class="math">\\(\pi\\)</span> 的特征期望；
-- <span class="math">\\(f(s\_t,a\_t)\\)</span>：第 <span class="math">\\(t\\)</span> 步的特征向量；
-- <span class="math">\\(\sum\_t \gamma^t f(s\_t,a\_t)\\)</span>：整条轨迹的折扣累计特征；
-- <span class="math">\\(\mathbb{E}\_{\tau\sim p\_\pi(\tau)}\\)</span>：对策略可能产生的轨迹求平均。
-
-直觉理解：
-
-如果 reward 是一张消费账单，feature expectation 就是在统计一个策略平均“消费”了多少安全、舒适、效率、能耗、风险等特征。
-
-工程含义：
-
-对于自动驾驶或泊车，专家的 feature expectation 可以告诉我们专家行为整体偏好：是否更保守、是否更平顺、是否更重视效率。策略如果 feature expectation 和专家接近，说明它在这些可设计特征层面复现了专家习惯。
-
-常见误解：
-
-feature expectation 接近，不代表轨迹逐点一样。两条轨迹可能局部不同，但在累计安全距离、平滑性、效率等指标上接近。这也是 IRL 和逐帧 BC 的区别。
-
-### 6.2 为什么匹配 feature expectation 有意义
-
-在线性 reward 下：
-
-<div class="math">\[
-R_w(\tau)=w^\top F(\tau) \tag{10.31}\]</div>
-
-策略的期望回报是：
-
-<div class="math">\[
-J_w(\pi)
-=
-w^\top \mu(\pi) \tag{10.32}\]</div>
-
-专家的期望回报近似是：
-
-<div class="math">\[
-J_w(\pi_E)
-=
-w^\top \mu_E \tag{10.33}\]</div>
-
-如果某个学习策略 <span class="math">\\(\pi\\)</span> 满足：
-
-<div class="math">\[
-\mu(\pi)\approx\mu_E \tag{10.34}\]</div>
-
-那么对任意线性 reward 权重 <span class="math">\\(w\\)</span>，它和专家的期望回报都会接近：
-
-<div class="math">\[
-w^\top\mu(\pi)\approx w^\top\mu_E \tag{10.35}\]</div>
-
-这给了我们一个重要直觉：
-
-> 如果 reward 由这些特征线性组合而成，那么匹配专家的 feature expectation，就是在匹配专家在这些 reward 因素上的行为偏好。
-
-这也是为什么第11章讲 occupancy measure 时，本章可以继续讲 feature expectation。occupancy measure 是状态—动作访问分布；feature expectation 是在这个访问分布上对特征求平均。
-
-可以粗略理解为：
-
-<div class="math">\[
-\mu(\pi)
-\approx
-\sum_{s,a}\rho_\pi(s,a) f(s,a) \tag{10.36}\]</div>
-
-也就是说，feature expectation 是 occupancy measure 经过特征函数压缩后的结果。
-
-### 公式拆解：专家特征期望估计
-
-公式：
-
-<div class="math">\[
-\mu_E
-\approx
-\frac{1}{N}
-\sum_{i=1}^{N}
-\sum_{t=0}^{T}
-\gamma^t f(s_t^i,a_t^i) \tag{10.37}\]</div>
-
-它要解决的问题：
-
-从有限条专家轨迹中估计专家平均累计了哪些特征。
-
-符号解释：
-
-- <span class="math">\\(N\\)</span>：专家轨迹数量；
-- <span class="math">\\(i\\)</span>：第 <span class="math">\\(i\\)</span> 条专家轨迹；
-- <span class="math">\\((s\_t^i,a\_t^i)\\)</span>：第 <span class="math">\\(i\\)</span> 条轨迹第 <span class="math">\\(t\\)</span> 步的状态和动作；
-- <span class="math">\\(f(s\_t^i,a\_t^i)\\)</span>：对应特征；
-- <span class="math">\\(\frac{1}{N}\sum\_i\\)</span>：对所有专家轨迹取平均。
-
-直觉理解：
-
-我们没有无限专家数据，只能用采集到的轨迹估计专家习惯。轨迹越多、覆盖越充分，估计越可靠。轨迹越少、场景越偏，估计越容易歪。
-
-工程含义：
-
-如果专家数据只覆盖晴天、直道、低速，学到的 feature expectation 可能无法代表雨天、弯道、高速。自动驾驶和机器人数据集都逃不开这个问题。
-
-常见误解：
-
-不要把 <span class="math">\\(\mu\_E\\)</span> 当成专家真实偏好的完整描述。它只是通过你设计的特征和采集到的数据，对专家行为做出的有限统计。
-
----
-
-## 7. Maximum Entropy IRL：不要把专家说成只有一种走法
-
-### 7.1 为什么需要最大熵
-
-早期 IRL 容易落入一种强假设：专家总是最优的。
-
-这在数学上方便，但在真实世界里有点像要求每个老司机都是最优控制器、每个遥操作员都是机械臂之神、每个停车动作都像教科书一样干净。现实当然没有这么客气。
-
-专家可能：
-
-- 偶尔抖一下；
-- 在两个合理路径中随便选一个；
-- 因为视觉遮挡临时保守一点；
-- 因为人类习惯导致轨迹不完全最短；
-- 同一个任务有多种同样合理的执行方式。
-
-如果 IRL 强行说“专家轨迹就是唯一最优轨迹”，就容易过拟合。Maximum Entropy IRL 的想法更温和：
-
-> reward 高的轨迹应该更可能出现，但不是只有最高 reward 轨迹才可能出现。
-
-于是它把轨迹看成概率分布：
-
-<div class="math">\[
-p_w(\tau)
-=
-\frac{1}{Z(w)}\exp(R_w(\tau)) \tag{10.38}\]</div>
-
-这个式子非常关键。
-
-它表示：轨迹回报 <span class="math">\\(R\_w(\tau)\\)</span> 越高，<span class="math">\\(\exp(R\_w(\tau))\\)</span> 越大，轨迹概率越高。
-
-但因为所有轨迹都有一个正概率，模型不会把专家行为理解成“世界上只有这一条路能走”。
-
-![图10-3 最大熵 IRL 直觉图](../images/图10-3_最大熵IRL直觉图.png)
-
-**图10-3 说明**：
-- 最大熵 IRL 把轨迹建模为概率分布，而不是只选一条最优轨迹；
-- 高 reward 轨迹概率更大，低 reward 轨迹概率更小；
-- 熵的作用是保留不确定性，避免把所有概率压到单一路径上；
-- 这更符合真实专家：专家通常比较好，但不一定每一步都绝对最优。
-
-### 7.2 轨迹概率为什么用指数形式
-
-最大熵 IRL 常用的轨迹分布是：
-
-<div class="math">\[
-p_w(\tau)
-=
-\frac{1}{Z(w)}\exp(R_w(\tau)) \tag{10.39}\]</div>
-
-其中：
-
-<div class="math">\[
-Z(w)=\sum_{\tau}\exp(R_w(\tau)) \tag{10.40}\]</div>
-
-在连续空间里，求和会变成积分。本章先用离散轨迹集合解释，直觉更清楚。
-
-为什么要用 <span class="math">\\(\exp(R\_w(\tau))\\)</span>？
-
-因为我们希望：
-
-- 回报高的轨迹概率大；
-- 回报低的轨迹概率小；
-- 概率必须是正数；
-- 所有轨迹概率加起来要等于 1。
-
-指数函数满足前两个条件：回报越高，指数越大，而且永远为正。<span class="math">\\(Z(w)\\)</span> 负责第三个关键工作：归一化。
-
-### 公式拆解：最大熵轨迹分布
-
-公式：
-
-<div class="math">\[
-p_w(\tau)
-=
-\frac{1}{Z(w)}\exp(R_w(\tau)) \tag{10.41}\]</div>
-
-它要解决的问题：
-
-把 reward 转换成轨迹概率，让高 reward 轨迹更可能出现，同时保留多种可行轨迹的不确定性。
-
-符号解释：
-
-- <span class="math">\\(p\_w(\tau)\\)</span>：在 reward 参数 <span class="math">\\(w\\)</span> 下，轨迹 <span class="math">\\(\tau\\)</span> 出现的概率；
-- <span class="math">\\(R\_w(\tau)\\)</span>：轨迹 <span class="math">\\(\tau\\)</span> 的总回报；
-- <span class="math">\\(\exp(\cdot)\\)</span>：指数函数，把回报映射成正数权重；
-- <span class="math">\\(Z(w)\\)</span>：partition function，用于把所有轨迹权重归一化成概率。
-
-直觉理解：
-
-这像一个“软选择器”。不是只选最高分轨迹，而是给每条轨迹一个票数。分数越高，票数越多；分数低，也不是完全没票。
-
-工程含义：
-
-在机器人操作和自动驾驶中，同一个目标可能有多种合理做法。最大熵 IRL 不会强迫所有专家轨迹完全一致，而是允许多种高 reward 行为共同存在。
-
-常见误解：
-
-不要把 <span class="math">\\(p\_w(\tau)\\)</span> 理解为环境真实生成轨迹的唯一机制。它是一个用于解释专家数据的概率模型，不是说真实专家脑子里一定在计算指数函数。
-
-### 7.3 partition function 到底在干什么
-
-partition function 写作：
-
-<div class="math">\[
-Z(w)=\sum_{\tau}\exp(R_w(\tau)) \tag{10.42}\]</div>
-
-它的作用是让概率加起来等于 1：
-
-<div class="math">\[
-\sum_\tau p_w(\tau)=1 \tag{10.43}\]</div>
-
-代入 <span class="math">\\(p\_w(\tau)\\)</span>：
-
-<div class="math">\[
-\sum_\tau \frac{1}{Z(w)}\exp(R_w(\tau))
-=
-\frac{1}{Z(w)}\sum_\tau\exp(R_w(\tau))
-=
-1 \tag{10.44}\]</div>
-
-所以 <span class="math">\\(Z(w)\\)</span> 不是装饰品，它是归一化常数。
-
-但工程上，<span class="math">\\(Z(w)\\)</span> 很麻烦。因为它要求对所有可能轨迹求和。机器人连续状态、连续动作、长时域任务里，所有可能轨迹的数量大到离谱。你不可能真的把每条轨迹都列出来。
-
-这就是最大熵 IRL 难训练的重要原因之一。
-
-### 公式拆解：partition function
-
-公式：
-
-<div class="math">\[
-Z(w)=\sum_\tau \exp(R_w(\tau)) \tag{10.45}\]</div>
-
-它要解决的问题：
-
-把每条轨迹的非归一化权重 <span class="math">\\(\exp(R\_w(\tau))\\)</span> 转换成真正的概率分布。
-
-符号解释：
-
-- <span class="math">\\(Z(w)\\)</span>：配分函数，也叫 partition function；
-- <span class="math">\\(\sum\_\tau\\)</span>：对所有可能轨迹求和；
-- <span class="math">\\(\exp(R\_w(\tau))\\)</span>：轨迹 <span class="math">\\(\tau\\)</span> 的正权重。
-
-直觉理解：
-
-如果每条轨迹都有一个“票数”，<span class="math">\\(Z(w)\\)</span> 就是所有票数总和。某条轨迹的概率等于它自己的票数除以总票数。
-
-工程含义：
-
-在小规模网格世界里，<span class="math">\\(Z(w)\\)</span> 还能算；在真实机械臂、自动驾驶和泊车任务中，完整计算通常不可行，需要动态规划、采样、近似推断或用其他方法绕开。
-
-常见误解：
-
-不要忽略 <span class="math">\\(Z(w)\\)</span>。如果没有它，<span class="math">\\(\exp(R\_w(\tau))\\)</span> 只是权重，不是概率。很多概率模型看起来难，就是难在这个归一化常数上。
-
----
-
-## 8. 最大熵 IRL 的最大似然目标
-
-### 8.1 让专家轨迹在模型下概率更高
-
-有了轨迹概率模型：
-
-<div class="math">\[
-p_w(\tau)
-=
-\frac{1}{Z(w)}\exp(R_w(\tau)) \tag{10.46}\]</div>
-
-我们希望专家轨迹概率尽量高。
-
-给定专家数据：
-
-<div class="math">\[
-\mathcal{D}_E=\{\tau_i^E\}_{i=1}^{N} \tag{10.47}\]</div>
-
-最大似然目标是：
-
-<div class="math">\[
-\max_w
-\sum_{i=1}^{N}
-\log p_w(\tau_i^E) \tag{10.48}\]</div>
-
-代入 <span class="math">\\(p\_w(\tau)\\)</span>：
-
-<div class="math">\[
-\log p_w(\tau_i^E)
-=
-\log \left(\frac{1}{Z(w)}\exp(R_w(\tau_i^E))\right) \tag{10.49}\]</div>
-
-拆开：
-
-<div class="math">\[
-\log p_w(\tau_i^E)
-=
-R_w(\tau_i^E)-\log Z(w) \tag{10.50}\]</div>
-
-所以整体目标变成：
-
-<div class="math">\[
-\mathcal{L}(w)
-=
-\sum_{i=1}^{N} R_w(\tau_i^E)
--
-N\log Z(w) \tag{10.51}\]</div>
-
-这就是 maximum entropy IRL 的核心目标形式。
-
-### 公式拆解：最大熵 IRL 的 log-likelihood
-
-公式：
-
-<div class="math">\[
-\mathcal{L}(w)
-=
-\sum_{i=1}^{N} R_w(\tau_i^E)
--
-N\log Z(w) \tag{10.52}\]</div>
-
-它要解决的问题：
-
-调整 reward 参数 <span class="math">\\(w\\)</span>，让专家轨迹在最大熵轨迹分布下具有较高概率。
-
-符号解释：
-
-- <span class="math">\\(\mathcal{L}(w)\\)</span>：专家数据的对数似然；
-- <span class="math">\\(R\_w(\tau\_i^E)\\)</span>：第 <span class="math">\\(i\\)</span> 条专家轨迹在 reward <span class="math">\\(w\\)</span> 下的回报；
-- <span class="math">\\(\sum\_i R\_w(\tau\_i^E)\\)</span>：希望专家轨迹回报高；
-- <span class="math">\\(Z(w)\\)</span>：所有可能轨迹的指数回报总和；
-- <span class="math">\\(N\log Z(w)\\)</span>：归一化带来的惩罚项。
-
-直觉理解：
-
-第一项在说：专家轨迹应该得高分。第二项在说：你不能把所有轨迹都随便打高分。如果所有轨迹都高分，专家轨迹虽然也高，但它们不再特殊，概率不会真正变高。
-
-工程含义：
-
-reward 学习不是简单地把专家出现过的状态全部加分。如果模型把所有状态都加分，就不能区分好坏行为。<span class="math">\\(\log Z(w)\\)</span> 迫使 reward 对专家轨迹和其他可能轨迹拉开差异。
-
-常见误解：
-
-不要只看 <span class="math">\\(\sum\_i R\_w(\tau\_i^E)\\)</span>。如果没有 <span class="math">\\(-N\log Z(w)\\)</span>，模型可以把所有 reward 推到无穷大，看起来专家回报很高，但没有任何判别力。
-
-### 8.2 梯度：专家特征期望减去模型特征期望
-
-在线性 reward 下：
-
-<div class="math">\[
-R_w(\tau)=w^\top F(\tau) \tag{10.53}\]</div>
-
-最大熵 IRL 的梯度具有一个非常漂亮的形式：
-
-<div class="math">\[
-\nabla_w \mathcal{L}(w)
-=
-\sum_{i=1}^{N} F(\tau_i^E)
--
-N\mathbb{E}_{\tau\sim p_w(\tau)}[F(\tau)] \tag{10.54}\]</div>
-
-除以 <span class="math">\\(N\\)</span> 后，可以写成：
-
-<div class="math">\[
-\frac{1}{N}\nabla_w \mathcal{L}(w)
-=
-\mu_E
--
-\mu_w \tag{10.55}\]</div>
-
-其中：
-
-<div class="math">\[
-\mu_w
-=
-\mathbb{E}_{\tau\sim p_w(\tau)}[F(\tau)] \tag{10.56}\]</div>
-
-这个结果非常重要。它告诉我们：
-
-> maximum entropy IRL 在调 reward，让模型分布下的特征期望接近专家特征期望。
-
-如果专家比模型更多地保持安全距离，那么安全特征对应权重会被调整；如果模型比专家更频繁地急转，平滑性惩罚会被调整。
-
-### 公式拆解：为什么梯度是专家特征期望减模型特征期望
-
-公式：
-
-<div class="math">\[
-\frac{1}{N}\nabla_w \mathcal{L}(w)
-=
-\mu_E-\mu_w \tag{10.57}\]</div>
-
-它要解决的问题：
-
-给出 reward 参数更新方向：让模型产生的轨迹特征统计逐渐靠近专家。
-
-符号解释：
-
-- <span class="math">\\(\nabla\_w \mathcal{L}(w)\\)</span>：对 reward 权重的梯度；
-- <span class="math">\\(\mu\_E\\)</span>：专家特征期望；
-- <span class="math">\\(\mu\_w\\)</span>：当前 reward 模型诱导出的轨迹分布的特征期望；
-- <span class="math">\\(\mu\_E-\mu\_w\\)</span>：专家和模型之间的特征统计差异。
-
-直觉理解：
-
-如果专家经常做某件好事，而当前模型轨迹很少做，那么对应特征差值为正，reward 会提高这类行为的权重。如果模型经常做专家不做的坏事，对应差值会推动 reward 惩罚它。
-
-工程含义：
-
-这给 IRL 调试提供了很好的指标：不要只看 reward loss，还要看专家和模型的特征统计差异。比如泊车中，可以比较两者的平均边距、最终 yaw 误差、方向盘变化率和碰撞风险。
-
-常见误解：
-
-梯度不是直接告诉策略每一步该怎么做，而是告诉 reward 参数怎样调整。IRL 通常还需要内层 RL、规划或采样来得到 <span class="math">\\(\mu\_w\\)</span>。这也是 IRL 比普通监督学习更重的原因。
-
----
-
-## 9. IRL 的算法流程
-
-为了让概念落地，我们先看一个典型 IRL 流程。
-
-### 9.1 基础流程
-
-1. 收集专家轨迹：<span class="math">\\(\mathcal{D}\_E\\)</span>。
-2. 设计状态、动作和特征：<span class="math">\\(f(s,a)\\)</span>。
-3. 初始化 reward 参数：<span class="math">\\(w\\)</span>。
-4. 根据当前 reward <span class="math">\\(r\_w(s,a)\\)</span>，求一个策略 <span class="math">\\(\pi\_w\\)</span> 或轨迹分布 <span class="math">\\(p\_w(\tau)\\)</span>。
-5. 让当前策略 rollout，估计模型特征期望 <span class="math">\\(\mu\_w\\)</span>。
-6. 计算专家特征期望 <span class="math">\\(\mu\_E\\)</span> 与模型特征期望差异。
-7. 更新 reward 参数 <span class="math">\\(w\\)</span>。
-8. 重复 4—7，直到特征统计接近或策略表现满足要求。
-
-这个流程最容易让人头大的地方是第4步：
-
-> 给定一个 reward，还要解一个 RL 或规划问题。
-
-也就是说，IRL 常常是一个外层学 reward、内层学策略的嵌套问题。
-
-### 9.2 这和 GAIL 有什么关系
-
-第11章讲的 GAIL，可以从某种角度看成绕开显式 reward 学习的一条路。
-
-GAIL 直接让判别器提供隐式奖励：
-
-<div class="math">\[
-r_D(s,a)=-\log D(s,a) \tag{10.58}\]</div>
-
-然后用策略优化去匹配 occupancy measure。
-
-IRL 则更直接地问：
-
-<div class="math">\[
-r_\phi(s,a)=? \tag{10.59}\]</div>
-
-两者都关心专家行为背后的目标，但侧重点不同：
-
-- GAIL：更强调对抗式 occupancy matching；
-- IRL：更强调从专家行为中恢复或构造 reward；
-- GAIL 的 reward 往往是判别器给出的训练信号；
-- IRL 的 reward 通常希望具有更清晰的解释性或可迁移性。
-
-也可以这样理解：
-
-> GAIL 更像“学一个让策略像专家的训练信号”；IRL 更像“学一个能解释专家行为的目标函数”。
-
-![图10-4 reward 与 policy 闭环关系图](../images/图10-4_reward与policy闭环关系图.png)
-
-**图10-4 说明**：
-- IRL 从专家数据中学习 reward；
-- 学到 reward 后，还需要 RL 或规划根据 reward 求策略；
-- 新策略 rollout 后，要检查它和专家行为是否接近；
-- 工程上不能只看 reward 数值，还要看 reward 导出的策略是否安全、稳定、可解释。
-
----
-
-## 10. Python 风格伪代码
-
-下面给一个简化版 maximum entropy IRL 伪代码。它不是可直接运行的完整实现，而是帮助你看清楚训练闭环。
-
-```python
-# 专家数据：expert_trajectories = [tau_1, tau_2, ...]
-# 每条 tau 是 [(s0, a0), (s1, a1), ...]
-# feature_fn(s, a) 返回特征向量 f(s, a)
-# solve_policy(reward_fn) 表示在当前 reward 下求策略
-# rollout(policy) 表示用当前策略采样轨迹
-
-w = initialize_reward_weights()
-mu_expert = estimate_feature_expectation(expert_trajectories, feature_fn)
-
-for iteration in range(num_iterations):
-    def reward_fn(s, a):
-        return dot(w, feature_fn(s, a))
-
-    # 内层：给定 reward，求一个策略
-    policy = solve_policy(reward_fn)
-
-    # 用当前策略 rollout，估计模型特征期望
-    sampled_trajectories = rollout(policy)
-    mu_model = estimate_feature_expectation(sampled_trajectories, feature_fn)
-
-    # 外层：更新 reward 权重
-    grad_w = mu_expert - mu_model
-    w = w + learning_rate * grad_w
-
-    log_metrics({
-        "feature_gap": norm(mu_expert - mu_model),
-        "reward_weights": w,
-        "rollout_success_rate": evaluate_success(policy),
-    })
+如果当前模型过度偏好某些专家并不常见的特征，
+就降低这些特征对应的 reward 权重。
 ```
 
-这段伪代码里有几个关键点。
+换句话说，IRL 并不是神秘地“读懂专家内心”。它在做一件很朴素的事：让模型分布下的特征统计，逐渐接近专家数据里的特征统计。
 
-第一，IRL 不是只训练一个网络 forward 一下。它需要不断在当前 reward 下重新生成策略或轨迹。
+**工程含义**：
 
-第二，真正更新 reward 的信号不是“专家动作标签”，而是：
+在机械臂任务里，如果专家轨迹经常保持较大安全距离，而模型轨迹总是贴着治具边缘走，那么梯度会推动 reward 更重视安全距离。
 
-<div class="math">\[
-\mu_E-\mu_w \tag{10.60}\]</div>
+如果专家轨迹接近目标时动作更慢，而模型轨迹总是高速冲过去，那么梯度会推动 reward 更重视接近阶段的速度控制。
 
-第三，评估不能只看 feature gap。特征统计接近不一定任务成功，还要看闭环成功率、安全距离、碰撞率、动作平滑性和失败恢复。
+**常见误解**：
 
-第四，如果 <span class="math">\\(solve\_policy\\)</span> 很慢，整个 IRL 就会很慢。真实机器人系统里，这通常是一个大问题。
-
----
-
-## 11. 工程实践案例
-
-### 11.1 自动驾驶：从人类驾驶中推断安全、舒适、效率权衡
-
-自动驾驶非常适合解释 IRL 的直觉。
-
-人类驾驶数据中有大量轨迹：跟车、变道、转弯、避障、泊车、通过路口。我们可以设计特征：
-
-- 与前车距离；
-- 车速；
-- 加速度；
-- jerk；
-- 横向偏移；
-- 车道线距离；
-- 到目标车道的进展；
-- 与动态障碍的碰撞时间 TTC；
-- 是否违反交通规则。
-
-线性 reward 可能写成：
-
-<div class="math">\[
-r_w(s,a)
-=
-w_1 f_{\text{safety}}(s,a)
-+
-w_2 f_{\text{comfort}}(s,a)
-+
-w_3 f_{\text{efficiency}}(s,a)
-+
-w_4 f_{\text{rule}}(s,a) \tag{10.61}\]</div>
-
-IRL 可以尝试从人类数据中推断这些权重。
-
-但工程上要小心。人类驾驶数据并不总是好数据。人类会分心、抢行、压线、急刹，也会受局部交通文化影响。如果不做数据筛选，IRL 可能把坏习惯也解释成 reward。
-
-这就像你跟一个老司机学车，结果他确实老司机，但他开车喜欢贴着大货车钻缝。你要学的是经验，不是胆量。
-
-### 11.2 泊车：反推“贴边、居中、少打方向”的隐含代价
-
-泊车是用户非常熟悉的场景，也很适合 IRL 思路。
-
-一条专家泊车轨迹背后可能包含这些偏好：
-
-- 最终车身居中；
-- 最终 yaw 对齐车位方向；
-- 与障碍物保持安全距离；
-- 尽量少打方向；
-- 不频繁前后切换；
-- 速度不要太高；
-- 靠近终点时动作更平滑。
-
-如果我们只用 BC 学方向盘角和速度，模型学到的是动作映射。如果用 IRL 思路，我们可以尝试学习一个泊车代价函数：
-
-<div class="math">\[
-c_w(s,a)
-=
-w_1 e_{\text{center}}^2
-+
-w_2 e_{\text{yaw}}^2
-+
-w_3 \Delta \delta^2
-+
-w_4 v^2
-+
-w_5 \mathbb{I}[\text{near obstacle}] \tag{10.62}\]</div>
-
-这里用 cost 更符合工程习惯。reward 可以理解为负 cost：
-
-<div class="math">\[
-r_w(s,a)=-c_w(s,a) \tag{10.63}\]</div>
-
-这个代价函数学出来后，可以用于：
-
-- 规划器 cost 调参；
-- 判断专家数据质量；
-- 比较不同策略是否复现专家偏好；
-- 给模仿学习模型设计辅助 loss；
-- 分析失败案例：到底是安全项、平顺项还是目标项出了问题。
-
-但真实泊车里也有 reward ambiguity。比如专家靠右一点，可能是因为左侧有柱子，也可能是因为车位线识别误差，也可能是司机个人习惯。如果状态表示没有包含这些上下文，IRL 会猜错原因。
-
-### 11.3 机械臂摆放：从示教中推断“稳、准、轻”的偏好
-
-机械臂抓取 + 精准摆放任务中，专家示教可能体现出：
-
-- 接近目标时减速；
-- 接触前保持姿态对齐；
-- 抓取后避开障碍；
-- 放置时避免横向刮擦；
-- 插入治具时沿某个方向轻微搜索；
-- 失败时退回再尝试。
-
-这些行为如果只靠 BC，模型可能学到某些动作模式，但不一定知道为什么要慢、为什么要对齐、为什么要退回。
-
-IRL 可以帮助我们把偏好显式化。例如设计特征：
-
-- 末端到目标位姿误差；
-- 末端速度；
-- 姿态误差；
-- 接触力；
-- 与夹具边界距离；
-- 是否产生卡滞；
-- 是否完成插入。
-
-学到的 reward 可以辅助判断：专家更重视速度还是接触安全？当前策略失败是因为目标误差大，还是因为接触阶段太激进？
-
-这类任务中，IRL 的价值未必是直接训练最终策略，而是帮助设计更好的 cost、评测指标和安全约束。
+不要把式 (10.34) 理解成“只要算一下专家统计和模型统计就能轻松训练 IRL”。真正困难的是模型特征期望 $\mu_w$ 通常需要从当前 reward 下采样、规划或做 RL，代价很高，而且在真实机器人中并不容易。
 
 ---
 
-## 12. 方法边界与工程风险
+## 11. IRL 与 GAIL 的关系
 
-IRL 很有吸引力，但工程上必须冷静。它不是“看几条专家轨迹，自动悟出老师傅心法”的魔法。
+到这里，本章已经说明了 IRL 的核心逻辑：
 
-### 12.1 reward ambiguity 无法完全消失
+```text
+专家轨迹
+→ 假设存在隐藏 reward
+→ 用 reward 给轨迹分配概率
+→ 通过最大似然学习 reward
+→ 梯度推动模型特征期望接近专家特征期望
+```
 
-reward ambiguity 是结构性问题，不是换个网络就没了。
+但这也暴露了两个困难。
 
-同一条轨迹可以由很多 reward 解释。要减少歧义，需要额外信息：
+第一，reward ambiguity。专家轨迹不能唯一决定 reward，学到的 reward 只是可解释偏好之一。
 
-- 更丰富的状态表示；
-- 更好的特征设计；
-- 更多场景覆盖；
-- 失败数据和反例；
-- 人工偏好标注；
-- 任务约束和安全规则；
-- 真实闭环评测。
+第二，求解代价。MaxEnt IRL 需要估计模型分布下的特征期望 $\mu_w$，这通常意味着要在当前 reward 下进行采样、规划或策略优化。
 
-如果只给 IRL 一堆成功轨迹，它很难知道哪些因素是关键，哪些只是巧合。
+于是第11章 GAIL 会换一个角度：
 
-### 12.2 特征设计决定上限
+> 既然显式恢复 reward 很难，能不能直接让策略产生的状态—动作访问分布接近专家？
 
-线性 IRL 中，reward 只能表达特征里已有的东西。
+这就引出 occupancy measure：
 
-如果特征没有包含“接触力”，模型就很难学出轻柔接触；如果特征没有包含“动态障碍风险”，自动驾驶模型就很难学出避让偏好；如果特征没有包含“治具变形”，机械臂摆放 reward 就无法解释为什么专家在某些位置会绕一下。
+$$\rho_\pi(s,a) \tag{10.35}$$
 
-深度 IRL 可以用神经网络学习 reward，但它也需要足够数据和约束，否则可解释性下降，过拟合风险上升。
+它表示策略 $\pi$ 在闭环执行时，有多经常访问状态 $s$ 并执行动作 $a$。
 
-### 12.3 内层 RL / 规划成本很高
+IRL 试图先学 reward，再通过 reward 得到策略。GAIL 则更像是直接比较专家和学习策略的行为分布。
 
-IRL 往往需要在每次 reward 更新后重新求策略，或者至少采样当前 reward 下的轨迹。
+```text
+IRL：专家轨迹 → reward → 策略
+GAIL：专家状态—动作分布 ↔ 策略状态—动作分布
+```
 
-这对真实机器人非常重：
-
-- 实机试错成本高；
-- 仿真器不一定准；
-- 长时域任务采样效率低；
-- 策略优化不稳定；
-- reward 更新和策略更新互相影响。
-
-这也是为什么很多工程系统更愿意先用 BC/ACT/Diffusion Policy 做策略，再用 reward/cost 做约束、评估和辅助调参。
-
-### 12.4 学到的 reward 可能利用数据偏差
-
-如果专家数据里所有成功样本都在白天采集，IRL 可能把某些和白天相关的观测模式误认为高 reward；如果某个示教员总是从左侧绕障，模型可能误以为左绕本身比右绕好；如果失败数据缺失，模型可能不知道哪些区域危险。
-
-reward 学习也会过拟合。它不只是策略会 overfit，reward 也会 overfit。
-
-### 12.5 reward 不等于安全约束
-
-工程上最危险的误解是：
-
-> 学到了 reward，就可以放心让策略自己优化。
-
-不可以。
-
-reward 是软信号，安全约束是硬边界。机械臂不能撞人，车辆不能撞障碍，泊车不能压到不可碰区域。这些不能只靠 reward 惩罚，而要有显式约束、碰撞检测、限幅、fallback、人工接管和监控。
+这就是第10章自然引出第11章的原因。
 
 ---
 
-## 13. 常见误区
+## 12. IRL 在工程中的价值与限制
 
-### 13.1 误区一：IRL 能恢复专家真实内心 reward
+### 12.1 IRL 的价值
 
-IRL 学到的是在模型假设下能解释数据的 reward，不是专家大脑里的真实目标函数。
+IRL 的价值不在于它能一键替代 BC、ACT 或 Diffusion Policy，而在于它提供了一个更高层的解释视角。
 
-专家可能自己都说不清为什么这样操作。人类经验往往是习惯、感知、风险判断和肌肉记忆混合出来的，不一定对应一个干净的数学 reward。
+它可以帮助工程师回答：
 
-### 13.2 误区二：reward 学得好，策略自然就好
+- 专家是不是在隐式惩罚危险边界？
+- 专家是不是更重视平顺性，而不是最短时间？
+- 不同专家风格是否对应不同 reward 权重？
+- 某个失败策略到底违背了哪些任务偏好？
+- 手写 reward 时，哪些项可能遗漏了？
 
-reward 只是第一步。给定 reward 后，还要能求出好策略。内层 RL 或规划如果做不好，最终策略仍然会失败。
+### 12.2 IRL 的限制
 
-这就像你写了一份完美 KPI，但员工听不懂、工具不好用、流程跑不通，公司照样乱成一锅粥。
+真实工程里，很少把 IRL 当成万能方案，原因包括：
 
-### 13.3 误区三：专家轨迹越多，reward 一定越准
+1. **reward 不唯一**：学到的 reward 只是解释之一；
+2. **特征依赖强**：线性 reward 依赖特征设计，深度 reward 又更难解释和训练；
+3. **需要环境交互或采样**：估计模型特征期望常常很贵；
+4. **真实机器人试错成本高**：不能为了估计 reward 就频繁撞夹具、刮工件；
+5. **上线风险大**：学到的 reward 如果在 OOD 状态下泛化错误，可能诱导危险策略。
 
-数据多当然重要，但覆盖更重要。
+因此，在很多机器人项目中，IRL 更适合承担三类角色：
 
-如果 100 万条轨迹都来自同一种简单场景，IRL 学到的是这个场景里的偏好，不是全世界通用 reward。对于机器人和自动驾驶，场景覆盖、失败样本、边界状态和恢复动作非常关键。
-
-### 13.4 误区四：最大熵就是让策略随机
-
-最大熵 IRL 不是鼓励机器人乱动。它是在满足专家行为解释的前提下，保留不确定性。高 reward 轨迹仍然更可能出现，低 reward 轨迹仍然概率低。
-
-“不要过早断言唯一解释”和“随便乱来”不是一回事。
-
-### 13.5 误区五：IRL 比 BC 一定高级
-
-方法没有绝对高级，只有是否适合问题。
-
-如果你有大量高质量遥操作数据，任务主要是从观测直接输出动作，BC/ACT/Diffusion Policy 可能更直接有效。IRL 更适合需要解释偏好、构造 reward、辅助规划或分析专家目标的场景。
-
----
-
-## 14. 与 BC、GAIL、Offline RL 的关系
-
-### 14.1 IRL 与 BC
-
-BC 的核心是：
-
-<div class="math">\[
-\max_\theta \sum_t \log \pi_\theta(a_t^E|s_t^E) \tag{10.64}\]</div>
-
-它直接让模型在专家状态下输出专家动作。
-
-IRL 的核心是：
-
-<div class="math">\[
-\mathcal{D}_E \rightarrow r_\phi(s,a) \tag{10.65}\]</div>
-
-它先学 reward，再用 reward 解释或优化策略。
-
-两者区别：
-
-- BC 学动作映射，IRL 学目标函数；
-- BC 更像监督学习，IRL 更像反问题 + RL；
-- BC 简单高效，IRL 更有解释性但更难；
-- BC 对数据分布偏移敏感，IRL 关注行为背后的偏好，但也需要环境或轨迹分布估计。
-
-### 14.2 IRL 与 GAIL
-
-GAIL 和 IRL 都不满足于逐帧动作监督。
-
-GAIL 通过判别器匹配 occupancy measure：
-
-<div class="math">\[
-\rho_{\pi_\theta}(s,a)\approx \rho_{\pi_E}(s,a) \tag{10.66}\]</div>
-
-IRL 试图学习 reward：
-
-<div class="math">\[
-r_\phi(s,a) \tag{10.67}\]</div>
-
-从更高层看，它们都在处理“专家行为背后的目标”。不同的是：
-
-- GAIL 的判别器奖励通常服务于策略训练；
-- IRL 更强调 reward 的解释、迁移和可分析性；
-- GAIL 训练像对抗学习；
-- IRL 训练常常涉及最大似然、特征匹配、内层规划或 RL。
-
-### 14.3 IRL 与 Offline RL / Offline Imitation Learning
-
-第12章会进入 offline imitation learning。它关心的问题是：
-
-> 给定离线数据，如何安全地学策略？
-
-IRL 和 offline learning 有天然联系。因为很多时候我们只有历史轨迹，没有机会在线试错。IRL 可以从离线轨迹中学 reward，但如果要用这个 reward 继续优化策略，就会遇到 offline RL 的经典问题：数据覆盖不足、OOD action、价值高估和安全风险。
-
-这就是第12章要继续讲的：
-
-> 离线数据不是越多越好，是坑有没有录进去。
+```text
+第一，帮助理解专家行为背后的偏好；
+第二，辅助设计 reward、评价指标和安全约束；
+第三，为 GAIL、Offline IL、后训练和策略评估提供分布与偏好视角。
+```
 
 ---
 
-## 15. 工程落地建议：IRL 更适合当“偏好显微镜”
+## 13. 读完本章，你应该能判断什么
 
-从工程角度看，IRL 最适合的定位不一定是直接替代 BC 或 Diffusion Policy，而是作为偏好显微镜。
-
-### 15.1 用 IRL 辅助设计 cost
-
-在自动驾驶、泊车和机械臂规划中，工程系统本来就有 cost function。IRL 可以用专家数据帮助调 cost 权重。
-
-例如泊车 cost：
-
-<div class="math">\[
-c(s,a)
-=
-w_1 e_{\text{center}}^2
-+w_2 e_{\text{yaw}}^2
-+w_3 \Delta\delta^2
-+w_4 c_{\text{obs}} \tag{10.68}\]</div>
-
-手工调参常常靠经验。IRL 可以提供一种数据驱动的参考：专家行为似乎更重视哪项，当前权重和专家偏好差在哪里。
-
-### 15.2 用 IRL 做专家数据诊断
-
-如果学出来的 reward 很奇怪，比如：
-
-- 贴障碍物反而高分；
-- 急转急停高分；
-- 越靠近边界越高分；
-- 任务失败轨迹得分也高；
-- 某个无关传感器特征权重异常大。
-
-这通常说明数据或特征有问题。
-
-IRL 可以帮助你发现：专家数据里是不是混进了坏样本？状态表示是不是缺关键信息？特征是不是和任务目标错位？
-
-### 15.3 用 IRL 辅助评估策略
-
-训练一个策略后，不只看成功率，也可以看它在 learned reward 下的分布：
-
-- 它是否和专家一样重视安全距离？
-- 它是否为了成功率牺牲了平顺性？
-- 它是否经常进入专家不会进入的状态？
-- 它是否在某些边界场景下 reward 很低？
-
-这可以作为模型评估的一部分，但不能替代真实闭环测试。
-
-### 15.4 不建议一上来就端到端深度 IRL
-
-对于工程团队，尤其是算力、数据、仿真和实机闭环能力有限的团队，不建议一上来就做复杂深度 IRL。
-
-更稳妥的路径是：
-
-1. 先定义可解释特征和手工 cost；
-2. 用专家数据统计 feature expectation；
-3. 对比不同策略与专家的特征差异；
-4. 尝试线性 reward 权重学习；
-5. 把学到的 reward 用于评估、调参或辅助规划；
-6. 最后再考虑深度 reward 或更复杂 IRL。
-
-这条路线不花哨，但更接近真实项目能落地的节奏。
+| 工程现象 | 应该想到的 IRL 判断 |
+|---|---|
+| 专家动作看起来不唯一，但都能完成任务 | 专家可能在优化同一组偏好，而不是输出唯一动作标签 |
+| 学到一个 reward 后，发现另一种 reward 也能解释专家 | 这是 reward ambiguity，不是代码一定错了 |
+| BC 单步误差低，但轨迹整体不安全 | 可能缺少对安全、平顺、边界等轨迹级偏好的建模 |
+| 专家轨迹整体更保守，模型轨迹更激进 | 可以从特征期望角度比较安全距离、速度、接触力等统计差异 |
+| MaxEnt IRL 推导中出现 $Z(w)$ | 它不是装饰项，而是让轨迹概率归一化，防止所有 reward 无限制变大 |
+| IRL 训练需要不断采样当前模型轨迹 | 这是为了估计模型特征期望 $\mu_w$，也是工程成本来源 |
+| 想直接把 IRL reward 上线控制机器人 | 必须谨慎，因为 reward 可能在未覆盖状态下泛化错误 |
 
 ---
 
-## 16. 核心公式拆解总表
+## 14. 本章常见误解
 
-本章已经在正文中拆解了多个公式，这里再集中整理一次，方便复习。
-
-### 16.1 普通 RL 目标
-
-<div class="math">\[
-J(\pi)
-=
-\mathbb{E}_{\tau\sim p_\pi(\tau)}
-\left[
-\sum_{t=0}^{T}\gamma^t r(s_t,a_t)
-\right] \tag{10.69}\]</div>
-
-含义：给定 reward，评价策略的期望累计回报。
-
-### 16.2 IRL 方向
-
-<div class="math">\[
-\mathcal{D}_E \longrightarrow r_\phi(s,a) \tag{10.70}\]</div>
-
-含义：从专家轨迹反推奖励函数。
-
-### 16.3 reward 缩放歧义
-
-<div class="math">\[
-r'(s,a)=\alpha r(s,a),\quad \alpha>0 \tag{10.71}\]</div>
-
-含义：不同 reward 可能诱导相同策略，说明 reward 不唯一。
-
-### 16.4 线性 reward
-
-<div class="math">\[
-r_w(s,a)=w^\top f(s,a) \tag{10.72}\]</div>
-
-含义：用特征加权和表达奖励。
-
-### 16.5 轨迹回报
-
-<div class="math">\[
-R_w(\tau)=\sum_{t=0}^{T}\gamma^t r_w(s_t,a_t) \tag{10.73}\]</div>
-
-含义：一条轨迹在 reward <span class="math">\\(w\\)</span> 下的总得分。
-
-### 16.6 轨迹累计特征
-
-<div class="math">\[
-F(\tau)=\sum_{t=0}^{T}\gamma^t f(s_t,a_t) \tag{10.74}\]</div>
-
-含义：一条轨迹累计“消费”了多少特征。
-
-### 16.7 feature expectation
-
-<div class="math">\[
-\mu(\pi)
-=
-\mathbb{E}_{\tau\sim p_\pi(\tau)}[F(\tau)] \tag{10.75}\]</div>
-
-含义：策略平均累计的特征向量。
-
-### 16.8 专家特征期望估计
-
-<div class="math">\[
-\mu_E
-\approx
-\frac{1}{N}
-\sum_{i=1}^{N}F(\tau_i^E) \tag{10.76}\]</div>
-
-含义：从有限专家轨迹估计专家的平均特征统计。
-
-### 16.9 最大熵轨迹分布
-
-<div class="math">\[
-p_w(\tau)
-=
-\frac{1}{Z(w)}\exp(R_w(\tau)) \tag{10.77}\]</div>
-
-含义：高回报轨迹概率更大，但保留多种轨迹可能性。
-
-### 16.10 partition function
-
-<div class="math">\[
-Z(w)=\sum_\tau \exp(R_w(\tau)) \tag{10.78}\]</div>
-
-含义：把非归一化轨迹权重转成概率分布的归一化常数。
-
-### 16.11 最大熵 IRL 对数似然
-
-<div class="math">\[
-\mathcal{L}(w)
-=
-\sum_{i=1}^{N}R_w(\tau_i^E)-N\log Z(w) \tag{10.79}\]</div>
-
-含义：让专家轨迹概率高，同时不能把所有轨迹都打高分。
-
-### 16.12 最大熵 IRL 梯度
-
-<div class="math">\[
-\frac{1}{N}\nabla_w\mathcal{L}(w)=\mu_E-\mu_w \tag{10.80}\]</div>
-
-含义：更新 reward，使模型特征期望接近专家特征期望。
+| 常见误解 | 正确认识 |
+|---|---|
+| IRL 能恢复专家真实 reward | IRL 只能学习能解释专家行为的 reward，通常不唯一 |
+| reward ambiguity 是小问题 | 它是 IRL 的核心困难之一 |
+| 线性 reward 太简单，没有价值 | 线性 reward 的价值在于让 feature expectation 推导清楚，帮助理解 IRL 本质 |
+| feature expectation 是单条轨迹特征 | 它是策略诱导轨迹分布下的平均特征统计 |
+| MaxEnt IRL 只是加了一个熵技巧 | 它用概率方式表达专家不是唯一最优，并得到清晰的特征匹配梯度 |
+| 梯度 $\mu_E-\mu_w$ 很容易算 | 专家特征容易算，模型特征通常需要采样、规划或 RL，工程代价很高 |
+| IRL 比 BC 一定更适合机器人 | IRL 更解释性，但训练和部署成本更高，不能替代强 baseline |
 
 ---
 
-## 17. 本章公式索引
+## 15. 本章公式索引
 
-1. <span class="math">\\(r(s,a)\rightarrow \pi^*\\)</span>
-2. <span class="math">\\(\mathcal{D}\_E\rightarrow r\_\phi(s,a)\\)</span>
-3. <span class="math">\\(J(\pi)=\mathbb{E}\_{\tau\sim p\_\pi(\tau)}[\sum\_t\gamma^t r(s\_t,a\_t)]\\)</span>
-4. <span class="math">\\(\pi^*=\arg\max\_\pi J(\pi)\\)</span>
-5. <span class="math">\\(r'(s,a)=\alpha r(s,a),\alpha>0\\)</span>
-6. <span class="math">\\(r\_w(s,a)=w^\top f(s,a)\\)</span>
-7. <span class="math">\\(R\_w(\tau)=\sum\_t\gamma^t r\_w(s\_t,a\_t)\\)</span>
-8. <span class="math">\\(F(\tau)=\sum\_t\gamma^t f(s\_t,a\_t)\\)</span>
-9. <span class="math">\\(\mu(\pi)=\mathbb{E}\_{\tau\sim p\_\pi(\tau)}[F(\tau)]\\)</span>
-10. <span class="math">\\(\mu\_E\approx\frac{1}{N}\sum\_i F(\tau\_i^E)\\)</span>
-11. <span class="math">\\(p\_w(\tau)=\frac{1}{Z(w)}\exp(R\_w(\tau))\\)</span>
-12. <span class="math">\\(Z(w)=\sum\_\tau\exp(R\_w(\tau))\\)</span>
-13. <span class="math">\\(\mathcal{L}(w)=\sum\_iR\_w(\tau\_i^E)-N\log Z(w)\\)</span>
-14. <span class="math">\\(\frac{1}{N}\nabla\_w\mathcal{L}(w)=\mu\_E-\mu\_w\\)</span>
-15. <span class="math">\\(r\_w(s,a)=-c\_w(s,a)\\)</span>
+- 公式 (10.1)：普通 RL 的方向：给定 reward 求策略。
+- 公式 (10.2)：策略的期望回报目标。
+- 公式 (10.3)：最优策略定义。
+- 公式 (10.4)：专家轨迹数据集。
+- 公式 (10.5)：专家轨迹形式。
+- 公式 (10.6)：IRL 的方向：从专家数据反推 reward。
+- 公式 (10.7)—(10.12)：reward ambiguity 的缩放与平移说明。
+- 公式 (10.13)：线性 reward。
+- 公式 (10.14)：轨迹特征。
+- 公式 (10.15)—(10.18)：feature expectation 推导。
+- 公式 (10.19)—(10.23)：maximum entropy IRL 的轨迹概率与最大似然目标。
+- 公式 (10.24)—(10.34)：MaxEnt IRL 梯度推导。
+- 公式 (10.35)：occupancy measure，为第11章铺垫。
 
 ---
 
-## 18. 建议阅读的附录条目
+## 16. 建议阅读的附录条目
 
-本章建议配合以下附录阅读：
-
-1. **附录 F：强化学习与序列决策基础**
-   用于复习 MDP、reward、return、policy、rollout、trajectory distribution 和普通 RL 的目标函数。
-
-2. **附录 C：最大似然、负对数似然、交叉熵与 KL 散度**
-   用于理解 maximum entropy IRL 中为什么要最大化专家轨迹的 log-likelihood，以及 <span class="math">\\(\log p\_w(\tau)\\)</span> 如何展开。
-
-3. **附录 B：概率论最小生存包**
-   用于复习轨迹概率、条件概率、期望、归一化和 partition function 的基础直觉。
-
-4. **附录 E：优化基础**
-   用于理解 reward 参数 <span class="math">\\(w\\)</span> 如何通过梯度 <span class="math">\\(\mu\_E-\mu\_w\\)</span> 更新。
-
-5. **附录 H：实验评估与闭环 rollout 基础**
-   用于理解为什么 IRL 学到 reward 后，还必须通过 rollout、成功率、安全指标和分布覆盖进行验证。
-
-6. **附录 G：生成模型基础**
-   用于理解最大熵轨迹分布 <span class="math">\\(p\_w(\tau)\propto\exp(R\_w(\tau))\\)</span> 与能量模型、归一化常数之间的关系。
+- 附录 B：概率论最小生存包。建议复习随机变量、概率分布、期望和条件概率。
+- 附录 C：最大似然、负对数似然、交叉熵与 KL 散度。建议结合本章第9节理解最大似然目标。
+- 附录 F：强化学习与序列决策基础。建议复习 MDP、回报、策略和轨迹分布。
+- 附录 I：熵、最大熵与 Score Matching。建议用于理解 maximum entropy 为什么会出现在 IRL 中。
 
 ---
 
-## 19. 本章核心概念回顾
+## 17. 本章小结：为什么下一章是 GAIL
 
-1. **IRL**：Inverse Reinforcement Learning，从专家行为反推 reward。
-2. **普通 RL**：给定 reward，求最优策略。
-3. **逆问题**：IRL 方向与 RL 相反，是从行为猜目标。
-4. **reward ambiguity**：同一专家行为可能由很多 reward 解释，reward 通常不唯一。
-5. **线性 reward**：把奖励写成特征加权和 <span class="math">\\(r\_w(s,a)=w^\top f(s,a)\\)</span>。
-6. **轨迹回报**：一条轨迹累计得到的 reward。
-7. **feature expectation**：策略平均累计的特征统计。
-8. **专家特征期望**：从专家轨迹估计专家在特征层面的行为偏好。
-9. **maximum entropy IRL**：用概率分布表达专家轨迹，高 reward 轨迹更可能，但保留多种可能性。
-10. **partition function**：把指数回报归一化成概率的常数。
-11. **最大似然目标**：让专家轨迹在模型下概率更高。
-12. **梯度直觉**：reward 更新方向是专家特征期望减模型特征期望。
-13. **与 GAIL 的关系**：二者都关注专家行为背后的目标，GAIL 更偏对抗式分布匹配，IRL 更偏 reward 学习与解释。
-14. **工程价值**：IRL 适合做偏好解释、cost 调参、专家数据诊断和策略评估。
-15. **工程风险**：特征缺失、数据偏差、内层 RL 成本高、reward 不唯一、安全约束不能只靠 reward。
+本章完成了三件事。
 
----
+第一，它把模仿学习从“专家动作标签”推进到了“专家偏好解释”。reward $r(s,a)$ 让我们可以讨论专家为什么偏好某些轨迹。
 
-## 20. 思考题
+第二，它说明了 reward ambiguity。专家轨迹不能唯一确定 reward，IRL 学到的是一种可解释偏好，不是专家内心真实目标的唯一答案。
 
-1. 请用自己的话解释：普通 RL 和 IRL 的方向有什么不同？
+第三，它推导了 feature expectation 和 MaxEnt IRL 梯度。这个推导告诉我们：IRL 的核心不是玄学，而是让模型分布下的特征统计接近专家特征统计。
 
-2. 为什么说 IRL 不是简单的监督学习？它相比 BC 多了哪些环节？
+但问题也随之出现：如果 reward 难以唯一恢复，估计模型特征期望又需要昂贵的采样或策略优化，那么能不能绕开显式 reward，直接比较专家和策略的行为分布？
 
-3. 给定公式 <span class="math">\\(r'(s,a)=\alpha r(s,a),\alpha>0\\)</span>，说明它如何体现 reward ambiguity。
-
-4. 在泊车任务中，请设计 5 个特征 <span class="math">\\(f\_k(s,a)\\)</span>，并说明每个特征对应什么工程偏好。
-
-5. 请解释 <span class="math">\\(r\_w(s,a)=w^\top f(s,a)\\)</span> 中 <span class="math">\\(w\\)</span> 和 <span class="math">\\(f(s,a)\\)</span> 分别代表什么。
-
-6. feature expectation <span class="math">\\(\mu(\pi)\\)</span> 和 occupancy measure <span class="math">\\(\rho\_\pi(s,a)\\)</span> 有什么关系？
-
-7. 为什么 maximum entropy IRL 不把专家轨迹看成唯一最优轨迹？这对机器人多模态行为有什么意义？
-
-8. partition function <span class="math">\\(Z(w)\\)</span> 为什么必须存在？如果没有它，<span class="math">\\(\exp(R\_w(\tau))\\)</span> 还算概率吗？
-
-9. 最大熵 IRL 目标中的 <span class="math">\\(-N\log Z(w)\\)</span> 在防止什么问题？
-
-10. 请解释为什么最大熵 IRL 的梯度可以理解为 <span class="math">\\(\mu\_E-\mu\_w\\)</span>。
-
-11. 如果专家数据中混入大量坏示教，IRL 可能学出什么错误 reward？如何在工程上缓解？
-
-12. 对于“抓取 + 精准摆入治具”任务，IRL 更适合作为直接策略学习方法，还是作为 cost / reward 辅助分析工具？请说明理由。
-
-13. 为什么 learned reward 不能替代安全约束？请结合机械臂或自动驾驶案例说明。
-
-14. 请比较 BC、GAIL 和 IRL：它们分别在模仿专家的哪个层面？动作、行为分布，还是目标函数？
-
-15. 如果你只有离线数据，不能在线 rollout，IRL 会遇到哪些困难？这如何引出第12章？
-
----
-
-## 21. 本章配图清单
-
-1. **图10-1 RL 与 IRL 方向对比图**
-   解释普通 RL 是从 reward 到 policy，IRL 是从专家轨迹到 reward。
-
-2. **图10-2 reward ambiguity 示例图**
-   展示同一条专家轨迹可能对应安全、舒适、效率、规则等多种解释。
-
-3. **图10-3 最大熵 IRL 直觉图**
-   解释 maximum entropy IRL 如何让高 reward 轨迹更可能，同时保留多种轨迹可能性。
-
-4. **图10-4 reward 与 policy 闭环关系图**
-   展示 IRL 学 reward、RL / 规划求策略、rollout 验证、再调整 reward 的闭环。
-
----
-
-## 22. 下一章预告：Offline Imitation Learning，离线数据不是越多越好，是坑有没有录进去
-
-IRL 让我们从专家行为追问背后的 reward。但在真实机器人和自动驾驶工程中，还有一个更现实的问题：很多时候我们不能在线乱试。
-
-机械臂不能为了探索 reward 把工件撞坏；自动驾驶不能为了采样边界动作去马路上试错；泊车系统不能为了估计 <span class="math">\\(\mu\_w\\)</span> 在真实车库里反复撞柱子。于是，我们经常只能依赖离线数据。
-
-这会带来一个新问题：
-
-> 数据里没覆盖的状态和动作，模型凭什么知道自己不会翻车？
-
-第12章会进入 Offline Imitation Learning。我们会讨论离线数据、behavior policy、support mismatch、OOD action、保守学习和离线评估。请先记住一句工程味很重的话：
-
-> 离线数据不是越多越好，是关键的坑、失败、恢复和边界状态有没有录进去。
-
-## 推荐阅读与深入材料
-
-### 阅读目的
-
-本章的核心是从“直接模仿动作”转到“反推专家背后的偏好/代价/奖励”。推荐阅读要服务于理解 reward ambiguity 和 maximum entropy 的必要性。
-
-### 推荐材料
-
-1. **Ng and Russell, 2000, “Algorithms for Inverse Reinforcement Learning”**
-   - 类型：A 类奠基论文。
-   - 阅读目的：理解 IRL 的原始问题：给定专家行为，反推 reward。
-   - 重点看：为什么 reward 不唯一。
-
-2. **Abbeel and Ng, 2004, “Apprenticeship Learning via Inverse Reinforcement Learning”**
-   - 类型：A/B 类经典论文。
-   - 阅读目的：理解 feature expectation matching。
-   - 对应本章：可用二维点机器人“离障碍远、路径短、靠近目标”等特征解释。
-
-3. **Ziebart et al., 2008, “Maximum Entropy Inverse Reinforcement Learning”**
-   - 类型：A/B 类核心论文。
-   - 阅读目的：理解最大熵为什么能缓解多个 reward 都能解释专家的问题。
-   - 重点看：轨迹概率 `p(\tau) \propto \exp(R(\tau))` 的直觉。
-
-4. **Finn, Levine, and Abbeel, 2016, “Guided Cost Learning”**
-   - 类型：B/C 类深度 IRL 材料。
-   - 链接：https://arxiv.org/abs/1603.00448
-   - 阅读目的：理解复杂连续控制任务中如何学习 cost/reward。
-
-### 阅读提示
-
-读 IRL 时不要把 reward 当成客观真理。更合理的理解是：reward 是一个能解释专家行为、并能指导策略泛化的工程假设。
-
----
+这就自然进入第11章：GAIL。
