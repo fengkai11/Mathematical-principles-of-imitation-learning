@@ -136,7 +136,16 @@ DAgger 的核心公式是：
 **公式 (4.2)：DAgger 数据集聚合公式**
 
 $$
-D_i=D_{i-1}\cup\left\{(o,a_E)\mid o\sim d^{\pi_i}(o),\;a_E\sim\pi_E(\cdot\mid o)\right\}
+D_i
+=
+D_{i-1}
+\cup
+\{
+(o,a_E)
+\mid
+ o\sim d^{\pi_i}(o),\;
+ a_E\sim\pi_E(\cdot\mid o)
+\}
 $$
 
 这个公式说明：
@@ -443,7 +452,16 @@ $$
 ### DAgger 的数据聚合
 
 $$
-D_i=D_{i-1}\cup\left\{(o,a_E)\mid o\sim d^{\pi_i}(o),\;a_E\sim\pi_E(\cdot\mid o)\right\}
+D_i
+=
+D_{i-1}
+\cup
+\{
+(o,a_E)
+\mid
+ o\sim d^{\pi_i}(o),\;
+ a_E\sim\pi_E(\cdot\mid o)
+\}
 $$
 
 ### DAgger 的误差改善直觉
@@ -504,7 +522,16 @@ $$
 ### 公式 (4.2)：DAgger 数据集聚合公式
 
 $$
-D_i=D_{i-1}\cup\left\{(o,a_E)\mid o\sim d^{\pi_i}(o),\;a_E\sim\pi_E(\cdot\mid o)\right\}
+D_i
+=
+D_{i-1}
+\cup
+\{
+(o,a_E)
+\mid
+ o\sim d^{\pi_i}(o),\;
+ a_E\sim\pi_E(\cdot\mid o)
+\}
 $$
 
 - **含义**：把当前策略访问到的观测及专家标签加入数据集。
