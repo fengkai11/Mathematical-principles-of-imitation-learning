@@ -202,7 +202,7 @@ $$-\log \pi_\theta(a \mid o) = \frac{1}{2\sigma^2}\lVert a - f_\theta(o)\rVert^2
 
 因此，在固定 $\sigma$ 的情况下，最小化 NLL 等价于最小化 MSE：
 
-$$\operatorname*{arg\,min}_{\theta}\left[-\log \pi_\theta(a \mid o)\right] = \operatorname*{arg\,min}_{\theta}\lVert a - f_\theta(o)\rVert^2$$
+$$\arg\min_{\theta}\left[-\log \pi_\theta(a \mid o)\right] = \arg\min_{\theta}\lVert a - f_\theta(o)\rVert^2$$
 
 这给 MSE 一个更深的解释：
 
@@ -222,7 +222,7 @@ MSE 和 NLL 看起来不同，但都可以放进经验风险最小化框架。
 
 **公式 (2.8)：行为克隆的统一经验风险目标**
 
-$$\theta^* = \operatorname*{arg\,min}_{\theta}\frac{1}{N}\sum_{i=1}^{N}\ell\left(\pi_\theta(\cdot \mid o_i), a_i\right)$$
+$$\theta^* = \arg\min_{\theta}\frac{1}{N}\sum_{i=1}^{N}\ell\left(\pi_\theta(\cdot \mid o_i), a_i\right)$$
 
 如果是确定性连续动作，$\ell$ 可以是 MSE：
 
@@ -388,7 +388,7 @@ $$-\log \pi_\theta(a \mid o) = \frac{1}{2\sigma^2}\lVert a - f_\theta(o)\rVert^2
 
 ### 公式 (2.8)：行为克隆的统一经验风险目标
 
-$$\theta^* = \operatorname*{arg\,min}_{\theta}\frac{1}{N}\sum_{i=1}^{N}\ell\left(\pi_\theta(\cdot \mid o_i), a_i\right)$$
+$$\theta^* = \arg\min_{\theta}\frac{1}{N}\sum_{i=1}^{N}\ell\left(\pi_\theta(\cdot \mid o_i), a_i\right)$$
 
 ### 公式 (2.9)：BC 的专家分布目标
 
