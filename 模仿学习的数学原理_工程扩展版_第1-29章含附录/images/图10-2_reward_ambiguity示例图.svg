@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="620" viewBox="0 0 1100 620">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333"/>
+    </marker>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans CJK SC', 'Microsoft YaHei', Arial, sans-serif; fill:#222; }
+      .title { font-size: 30px; font-weight: 700; }
+      .subtitle { font-size: 18px; fill:#555; }
+      .box-title { font-size: 20px; font-weight: 700; }
+      .body { font-size: 17px; }
+      .small { font-size: 15px; fill:#555; }
+      .box { fill:#f8f9fb; stroke:#333; stroke-width:2; rx:16; }
+      .reward { fill:#fff7e6; stroke:#b36b00; stroke-width:2; rx:16; }
+      .traj { fill:none; stroke:#1f77b4; stroke-width:7; stroke-linecap:round; }
+      .dash { stroke:#999; stroke-width:2; stroke-dasharray:8 8; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1100" height="620" fill="#ffffff"/>
+  <text x="550" y="48" text-anchor="middle" class="title">图10-2 reward ambiguity：同一条专家轨迹可以有多种解释</text>
+  <text x="550" y="82" text-anchor="middle" class="subtitle">专家轨迹只提供约束，不直接给出唯一 reward。</text>
+
+  <rect x="70" y="140" width="370" height="310" class="box"/>
+  <text x="255" y="175" text-anchor="middle" class="box-title">专家轨迹</text>
+  <path d="M125 370 C 190 270, 260 260, 355 190" class="traj"/>
+  <circle cx="125" cy="370" r="12" fill="#2ca02c"/>
+  <circle cx="355" cy="190" r="12" fill="#d62728"/>
+  <text x="125" y="402" text-anchor="middle" class="body">起点</text>
+  <text x="355" y="175" text-anchor="middle" class="body">目标</text>
+  <line x1="235" y1="135" x2="235" y2="455" class="dash"/>
+  <text x="255" y="492" text-anchor="middle" class="small">只观察到：专家这样走了</text>
+
+  <line x1="450" y1="295" x2="560" y2="295" stroke="#333" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="505" y="270" text-anchor="middle" class="body">可被解释为</text>
+
+  <rect x="610" y="120" width="390" height="95" class="reward"/>
+  <text x="805" y="153" text-anchor="middle" class="box-title">reward A：成功率优先</text>
+  <text x="805" y="185" text-anchor="middle" class="body">终点放置成功得分最高</text>
+
+  <rect x="610" y="245" width="390" height="95" class="reward"/>
+  <text x="805" y="278" text-anchor="middle" class="box-title">reward B：安全边界优先</text>
+  <text x="805" y="310" text-anchor="middle" class="body">远离治具边缘和障碍物更重要</text>
+
+  <rect x="610" y="370" width="390" height="95" class="reward"/>
+  <text x="805" y="403" text-anchor="middle" class="box-title">reward C：平顺与节拍权衡</text>
+  <text x="805" y="435" text-anchor="middle" class="body">动作平滑，同时不能太慢</text>
+
+  <text x="550" y="555" text-anchor="middle" class="subtitle">结论：IRL 学到的是“能解释专家行为的偏好函数”，不是专家内心真实 reward 的唯一答案。</text>
+</svg>
