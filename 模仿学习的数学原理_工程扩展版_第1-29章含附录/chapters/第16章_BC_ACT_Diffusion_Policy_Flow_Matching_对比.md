@@ -1,852 +1,386 @@
-# 第16章：BC / ACT / Diffusion Policy / Flow Matching 对比
+# 第16章：BC / ACT / Diffusion Policy / Flow Matching 对比：从点估计到生成式动作策略
 
-> **新版布局位置**：本章属于 **第四篇：现代机器人策略模型**。本章编号、公式编号与交叉引用已按新版八篇结构统一调整。
-
-
-> **本章一句话导读**：本章把 BC、ACT、Diffusion Policy 和 Flow Matching 放在同一张表里比较，帮助读者做方法选型。
-
-
-
-
-> 本章是前三章生成式策略学习内容的阶段性收束。第13章讲 ACT：一次预测动作小套餐；第14章讲 Diffusion Policy：从噪声里慢慢搓出动作块。本章不再急着介绍新模型，而是把 BC、ACT、Diffusion Policy 放到同一张桌子上审问：它们到底在预测什么？优化目标有什么区别？多模态动作谁更能打？工程上什么时候该用朴素 BC，什么时候该升级到 ACT，什么时候才值得请 Diffusion Policy 这位“慢工出细活”的选手出场？
+> **本章一句话导读**：本章把 BC、ACT、Diffusion Policy 和 Flow Matching 放到同一条动作建模谱系中比较，帮助读者判断：什么时候用简单点估计，什么时候需要动作块，什么时候值得引入生成式动作策略。
 
 ---
 
-## 1. 本章开场：不是模型越新越适合你的机器人
+## 1. 本章为什么出现：第四篇的阶段性收束
 
-做机器人学习时，工程师很容易被一个问题诱惑：
-
-> 既然 Diffusion Policy 看起来更先进，那是不是以后都不用 BC 和 ACT 了？
-
-这句话听起来像技术进步，实际上可能是项目经理听了会沉默、实机工程师听了会打开安全急停按钮的危险想法。
-
-模型不是越复杂越好。模型复杂度就像厨具：
-
-- 切葱用菜刀就够，不需要上五轴加工中心；
-- 做双臂穿线任务，单步菜刀可能不够，需要一套组合工具；
-- 做多接触、多路径、多解连续控制，才可能需要 diffusion 这种“先打草稿再修动作”的方法。
-
-模仿学习也是这样。
-
-BC、ACT、Diffusion Policy 不是简单的“旧方法、新方法、更新方法”关系，而是三种不同的动作建模视角：
-
-1. **BC**：把动作当成一个要回归或分类的答案；
-2. **ACT**：把未来一小段动作当成序列，一次性预测 action chunk；
-3. **Diffusion Policy**：把动作块当成条件生成对象，从噪声中迭代生成。
-
-如果任务本身动作非常规则、周期很短、数据分布也比较单一，BC 可能就是性价比最高的 baseline。你非要上 diffusion，相当于给电动车装火箭发动机：看起来很酷，验收时可能先被安全部门请去喝茶。
-
-但如果任务存在明显多解，比如同一个物体可以从左边抓、右边抓、先推再抓，动作轨迹是连续且多模态的，那么单纯 MSE 回归很可能把几条正确路线平均成一条“数学上折中、物理上尴尬”的路线。这时 ACT 或 Diffusion Policy 的优势才会出现。
-
-所以，本章的核心不是给三类方法排座次，而是建立一套工程判断框架：
-
-> 先看任务，再选模型；先做 baseline，再谈升级；先保证闭环安全，再追求论文效果。
-
----
-
-## 2. 本章要解决的核心问题
-
-本章围绕以下 14 个问题展开：
-
-1. BC、ACT、Diffusion Policy 在数学上分别建模什么对象？
-2. 为什么 BC 常常可以看成 point estimate，也就是点估计？
-3. 为什么 MSE 会把多模态动作平均掉？
-4. ACT 的 action chunk 相比单步动作多了什么表达能力？
-5. ACT 中的 latent variable 与多模态动作有什么关系？
-6. Diffusion Policy 的 denoising objective 和 BC 的 likelihood objective 有什么区别？
-7. 三类方法在动作 horizon 上有什么不同？
-8. 三类方法的推理成本和控制频率如何权衡？
-9. 为什么“能生成多模态动作”不等于“实机一定安全”？
-10. 短周期规则抓取是否真的需要复杂策略？
-11. 双臂精细操作为什么更适合 action chunk？
-12. 多模态连续控制为什么可能需要 diffusion？
-13. 自动驾驶轨迹预测与机器人动作生成有什么相似点？
-14. 工程项目中如何从 BC baseline 逐步升级到 ACT 或 Diffusion Policy？
-
-
-
-### 2.1 为什么新版布局把 Flow Matching 加入方法对比？
-
-在旧版结构中，本章主要比较 BC、ACT 与 Diffusion Policy。新版布局把第15章 Flow Matching 放在 Diffusion Policy 之后，因此本章也要把它纳入同一张比较表。
-
-从数学对象看，四类方法可以统一写成：
-
-<div class="math">\[
-A_t \sim \pi_\theta(A_t \mid o_t) \tag{16.1}\]</div>
-
-区别在于它们如何表示这个条件动作分布：
-
-| 方法 | 建模对象 | 生成方式 | 适合场景 |
-|---|---|---|---|
-| BC | 单步动作或简单动作块 | 直接回归 / 分类 | 规则、单峰、短周期任务 |
-| ACT | 动作块 <span class="math">\\(A\_t\\)</span> | Transformer + action chunk | 需要局部时间结构的操作任务 |
-| Diffusion Policy | 动作块分布 | 多步去噪生成 | 多模态、复杂连续动作 |
-| Flow Matching | 从噪声到动作的数据流 | 学习连续速度场 | 希望减少采样步数、用连续流表达动作生成 |
-
-因此，本章不是把 Flow Matching 当成全新孤立方法，而是把它放在“生成式动作策略”这条线上理解：
+到这里，第四篇已经连续讨论了三类现代机器人策略模型：
 
 ```text
-BC：直接给答案
-→ ACT：一次给一段答案
-→ Diffusion Policy：从噪声中迭代修答案
-→ Flow Matching：学习一条从噪声到答案的连续流
+第13章：ACT，把单步动作扩展为 action chunk；
+第14章：Diffusion Policy，把动作块看成从噪声中逐步去噪得到的样本；
+第15章：Flow Matching，把离散去噪过程进一步改写成连续流场生成过程。
 ```
 
-后文提到“三类方法”时，如果讨论的是旧版三者对比，仍然指 BC / ACT / Diffusion Policy；如果讨论生成式策略升级，则应把 Flow Matching 一并纳入。
+如果只逐章阅读，读者很容易形成一种错觉：
 
+> 新方法总是比旧方法强，所以 BC 不如 ACT，ACT 不如 Diffusion Policy，Diffusion Policy 又不如 Flow Matching。
 
-本章会反复使用以下符号：
+这个理解很危险。
 
-- 当前观测：<span class="math">\\(o\_t\\)</span> 或 <span class="math">\\(obs\_t\\)</span>；
-- 当前动作：<span class="math">\\(a\_t\\)</span>；
-- 动作块：<span class="math">\\(A\_t=a\_{t:t+H-1}\\)</span>；
-- 学习策略：<span class="math">\\(\pi\_\theta\\)</span>；
-- 点估计模型：<span class="math">\\(f\_\theta(o\_t)\\)</span>；
-- ACT 的隐变量：<span class="math">\\(z\\)</span>；
-- Diffusion 的带噪动作块：<span class="math">\\(A^{(k)}\\)</span>；
-- Diffusion 的噪声预测网络：<span class="math">\\(\epsilon\_\theta(A^{(k)},k,obs\_t)\\)</span>。
+真实机器人项目不是模型选美比赛，而是任务、数据、控制频率、推理延迟、部署算力和安全边界之间的工程谈判。一个固定位置抓取任务，如果 BC 已经足够稳定，强行换成 diffusion 或 flow matching，可能不是升级，而是在给一个本来能跑通的系统增加训练、推理和安全风险。
 
-![图16-1 三类方法输入输出对比](../images/图16-1_三类方法输入输出对比.png)
+本章的任务不是给四类方法排绝对名次，而是建立一个统一判断框架：
 
-**图16-1 说明**：
-- BC 通常从当前观测直接输出一个动作，适合短周期、低多模态任务；
-- ACT 从当前观测和隐变量生成一段动作块，重点补上局部时间结构；
-- Diffusion Policy 从随机动作块开始多步去噪，输出的是条件分布中的一个动作序列样本；
-- 三者区别不是“网络名字不同”，而是动作建模对象不同。
+```text
+BC：给定观测，输出一个动作点；
+ACT：给定观测，输出一段动作块；
+Diffusion Policy：给定观测，从噪声动作块中多步去噪得到动作块样本；
+Flow Matching：给定观测，学习一条从噪声分布流向动作分布的连续速度场。
+```
 
----
+也就是说，本章要回答的不是“哪个模型最先进”，而是：
 
-
-### 主线定位与统一例子
-
-为了让本章不变成孤立知识点，读本章时请始终把公式落回两个统一例子：
-
-- **二维点机器人跟随专家轨迹**：状态可写成位置/速度，动作可写成二维控制量，适合观察状态分布、轨迹分布和误差累积。
-- **机械臂末端运动/抓取轨迹模仿**：观测包含图像或本体状态，动作包含末端位姿增量或关节控制量，适合理解连续动作、多模态动作、动作块和实机闭环。
-
-- **承接前文**：承接第2、13、14章。
-- **本章推进**：把 BC、ACT、Diffusion Policy 放到同一套条件分布与动作 horizon 语言中比较。
-- **铺垫后文**：为第11章从单步/动作块生成过渡到行为分布匹配做准备。
-- **公式阅读抓手**：比较方法时先问：它学的是点估计、条件密度、动作块分布，还是生成过程。
-- **建议同步回看**：附录 C、D、G、I。
-
-## 3. 直觉解释：先不写公式，先把三类方法讲成人话
-
-### 3.1 BC：老师怎么做，我就回归什么
-
-Behavior Cloning 的想法非常朴素：
-
-> 专家在观测 <span class="math">\\(o\_t\\)</span> 下做了动作 <span class="math">\\(a\_t\\)</span>，那我就训练模型看到 <span class="math">\\(o\_t\\)</span> 时输出 <span class="math">\\(a\_t\\)</span>。
-
-如果动作是连续的，常用 MSE；如果动作是离散类别，常用交叉熵或负对数似然。第2章已经讲过，BC 的训练形态非常像监督学习。
-
-BC 的优点很明确：
-
-- 数据格式简单；
-- 训练稳定；
-- 推理快；
-- 容易部署；
-- 很适合作为所有复杂方法之前的 baseline。
-
-但 BC 的弱点也很直接：
-
-- 它常常输出一个“平均动作”；
-- 对多模态动作不友好；
-- 对闭环分布偏移敏感；
-- 单步预测不理解未来一小段动作节奏。
-
-用机械臂例子说，如果一个杯子可以从左侧抓，也可以从右侧抓，专家数据里两种方式都有。MSE 训练出来的模型可能输出一个介于左抓和右抓之间的动作，最后夹爪对准杯子中间的空气。模型不是没努力，它只是把数学平均当成了物理正确。
-
-### 3.2 ACT：别只想下一步，先想一小段
-
-ACT 的核心是 action chunk：
-
-> 不要只预测当前一步 <span class="math">\\(a\_t\\)</span>，而是预测未来一段 <span class="math">\\(A\_t=a\_{t:t+H-1}\\)</span>。
-
-这对机器人很重要。很多操作不是单步动作能表达的，而是有局部节奏：接近、对齐、接触、推进、停止。单步模型像每 20 毫秒问一次“你现在想干什么”，而 action chunk 更像让机器人先规划一个短句子，而不是一个字一个字蹦。
-
-ACT 的优势主要在两点：
-
-1. **时间结构更强**：动作块里包含短期计划；
-2. **执行更稳定**：temporal ensemble 可以平滑多个重叠动作块的输出。
-
-ACT 里经常结合 CVAE，用隐变量 <span class="math">\\(z\\)</span> 表示不同动作风格。例如同一个拉拉链任务，有人先拉紧布料再拉，有人直接拉，有人手腕角度不同。隐变量不是魔法，而是给模型一个“这次采用哪种局部风格”的旋钮。
-
-### 3.3 Diffusion Policy：动作不是答案，而是条件分布中的样本
-
-Diffusion Policy 更进一步：它不直接回归动作块，而是学习一个从噪声动作块到专家动作块的条件去噪过程。
-
-它的直觉是：
-
-> 当前观测给出任务约束，随机噪声提供候选起点，去噪网络一步步把候选动作修成像专家会做的动作。
-
-这非常适合复杂连续控制中的多模态问题。比如推方块到目标位置，合理轨迹可能有很多条。Diffusion Policy 不必把所有路线压成一个均值，而是可以从分布中生成某一条完整候选。
-
-但它也有代价：
-
-- 推理需要多步去噪；
-- 延迟更高；
-- 工程部署更复杂；
-- 生成的动作仍然必须经过安全过滤；
-- 如果数据质量差，生成模型可能只是更优雅地学会数据里的坏习惯。
-
-### 3.4 三者最核心的一句话差异
-
-可以用三句话记住：
-
-- **BC**：给我观测，我给你一个动作；
-- **ACT**：给我观测，我给你一段动作；
-- **Diffusion Policy**：给我观测和一团噪声，我慢慢生成一段动作。
-
-它们都在模仿专家，但模仿的数学对象越来越丰富：
-
-
-action point <span class="math">\\(\rightarrow\\)</span> action chunk <span class="math">\\(\rightarrow\\)</span> conditional action distribution。
+> 给定一个机器人任务，我们到底需要多强的动作分布表达能力？为这份表达能力要付出多少工程代价？
 
 ---
 
-## 4. 数学建模：三类方法到底在学什么对象
+## 2. 本章公式主线
 
-### 4.1 BC 的对象：从观测到动作的条件映射
+前几章的公式可以压缩成一条主线。
 
-最常见的 BC 写法是：
+第2章的 BC 从最朴素的监督学习开始：给定观测 $o_t$，直接预测专家动作 $a_t$。
 
-<div class="math">\[
-\hat a_t=f_\theta(o_t) \tag{16.2}\]</div>
+**公式 (16.1)：BC 的动作点估计形式**
 
-其中：
+$$\hat a_t=f_\theta(o_t)$$
 
-- <span class="math">\\(o\_t\\)</span>：第 <span class="math">\\(t\\)</span> 时刻观测，可以是图像、点云、状态向量或多传感器特征；
-- <span class="math">\\(a\_t\\)</span>：专家动作；
-- <span class="math">\\(\hat a\_t\\)</span>：模型预测动作；
-- <span class="math">\\(f\_\theta\\)</span>：参数为 <span class="math">\\(\theta\\)</span> 的神经网络。
+它解决了“如何从专家样本训练一个策略”的问题，但如果同一观测附近存在多种合理动作，MSE 点估计可能学到条件均值，而不是某个真实可执行动作。
 
-如果我们把策略写成条件概率形式，则是：
+第13章的 ACT 把动作对象从单步动作扩展为动作块。
 
-<div class="math">\[
-\pi_\theta(a_t|o_t) \tag{16.3}\]</div>
+**公式 (16.2)：ACT 的动作块对象**
 
-这表示：在观测 <span class="math">\\(o\_t\\)</span> 下，模型给动作 <span class="math">\\(a\_t\\)</span> 分配的概率。
+$$A_t=a_{t:t+H-1}=(a_t,a_{t+1},\dots,a_{t+H-1})$$
 
-对于连续动作，如果使用固定方差高斯策略，均值由神经网络输出：
+它解决了“单步动作缺少局部时间结构”的问题，但仍然需要考虑 chunk 长度、执行步长和闭环反馈。
 
-<div class="math">\[
-\pi_\theta(a_t|o_t)
-=
-\mathcal{N}
-\left(
- a_t;
- \mu_\theta(o_t),
- \sigma^2 I
-\right) \tag{16.4}\]</div>
+第14章的 Diffusion Policy 把动作块看成条件生成样本。
 
-此时最大化专家动作的似然，等价于最小化 MSE 的主要项。第2章和附录 D 已经讲过这个关系，本章只用它来比较方法。
+**公式 (16.3)：Diffusion Policy 的加噪动作块**
 
-### 公式拆解：BC 的 MSE 目标为什么容易变成点估计？
+$$A^{(k)}=\sqrt{\bar\alpha_k}A^{(0)}+\sqrt{1-\bar\alpha_k}\,\epsilon$$
 
-公式：
+它解决了“复杂连续多峰动作分布难以用单点预测表达”的问题，但代价是多步采样、推理延迟和更复杂的安全检查。
 
-<div class="math">\[
-\mathcal{L}_{\mathrm{BC\text{-}MSE}}(\theta)
-=
-\mathbb{E}_{(o,a)\sim\mathcal{D}}
-\left[
-\|a-f_\theta(o)\|^2
-\right] \tag{16.5}\]</div>
+第15章的 Flow Matching 进一步把生成过程改写为连续流场。
 
-它要解决的问题：
+**公式 (16.4)：Flow Matching 的连续流场采样**
 
-训练一个函数 <span class="math">\\(f\_\theta\\)</span>，让它在专家数据集 <span class="math">\\(\mathcal{D}\\)</span> 上尽量输出接近专家动作的预测值。
+$$\frac{dX_\tau}{d\tau}=v_\theta(X_\tau,\tau,o_t)$$
 
-符号解释：
+它解决的是“如何用连续速度场把噪声样本推向数据样本”的问题，为更少步数、更连续的生成式动作策略提供了另一种表达。
 
-- <span class="math">\\(\mathcal{L}\_{\mathrm{BC\text{-}MSE}}\\)</span>：行为克隆的均方误差损失；
-- <span class="math">\\(\theta\\)</span>：模型参数；
-- <span class="math">\\((o,a)\sim\mathcal{D}\\)</span>：从专家数据集中抽取一个观测—动作样本；
-- <span class="math">\\(f\_\theta(o)\\)</span>：模型在观测 <span class="math">\\(o\\)</span> 下预测的动作；
-- <span class="math">\\(\|a-f\_\theta(o)\|^2\\)</span>：预测动作和专家动作之间的平方距离；
-- <span class="math">\\(\mathbb{E}\\)</span>：对数据分布中的样本取平均。
+因此，本章统一比较的核心问题是：
 
-直觉理解：
+```text
+给定观测 o_t，策略如何表示动作对象 A_t？
 
-MSE 会惩罚“离专家动作远”的预测。若同一个观测附近存在多种专家动作，MSE 的最优预测倾向于落在这些动作的平均位置。
-
-在理想函数空间中，对于固定观测 <span class="math">\\(o\\)</span>，MSE 的最优点估计可以写成：
-
-<div class="math">\[
-f^*(o)
-=
-\mathbb{E}[A|O=o] \tag{16.6}\]</div>
-
-这个式子的含义是：如果只允许模型输出一个点，并且损失是平方误差，那么最优答案是条件均值。
-
-机器人案例：
-
-机械臂看到同一个杯子，有两种专家抓取方式：左侧抓和右侧抓。若两类样本数量接近，条件均值可能落在杯子正前方。这个位置在数学上离两种专家动作都不算太远，但在物理上可能既不是左抓，也不是右抓。
-
-常见误解：
-
-很多人看到训练 loss 很低，就以为模型学到了专家策略。更准确地说，MSE 下模型可能学到的是专家动作条件均值，而不是专家行为分布。对于单峰动作任务，这通常够用；对于多峰动作任务，条件均值可能是坏答案。
-
-### 4.2 BC 的概率写法：条件密度估计
-
-更一般地，BC 可以写成条件密度估计：
-
-<div class="math">\[
-\theta^*
-=
-\arg\max_\theta
-\sum_{(o,a)\in\mathcal{D}}
-\log \pi_\theta(a|o) \tag{16.7}\]</div>
-
-或最小化负对数似然：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{BC\text{-}NLL}}(\theta)
-=
--
-\mathbb{E}_{(o,a)\sim\mathcal{D}}
-\left[
-\log \pi_\theta(a|o)
-\right] \tag{16.8}\]</div>
-
-从这个角度看，BC 并不必然只能是点估计。若 <span class="math">\\(\pi\_\theta(a|o)\\)</span> 是一个足够灵活的分布，比如 mixture density network 或 flow model，它也可以表达多模态动作。
-
-但在很多工程实现中，BC 被简化成“网络输出一个连续动作，然后用 MSE 训练”。因此本书比较三类方法时，会把“朴素 BC”主要理解为单步点估计或固定高斯条件分布。
-
-### 4.3 ACT 的对象：条件动作块分布
-
-ACT 把动作对象从单步 <span class="math">\\(a\_t\\)</span> 扩展为动作块：
-
-<div class="math">\[
-A_t
-=
-a_{t:t+H-1}
-=
-(a_t,a_{t+1},\dots,a_{t+H-1}) \tag{16.9}\]</div>
-
-如果每个动作维度为 <span class="math">\\(d\_a\\)</span>，动作块可以看成：
-
-<div class="math">\[
-A_t\in\mathbb{R}^{H\times d_a} \tag{16.10}\]</div>
-
-ACT 希望学习的是：
-
-<div class="math">\[
-p_\theta(A_t|o_{\le t},z) \tag{16.11}\]</div>
-
-其中：
-
-- <span class="math">\\(o\_{\le t}\\)</span>：当前及历史观测；
-- <span class="math">\\(A\_t\\)</span>：未来动作块；
-- <span class="math">\\(z\\)</span>：隐变量，用来表示动作风格或未观测因素；
-- <span class="math">\\(p\_\theta\\)</span>：动作块生成分布。
-
-ACT 的训练常常带有 CVAE 结构。训练时，encoder 可以看到真实动作块 <span class="math">\\(A\_t\\)</span>，学习后验：
-
-<div class="math">\[
-q_\phi(z|o_{\le t},A_t) \tag{16.12}\]</div>
-
-decoder 根据观测和 <span class="math">\\(z\\)</span> 重构动作块：
-
-<div class="math">\[
-\hat A_t
-=
-f_\theta(o_{\le t},z) \tag{16.13}\]</div>
-
-一个典型训练目标可以写成：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{ACT}}(\theta,\phi)
-=
-\mathbb{E}
-\left[
-\|A_t-f_\theta(o_{\le t},z)\|^2
-\right]
-+
-\beta
-D_{\mathrm{KL}}
-\left(
-q_\phi(z|o_{\le t},A_t)
-\|p(z)
-\right) \tag{16.14}\]</div>
-
-这不是 ACT 论文所有实现细节的唯一写法，而是本章用于理解的简化数学骨架。它表达了两个目标：动作块要重构好，隐变量分布不要乱飞。
-
-### 公式拆解：ACT 的 action chunk 目标在补什么短板？
-
-公式：
-
-<div class="math">\[
-A_t=a_{t:t+H-1} \tag{16.15}\]</div>
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{chunk}}(\theta)
-=
-\mathbb{E}
-\left[
-\|A_t-\hat A_t\|^2
-\right] \tag{16.16}\]</div>
-
-它要解决的问题：
-
-单步 BC 只关心当前动作是否像专家，ACT 希望模型直接学习一段短期动作结构。
-
-符号解释：
-
-- <span class="math">\\(A\_t\\)</span>：从当前时刻开始的专家动作块；
-- <span class="math">\\(H\\)</span>：动作块长度，也称 action horizon；
-- <span class="math">\\(\hat A\_t\\)</span>：模型预测的动作块；
-- <span class="math">\\(\mathcal{L}\_{\mathrm{chunk}}\\)</span>：动作块重构损失。
-
-直觉理解：
-
-如果单步动作像一个字，动作块就像一句短句。很多机器人任务不是靠一个字表达，而是靠一段连贯动作表达。ACT 让模型从“逐字预测”升级为“短句预测”。
-
-机器人案例：
-
-双臂拉开拉链时，左手固定布料，右手沿拉链方向移动。这个过程的关键不是某一帧动作，而是两只手在一段时间内的协调。action chunk 能让模型一次性表达这种局部协作。
-
-常见误解：
-
-action chunk 不是越长越好。chunk 太短，时间结构不够；chunk 太长，模型需要预测太远的未来，误差和环境不确定性会变大。工程里通常还要配合 receding horizon execution：生成一段，只执行前几步，然后重新观测。
-
-### 4.4 Diffusion Policy 的对象：条件动作块生成过程
-
-Diffusion Policy 同样生成动作块 <span class="math">\\(A\_t\\)</span>，但它不直接输出 <span class="math">\\(\hat A\_t\\)</span>，而是学习从带噪动作块到干净动作块的反向过程。
-
-训练时先对专家动作块加噪：
-
-<div class="math">\[
-A^{(k)}
-=
-\sqrt{\bar\alpha_k}A^{(0)}
-+
-\sqrt{1-\bar\alpha_k}\,\epsilon,
-\quad
-\epsilon\sim\mathcal{N}(0,I) \tag{16.17}\]</div>
-
-其中：
-
-- <span class="math">\\(A^{(0)}\\)</span>：干净专家动作块；
-- <span class="math">\\(A^{(k)}\\)</span>：加噪到第 <span class="math">\\(k\\)</span> 步的动作块；
-- <span class="math">\\(\epsilon\\)</span>：标准高斯噪声；
-- <span class="math">\\(\bar\alpha\_k\\)</span>：由噪声调度决定的累计保留系数。
-
-模型学习预测噪声：
-
-<div class="math">\[
-\epsilon_\theta(A^{(k)},k,obs_t) \tag{16.18}\]</div>
-
-训练目标是：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{diffusion}}(\theta)
-=
-\mathbb{E}_{A^{(0)},\epsilon,k,obs_t}
-\left[
-\left\|
-\epsilon-
-\epsilon_\theta(A^{(k)},k,obs_t)
-\right\|^2
-\right] \tag{16.19}\]</div>
-
-### 公式拆解：Diffusion 的 denoising objective 和 BC 的 NLL 差在哪里？
-
-公式：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{diffusion}}(\theta)
-=
-\mathbb{E}
-\left[
-\left\|
-\epsilon-
-\epsilon_\theta(A^{(k)},k,obs_t)
-\right\|^2
-\right] \tag{16.20}\]</div>
-
-它要解决的问题：
-
-训练一个条件去噪网络，使它能在不同噪声等级 <span class="math">\\(k\\)</span> 下，根据观测 <span class="math">\\(obs\_t\\)</span> 判断动作块里混入了什么噪声。
-
-符号解释：
-
-- <span class="math">\\(A^{(0)}\\)</span>：专家动作块；
-- <span class="math">\\(A^{(k)}\\)</span>：带噪动作块；
-- <span class="math">\\(k\\)</span>：diffusion 加噪 / 去噪步；
-- <span class="math">\\(obs\_t\\)</span>：当前观测条件；
-- <span class="math">\\(\epsilon\\)</span>：真实加入的噪声；
-- <span class="math">\\(\epsilon\_\theta\\)</span>：网络预测的噪声；
-- <span class="math">\\(\|\epsilon-\epsilon\_\theta\|^2\\)</span>：噪声预测误差。
-
-直觉理解：
-
-BC 直接问：“专家动作是什么？”
-
-Diffusion Policy 问：“这份带噪动作里，哪些部分不像专家动作？我该怎么把它修回去？”
-
-机器人案例：
-
-推方块时，同一个起点到目标有多条合理轨迹。Diffusion Policy 可以从随机候选轨迹开始，在观测条件下逐步修出一条可行轨迹，而不是一开始就被迫输出一个平均轨迹。
-
-常见误解：
-
-Diffusion Policy 不是让机器人在真实世界里随机试动作。噪声和去噪发生在模型内部，真实机器人只执行最终生成并经过约束检查的动作。
-
-![图16-2 动作分布建模能力对比](../images/图16-2_动作分布建模能力对比.png)
-
-**图16-2 说明**：
-- 朴素 BC 在 MSE 训练下倾向输出条件均值，可能落在多个专家模式之间；
-- ACT / CVAE 通过隐变量 <span class="math">\\(z\\)</span> 表示若干动作风格，但生成结构仍相对直接；
-- Diffusion Policy 通过迭代去噪表达复杂连续多峰分布；
-- 分布建模能力越强，越需要工程侧做安全筛选和约束检查。
+点估计 → 动作块 → 离散去噪生成 → 连续流场生成
+```
 
 ---
 
-## 5. 核心公式拆解：把三类方法放到同一张公式表上
+## 3. 本章核心数学对象
 
-### 5.1 三类方法的统一视角
+### 定义 16.1：动作点估计
 
-我们可以把三类方法统一写成：
+> **动作点估计**指策略在给定观测后，只输出一个确定动作或一个分布的代表值。
 
-<div class="math">\[
-\text{model input} \longrightarrow \text{action object} \tag{16.21}\]</div>
+最常见形式是：
 
-但 action object 不同。
+**公式 (16.5)：动作点估计**
 
-BC：
+$$\hat a=f_\theta(o)$$
 
-<div class="math">\[
-o_t \longrightarrow a_t \tag{16.22}\]</div>
+这里的 $o$ 是观测，$\hat a$ 是模型输出的动作，$f_\theta$ 是参数为 $\theta$ 的函数。
 
-ACT：
+在工程中，它对应“当前相机图像进模型，模型直接吐出一个末端位姿增量或关节控制量”。它的优点是快、简单、容易部署；缺点是如果任务存在多种合理动作，它只能给一个答案。
 
-<div class="math">\[
-o_{\le t} \longrightarrow A_t=a_{t:t+H-1} \tag{16.23}\]</div>
+### 定义 16.2：条件动作分布
 
-Diffusion Policy：
+> **条件动作分布**指在给定观测条件下，动作不是唯一答案，而是一个可能动作集合上的概率分布。
 
-<div class="math">\[
-(obs_t,A^{(K)})
-\longrightarrow
-A^{(K-1)}
-\longrightarrow
-\cdots
-\longrightarrow
-A^{(0)} \tag{16.24}\]</div>
+**公式 (16.6)：条件动作分布**
 
-也就是说，BC 输出的是单步动作，ACT 输出的是动作块，Diffusion Policy 输出的是经过生成过程得到的动作块样本。
+$$a\sim p_\theta(a\mid o)$$
 
-### 5.2 公式拆解：point estimate 与 conditional distribution
+读法是：在观测 $o$ 的条件下，从策略表示的动作分布 $p_\theta(a\mid o)$ 中采样动作 $a$。
 
-先看一个重要区别：点估计和条件分布。
+这个对象很重要。机器人任务中，同一个视觉观测下可能存在多个正确做法：从左侧抓、从右侧抓、先推再抓、先对齐再插入。条件动作分布承认“多个答案都可能正确”。
 
-点估计写作：
+### 定义 16.3：动作块
 
-<div class="math">\[
-\hat a=f_\theta(o) \tag{16.25}\]</div>
+> **动作块**指从当前时刻开始的一段未来动作序列。
 
-条件分布写作：
+**公式 (16.7)：动作块**
 
-<div class="math">\[
-a\sim p_\theta(a|o) \tag{16.26}\]</div>
+$$A_t=a_{t:t+H-1}=(a_t,a_{t+1},\dots,a_{t+H-1})$$
 
-动作块条件分布写作：
+其中 $H$ 是动作块长度，也叫 action horizon。
 
-<div class="math">\[
-A\sim p_\theta(A|obs) \tag{16.27}\]</div>
+在机械臂任务中，动作块可以表示一段连续操作：接近工件、降低末端、闭合夹爪、轻微抬起。它比单步动作更适合表达局部时间结构。
 
-它要解决的问题：
+### 定义 16.4：离散去噪生成过程
 
-同一个观测下，如果只有一个合理动作，点估计通常足够。如果同一个观测下存在多种合理动作，就需要建模条件分布。
+> **离散去噪生成过程**指先从随机噪声动作块开始，再经过有限步反向去噪，逐步得到可执行动作块。
 
-符号解释：
+**公式 (16.8)：离散去噪生成过程**
 
-- <span class="math">\\(\hat a\\)</span>：模型输出的单个动作点；
-- <span class="math">\\(p\_\theta(a|o)\\)</span>：观测条件下动作的概率分布；
-- <span class="math">\\(A\\)</span>：动作块；
-- <span class="math">\\(p\_\theta(A|obs)\\)</span>：观测条件下动作块的概率分布。
+$$A^{(K)}\rightarrow A^{(K-1)}\rightarrow\cdots\rightarrow A^{(0)}$$
 
-直觉理解：
+这里的 $A^{(K)}$ 是噪声动作块，$A^{(0)}$ 是最终生成的动作块。
 
-点估计像让学生只能交一个答案；条件分布像承认“这道题可能有多个正确做法”。机器人世界里，多解是常态，不是异常。尤其是接触操作、绕障、抓取姿态选择和自动驾驶轨迹规划。
+Diffusion Policy 的核心不是“机器人在真实世界里随机试动作”，而是在模型内部把随机候选动作逐步修成更像专家数据的动作块。真实机器人只执行最终生成并通过安全过滤的动作。
 
-工程案例：
+### 定义 16.5：连续速度场生成过程
 
-自动驾驶轨迹预测中，前车慢行时，人类驾驶员可能选择跟车、轻微变道、等待空隙后变道。若模型输出一条平均轨迹，可能既不跟车，也不变道，而是在两条车道中间思考人生。多模态轨迹预测的思想与多模态机器人动作生成高度相似。
+> **连续速度场生成过程**指学习一个速度场，让样本沿着连续路径从噪声分布流向专家动作分布。
 
-常见误解：
+**公式 (16.9)：连续速度场生成过程**
 
-条件分布不是越宽越好。一个很宽的动作分布可能只是模型不确定，甚至是没学会。真正有价值的是：分布覆盖合理动作模式，同时排除危险动作区域。
+$$\frac{dX_\tau}{d\tau}=v_\theta(X_\tau,\tau,o_t),\quad \tau\in[0,1]$$
 
-### 5.3 公式拆解：三类训练目标的核心差异
+其中 $X_\tau$ 是生成路径上的中间动作样本，$v_\theta$ 是模型学习到的速度场，$o_t$ 是观测条件。
 
-BC NLL：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{BC\text{-}NLL}}
-=
--
-\mathbb{E}_{(o,a)\sim\mathcal{D}}
-\left[
-\log \pi_\theta(a|o)
-\right] \tag{16.28}\]</div>
-
-ACT 重构 + KL：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{ACT}}
-=
-\mathbb{E}
-\left[
-\|A-f_\theta(o,z)\|^2
-\right]
-+
-\beta D_{\mathrm{KL}}
-\left(q_\phi(z|o,A)\|p(z)\right) \tag{16.29}\]</div>
-
-Diffusion 去噪：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{diffusion}}
-=
-\mathbb{E}
-\left[
-\|\epsilon-\epsilon_\theta(A^{(k)},k,obs)\|^2
-\right] \tag{16.30}\]</div>
-
-它们要解决的问题：
-
-- BC NLL：让模型给专家动作更高概率；
-- ACT 目标：让模型能重构专家动作块，同时让隐变量分布可采样；
-- Diffusion 目标：让模型学会在观测条件下从带噪动作块中估计噪声。
-
-直觉理解：
-
-- BC 像直接批改最终答案；
-- ACT 像批改一小段动作作业，并检查学生的“风格变量”不要乱写；
-- Diffusion 像批改草稿修改能力：给你一份被污染的动作，让你指出哪里是噪声。
-
-机器人案例：
-
-在精准摆入治具任务中，如果工件位置固定、托盘槽口稳定，BC 可能足够。如果托盘有轻微变形、对齐过程需要连续微调，ACT 的动作块更合适。如果存在多种接触调整方式，比如先碰左边定位、再滑入，或者先碰右边定位、再旋转进入，Diffusion Policy 的多模态生成能力才可能体现价值。
-
-常见误解：
-
-不要把三类损失的数值直接横向比较。BC 的 MSE、ACT 的重构损失和 Diffusion 的噪声预测损失不是同一个物理量。真正要比较的是闭环成功率、失败类型、延迟、安全性和数据效率。
-
-### 5.4 action horizon：动作想多远？
-
-BC 的 horizon 通常是 1：
-
-<div class="math">\[
-H_{\mathrm{BC}}=1 \tag{16.31}\]</div>
-
-ACT 和 Diffusion Policy 通常生成长度为 <span class="math">\\(H\\)</span> 的动作块：
-
-<div class="math">\[
-A_t=a_{t:t+H-1} \tag{16.32}\]</div>
-
-但执行时未必执行完整个动作块。常见做法是只执行前 <span class="math">\\(H\_e\\)</span> 步：
-
-<div class="math">\[
-H_e\le H \tag{16.33}\]</div>
-
-然后重新观测、重新生成动作块。这就是 receding horizon execution。
-
-### 公式拆解：为什么生成 H 步，却只执行 H_e 步？
-
-公式：
-
-<div class="math">\[
-A_t=a_{t:t+H-1},
-\quad
-\text{execute } a_{t:t+H_e-1},
-\quad
-H_e\le H \tag{16.34}\]</div>
-
-它要解决的问题：
-
-动作块提供短期计划，但真实环境会变化。只执行前几步，可以保留计划结构，同时避免长期开环执行带来的风险。
-
-符号解释：
-
-- <span class="math">\\(H\\)</span>：模型生成的动作块长度；
-- <span class="math">\\(H\_e\\)</span>：实际执行长度；
-- <span class="math">\\(a\_{t:t+H\_e-1}\\)</span>：真正发送给控制器执行的前段动作。
-
-直觉理解：
-
-模型先想一小段，但不要闭着眼把整段走完。走几步，看一眼，再重新规划。像倒车入库时，老司机不是一次打死方向盘然后祈祷，而是边看边修。
-
-工程案例：
-
-机械臂插孔时，模型可以生成 16 步动作块，但实际只执行前 2 到 4 步。因为孔位、接触状态和摩擦会变化，后半段动作需要基于新观测更新。
-
-常见误解：
-
-action chunk 不是 open-loop 执行许可证。chunk 只是让模型表达局部时间结构，不代表可以忽视反馈控制。
-
-### 5.5 推理成本：模型会不会拖慢控制循环？
-
-从推理角度看，三类方法的成本也不同。
-
-BC 通常一次前向：
-
-<div class="math">\[
-C_{\mathrm{BC}}\approx C_f \tag{16.35}\]</div>
-
-ACT 通常也是一次前向，但输出更长序列：
-
-<div class="math">\[
-C_{\mathrm{ACT}}\approx C_g \tag{16.36}\]</div>
-
-Diffusion Policy 需要 <span class="math">\\(K\\)</span> 步去噪：
-
-<div class="math">\[
-C_{\mathrm{diffusion}}
-\approx
-K\,C_\epsilon \tag{16.37}\]</div>
-
-其中：
-
-- <span class="math">\\(C\_f\\)</span>：BC 单次网络前向成本；
-- <span class="math">\\(C\_g\\)</span>：ACT 单次网络前向成本；
-- <span class="math">\\(C\_\epsilon\\)</span>：Diffusion 去噪网络单次前向成本；
-- <span class="math">\\(K\\)</span>：去噪步数。
-
-这个式子不追求精确硬件计时，只提醒一个工程事实：Diffusion Policy 的表达能力通常伴随更高推理成本。
-
-![图16-3 推理成本与控制频率对比](../images/图16-3_推理成本与控制频率对比.png)
-
-**图16-3 说明**：
-- BC 推理快，适合高频、算力紧张的控制环；
-- ACT 输出动作块，成本中等，但仍通常比多步 diffusion 更易部署；
-- Diffusion Policy 表达能力强，但多步去噪会增加延迟；
-- 实机部署时要同时考虑模型延迟、控制频率、执行安全和 fallback。
+Flow Matching 可以理解成：不是一步步问“这一步噪声该怎么去掉”，而是学习“每个中间位置应该朝哪个方向流动，才能从噪声端点到达动作数据端点”。
 
 ---
 
-## 6. 算法流程：从 BC baseline 到生成式策略
+## 4. 四类方法分别在建模什么
 
-### 6.1 BC 训练与推理流程
+### 4.1 BC：建模观测到动作的直接映射
 
-BC 的流程最直接。
+BC 的最朴素写法是点估计。
 
-训练：
+**公式 (16.10)：BC 点估计策略**
 
-1. 收集专家数据 <span class="math">\\(\mathcal{D}=\{(o\_t,a\_t)\}\\)</span>；
-2. 送入神经网络 <span class="math">\\(f\_\theta(o\_t)\\)</span>；
-3. 计算 MSE 或 NLL；
-4. 反向传播更新 <span class="math">\\(\theta\\)</span>。
+$$\hat a_t=f_\theta(o_t)$$
 
-推理：
+如果使用 MSE 训练，目标可以写成：
 
-1. 读取当前观测 <span class="math">\\(o\_t\\)</span>；
-2. 输出动作 <span class="math">\\(\hat a\_t=f\_\theta(o\_t)\\)</span>；
-3. 发送给控制器；
-4. 下一帧重新观测。
+**公式 (16.11)：BC 的 MSE 训练目标**
 
-BC 的工程价值在于：它是最便宜的试金石。如果 BC 在开环和闭环都完全没有起色，直接上更复杂模型不一定能救项目，可能只是把问题包装得更高级。
+$$\mathcal{L}_{\mathrm{BC\text{-}MSE}}(\theta)=\mathbb{E}_{(o,a)\sim\mathcal{D}}\left[\left\|a-f_\theta(o)\right\|^2\right]$$
 
-### 6.2 ACT 训练与推理流程
+这个目标的读法是：从专家数据集 $\mathcal{D}$ 中抽取观测—动作对，让模型预测动作尽量接近专家动作。
 
-ACT 训练：
+BC 的工程价值很高：它是所有复杂策略之前最应该做的 baseline。它能快速回答：数据是否可学、观测是否有效、动作标签是否对齐、训练评估管线是否打通。
 
-1. 把专家轨迹切成动作块 <span class="math">\\(A\_t=a\_{t:t+H-1}\\)</span>；
-2. 用观测历史 <span class="math">\\(o\_{\le t}\\)</span> 和动作块训练 encoder；
-3. 从 <span class="math">\\(q\_\phi(z|o\_{\le t},A\_t)\\)</span> 采样隐变量；
-4. decoder 预测动作块 <span class="math">\\(\hat A\_t\\)</span>；
-5. 计算重构损失和 KL 正则；
-6. 更新参数。
+但朴素 BC 的短板也很明显：它容易把多种专家动作平均成一个动作。
 
-ACT 推理：
+**公式 (16.12)：MSE 点估计的条件均值形式**
 
-1. 当前观测进入模型；
-2. 从 prior 采样或使用固定 <span class="math">\\(z\\)</span>；
-3. decoder 输出动作块；
-4. 只执行前几步；
-5. 多个重叠动作块可用 temporal ensemble 融合。
+$$f^*(o)=\mathbb{E}[A\mid O=o]$$
 
-ACT 的核心价值是补上“局部时间结构”。它适合需要连续协调动作的任务，尤其是双臂操作和精细接触操作。
+如果同一个杯子既可以左抓也可以右抓，条件均值可能落在两种抓法中间。这个动作在数学上看起来“不远”，但在物理上可能谁也不是，最后夹爪对准空气。
 
-### 6.3 Diffusion Policy 训练与推理流程
+### 4.2 ACT：建模条件动作块
 
-Diffusion Policy 训练：
+ACT 的关键是把预测对象从单步动作 $a_t$ 改成动作块 $A_t$。
 
-1. 从专家数据中取动作块 <span class="math">\\(A^{(0)}\\)</span>；
-2. 随机采样 diffusion 步 <span class="math">\\(k\\)</span>；
-3. 采样噪声 <span class="math">\\(\epsilon\sim\mathcal{N}(0,I)\\)</span>；
-4. 构造带噪动作块 <span class="math">\\(A^{(k)}\\)</span>；
-5. 网络根据 <span class="math">\\(A^{(k)}, k, obs\\)</span> 预测噪声；
-6. 用噪声预测损失训练。
+**公式 (16.13)：ACT 的动作块分布**
 
-Diffusion Policy 推理：
+$$A_t\sim p_\theta(A_t\mid o_{\le t},z)$$
 
-1. 从随机动作块 <span class="math">\\(A^{(K)}\sim\mathcal{N}(0,I)\\)</span> 开始；
-2. 在当前观测条件下逐步去噪；
-3. 得到 <span class="math">\\(A^{(0)}\\)</span>；
-4. 执行前几步；
-5. 重新观测并滚动生成。
+其中 $o_{\le t}$ 表示当前及历史观测，$z$ 是隐变量，用来表示动作风格或未观测因素。
 
-Diffusion Policy 的核心价值是复杂连续动作分布建模。但它不是免费午餐，推理延迟、动作过滤和安全约束都要认真设计。
+一个简化的 ACT / CVAE 训练骨架可以写成：
+
+**公式 (16.14)：ACT 的重构加 KL 目标**
+
+$$\mathcal{L}_{\mathrm{ACT}}(\theta,\phi)=\mathbb{E}\left[\left\|A_t-f_\theta(o_{\le t},z)\right\|^2\right]+\beta D_{\mathrm{KL}}\left(q_\phi(z\mid o_{\le t},A_t)\|p(z)\right)$$
+
+这个目标包含两层意思：
+
+1. 预测动作块要接近专家动作块；
+2. 隐变量后验 $q_\phi$ 不能偏离先验 $p(z)$ 太远，否则推理时无法从先验中稳定采样。
+
+ACT 适合需要局部时间结构的任务。例如双臂拉拉链、插接件、精准摆入治具，这些任务不是某一帧动作正确就够了，而是一段动作的节奏、接触顺序和相对配合要正确。
+
+### 4.3 Diffusion Policy：建模离散去噪生成过程
+
+Diffusion Policy 同样生成动作块，但它不直接输出 $\hat A_t$，而是学习从带噪动作块到干净动作块的去噪过程。
+
+训练时，先构造带噪动作块。
+
+**公式 (16.15)：Diffusion 的正向加噪**
+
+$$A^{(k)}=\sqrt{\bar\alpha_k}A^{(0)}+\sqrt{1-\bar\alpha_k}\,\epsilon,\quad \epsilon\sim\mathcal{N}(0,I)$$
+
+然后训练网络预测噪声。
+
+**公式 (16.16)：Diffusion Policy 的噪声预测目标**
+
+$$\mathcal{L}_{\mathrm{diffusion}}(\theta)=\mathbb{E}_{A^{(0)},\epsilon,k,o_t}\left[\left\|\epsilon-\epsilon_\theta(A^{(k)},k,o_t)\right\|^2\right]$$
+
+这个目标不是直接问“专家动作是什么”，而是问：
+
+> 给定一个带噪动作块和当前观测，动作块里哪些部分是噪声？应该如何把它修回专家动作分布附近？
+
+Diffusion Policy 的优势在于复杂连续多峰分布建模。它可以从噪声中生成多个候选动作块，而不是被迫输出条件均值。
+
+但它的工程代价也高：多步采样带来推理延迟；生成动作必须经过速度、加速度、碰撞、关节限位和任务约束检查；训练数据中的坏习惯也可能被更优雅地学出来。
+
+### 4.4 Flow Matching：建模连续速度场
+
+Flow Matching 和 Diffusion Policy 一样，都可以用于生成动作块。但二者看待生成过程的方式不同。
+
+Diffusion Policy 更像离散修草稿：
+
+```text
+A^(K) → A^(K-1) → ... → A^(0)
+```
+
+Flow Matching 更像连续流动：
+
+```text
+X_0 沿速度场流向 X_1
+```
+
+训练时，可以把噪声端点和数据端点连接成一条路径。为了避免中文句子直接以公式作主语，这里把两个端点分开理解：
+
+- **噪声端点**：从简单分布 $p_0$ 采样得到 $X_0$；
+- **数据端点**：从专家动作块经验分布 $p_{\mathrm{data}}(A\mid o_t)$ 采样得到 $X_1$。
+
+一种最简单的线性路径写法是：
+
+**公式 (16.17)：Flow Matching 的线性路径**
+
+$$X_\tau=(1-\tau)X_0+\tau X_1,\quad \tau\in[0,1]$$
+
+对应的速度目标是：
+
+**公式 (16.18)：线性路径的速度目标**
+
+$$u_\tau=X_1-X_0$$
+
+于是 Flow Matching 的训练目标可以写成：
+
+**公式 (16.19)：Flow Matching 的速度场训练目标**
+
+$$\mathcal{L}_{\mathrm{FM}}(\theta)=\mathbb{E}_{\tau,X_0,X_1,o_t}\left[\left\|v_\theta(X_\tau,\tau,o_t)-(X_1-X_0)\right\|^2\right]$$
+
+读法是：在路径中间点 $X_\tau$ 处，网络预测的速度 $v_\theta(X_\tau,\tau,o_t)$ 应该接近真实路径速度 $X_1-X_0$。
+
+推理时，从噪声样本出发，沿着学到的速度场积分：
+
+**公式 (16.20)：Flow Matching 的 ODE 采样**
+
+$$\frac{dX_\tau}{d\tau}=v_\theta(X_\tau,\tau,o_t),\quad X_0\sim p_0$$
+
+积分到 $\tau=1$ 附近时，得到一个动作块样本。
+
+Flow Matching 的工程吸引力在于：它有机会用更少采样步数生成动作，同时保持较强的连续分布表达能力。但它仍然不是免费午餐：速度场是否稳定、积分步数如何选、动作约束如何加入，都会影响实机表现。
 
 ---
 
-## 7. Python 风格伪代码
+## 5. 关键命题：表达能力递进不等于工程安全递进
 
-下面用伪代码把三类方法放在同一个工程接口里。它不是可直接运行代码，而是帮助读者理解训练和推理对象。
+> **命题 16.1：表达能力递进不等于工程安全递进**
+>
+> 在连续机器人动作任务中，从 BC 到 ACT，再到 Diffusion Policy 和 Flow Matching，动作分布表达能力通常逐步增强；但表达能力增强并不自动推出闭环成功率提升，也不自动推出实机安全性提升。
 
-### 7.1 BC：单步动作预测
+**证明思路**：
+
+我们分三步看这个命题：先说明表达能力为什么增强，再说明为什么表达能力不等于成功率，最后说明为什么生成式策略更需要安全约束。
+
+**证明**：
+
+第一，朴素 BC 通常学习一个点估计。
+
+**公式 (16.21)：点估计只输出一个动作**
+
+$$\hat a=f_\theta(o)$$
+
+如果任务在观测 $o$ 下只有一个主要动作模式，这种表达足够。但如果存在多个动作模式，单点输出必须把多个模式压缩成一个动作。
+
+第二，ACT 把输出对象扩展成动作块。
+
+**公式 (16.22)：动作块表达局部时间结构**
+
+$$A_t=(a_t,a_{t+1},\dots,a_{t+H-1})$$
+
+这让模型可以表达一段局部动作节奏，比如“靠近—对齐—接触—推进”。因此 ACT 的表达能力强于单步动作点估计。
+
+第三，Diffusion Policy 和 Flow Matching 进一步把动作块作为生成对象。
+
+**公式 (16.23)：生成式动作块策略**
+
+$$A\sim p_\theta(A\mid o)$$
+
+它们可以从条件分布中采样动作块，因此更适合多峰连续控制。
+
+但是，闭环成功率不仅由动作分布表达能力决定，还依赖观测稳定性、标定精度、控制器跟踪误差、动作约束、安全过滤、数据覆盖和失败恢复。一个生成式策略即使能生成很多候选动作，也可能生成碰撞动作、超速动作、夹爪不可达动作或数据中存在的坏动作模式。
+
+所以，表达能力递进只能说明模型“更能表示复杂动作分布”，不能说明它“必然更安全、更稳定、更适合当前项目”。
+
+**这个命题告诉我们什么？**
+
+工程选型不能按论文新旧排序，而要按任务需求排序：
+
+```text
+任务简单、动作单峰、高频控制 → 先做 BC；
+任务需要局部时间结构 → 考虑 ACT；
+任务存在复杂多模态连续动作 → 考虑 Diffusion Policy 或 Flow Matching；
+只要上生成式策略 → 必须同时设计安全过滤、闭环评估和失败回收。
+```
+
+**常见误解**：
+
+不要把“能生成多模态动作”理解成“机器人可以随机多试几次”。真实机器人不是仿真里的无限复活角色，多模态生成必须被约束在安全动作集合内。
+
+---
+
+## 6. 四类训练目标对比
+
+四类方法可以放在同一张训练目标表里看。
+
+| 方法 | 训练目标 | 训练时学什么 | 主要短板 |
+|---|---|---|---|
+| BC | MSE / NLL | 观测到动作的映射或条件概率 | 点估计可能平均多峰动作 |
+| ACT | 动作块重构 + KL | 短期动作结构和隐变量风格 | chunk 长度、隐变量退化、推理滞后 |
+| Diffusion Policy | 噪声预测 MSE | 不同噪声等级下如何去噪动作块 | 多步采样、延迟、安全过滤复杂 |
+| Flow Matching | 速度场 MSE | 路径中间点应该如何流向数据端点 | 速度场泛化、ODE 积分和约束处理 |
+
+这张表有一个重要提醒：
+
+> 不要直接比较四类 loss 的数值大小。
+
+BC 的 MSE、ACT 的重构损失、Diffusion 的噪声预测误差、Flow Matching 的速度场误差不是同一个物理量。真实项目中更应该比较：闭环成功率、失败类型、恢复能力、延迟、动作平滑性、安全违规率和数据效率。
+
+---
+
+## 7. 四类推理过程对比
+
+### 7.1 BC 推理
+
+BC 推理最简单。
 
 ```python
 class BCPolicy:
     def __init__(self, model):
         self.model = model
 
-    def training_step(self, batch):
-        obs = batch["obs"]          # [B, obs_dim] 或图像特征
-        action = batch["action"]    # [B, action_dim]
-
-        pred_action = self.model(obs)
-        loss = mse(pred_action, action)
-        return loss
-
     def act(self, obs):
         action = self.model(obs)
         return safety_filter(action)
 ```
 
-关键点：
+它通常只需要一次前向推理，适合高频控制和快速 baseline。
 
-- 输入是当前观测；
-- 输出是单步动作；
-- 训练最便宜；
-- 必须做闭环验证，不要只看 open-loop MSE。
+### 7.2 ACT 推理
 
-### 7.2 ACT：动作块预测
+ACT 一次生成动作块，但通常只执行前几步。
 
 ```python
 class ACTPolicy:
-    def __init__(self, encoder, decoder, horizon, execute_steps):
-        self.encoder = encoder
+    def __init__(self, decoder, horizon, execute_steps):
         self.decoder = decoder
         self.horizon = horizon
         self.execute_steps = execute_steps
-
-    def training_step(self, batch):
-        obs_hist = batch["obs_hist"]          # [B, T_obs, ...]
-        action_chunk = batch["action_chunk"]  # [B, H, action_dim]
-
-        z_dist = self.encoder(obs_hist, action_chunk)
-        z = z_dist.sample()
-        pred_chunk = self.decoder(obs_hist, z)
-
-        recon_loss = mse(pred_chunk, action_chunk)
-        kl_loss = kl_divergence(z_dist, standard_normal())
-        loss = recon_loss + beta * kl_loss
-        return loss
 
     def act(self, obs_hist):
         z = sample_standard_normal()
@@ -855,603 +389,448 @@ class ACTPolicy:
         return action_chunk[:self.execute_steps]
 ```
 
-关键点：
+它比 BC 多了动作块结构，适合需要局部动作节奏的任务。
 
-- 训练对象是动作块；
-- 隐变量 <span class="math">\\(z\\)</span> 帮助表示动作风格；
-- 执行时通常只执行前几步；
-- temporal ensemble 可以进一步平滑动作。
+### 7.3 Diffusion Policy 推理
 
-### 7.3 Diffusion Policy：条件去噪生成动作块
+Diffusion Policy 从随机动作块开始多步去噪。
 
 ```python
 class DiffusionPolicy:
-    def __init__(self, denoiser, noise_schedule, horizon, denoise_steps, execute_steps):
+    def __init__(self, denoiser, denoise_steps, horizon, execute_steps):
         self.denoiser = denoiser
-        self.noise_schedule = noise_schedule
-        self.horizon = horizon
         self.denoise_steps = denoise_steps
+        self.horizon = horizon
         self.execute_steps = execute_steps
 
-    def training_step(self, batch):
-        obs = batch["obs"]
-        clean_chunk = batch["action_chunk"]       # A^(0)
-
-        k = sample_diffusion_step()
-        eps = sample_gaussian_like(clean_chunk)
-        noisy_chunk = add_noise(clean_chunk, eps, k, self.noise_schedule)
-
-        pred_eps = self.denoiser(noisy_chunk, k, obs)
-        loss = mse(pred_eps, eps)
-        return loss
-
     def act(self, obs):
-        chunk = sample_gaussian(shape=[self.horizon, action_dim])  # A^(K)
-
+        chunk = sample_gaussian_chunk(self.horizon)
         for k in reversed(range(self.denoise_steps)):
             pred_eps = self.denoiser(chunk, k, obs)
-            chunk = denoise_one_step(chunk, pred_eps, k, self.noise_schedule)
-
+            chunk = denoise_one_step(chunk, pred_eps, k)
         chunk = chunk_safety_filter(chunk)
         return chunk[:self.execute_steps]
 ```
 
-关键点：
+它的表达能力强，但采样步数会直接影响延迟。
 
-- 训练时学预测噪声；
-- 推理时多步去噪；
-- 输出仍是动作块；
-- 实机执行前必须经过动作范围、速度、加速度、碰撞和任务约束检查。
+### 7.4 Flow Matching 推理
 
-### 7.4 选择方法的伪代码
-
-工程上可以先用非常朴素的判断逻辑：
+Flow Matching 从噪声样本出发，沿速度场积分。
 
 ```python
-def choose_policy(task):
-    if task.is_short_horizon and task.is_low_multimodal and task.requires_high_frequency:
-        return "Start with BC baseline"
+class FlowMatchingPolicy:
+    def __init__(self, velocity_model, ode_steps, horizon, execute_steps):
+        self.velocity_model = velocity_model
+        self.ode_steps = ode_steps
+        self.horizon = horizon
+        self.execute_steps = execute_steps
 
-    if task.needs_local_temporal_structure and task.has_demonstration_chunks:
-        return "Try ACT"
-
-    if task.has_complex_multimodal_continuous_actions and task.can_afford_inference_cost:
-        return "Consider Diffusion Policy"
-
-    return "Build stronger data pipeline and evaluation before changing model"
+    def act(self, obs):
+        x = sample_gaussian_chunk(self.horizon)
+        tau = 0.0
+        dt = 1.0 / self.ode_steps
+        for _ in range(self.ode_steps):
+            velocity = self.velocity_model(x, tau, obs)
+            x = x + dt * velocity
+            tau = tau + dt
+        chunk = chunk_safety_filter(x)
+        return chunk[:self.execute_steps]
 ```
 
-这段伪代码最重要的是最后一行：很多时候问题不是模型不高级，而是数据、标注、观测、控制器、评测和安全约束没有准备好。
+这段伪代码不是推荐实现，只是帮助读者理解：Flow Matching 推理时依赖速度场和数值积分。
 
 ---
 
-## 8. 工程实践案例
+## 8. horizon、采样步数与控制频率
 
-### 8.1 案例一：短周期规则抓取，BC baseline 往往值得先做
+动作模型不是只看表达能力，还要看它能否塞进控制循环。
 
-假设任务是：机械臂从固定料盘中抓取规则工件，工件姿态变化不大，夹具设计合理，相机稳定，抓取动作短且重复。
+BC 通常一次前向。
 
-这种任务的特点是：
+**公式 (16.24)：BC 推理成本近似**
 
-- 动作模式少；
-- 多模态不强；
-- 控制频率要求较高；
-- 失败原因可能更多来自定位误差、夹具设计、标定漂移，而不是策略表达能力不足。
+$$C_{\mathrm{BC}}\approx C_f$$
 
-这时先做 BC baseline 很合理：
+ACT 通常一次生成动作块。
 
-<div class="math">\[
-\hat a_t=f_\theta(o_t) \tag{16.38}\]</div>
+**公式 (16.25)：ACT 推理成本近似**
 
-如果 BC 已经能稳定完成任务，就没有必要为了“生成式策略”而增加复杂度。工程里最怕的是把一个本来可以用传统视觉 + 简单策略解决的问题，改造成一个需要收集海量示教、训练大模型、部署高算力、最后还要靠规则兜底的系统。
+$$C_{\mathrm{ACT}}\approx C_g$$
 
-但 BC baseline 也不是随便做做。至少要检查：
+Diffusion Policy 需要多步去噪。
 
-1. open-loop 动作误差；
-2. closed-loop 成功率；
-3. 失败样本分布；
-4. 对光照、位置扰动、夹爪磨损的鲁棒性；
-5. 是否出现分布偏移后的连续补锅失败。
+**公式 (16.26)：Diffusion 推理成本近似**
 
-### 8.2 案例二：双臂精细操作，ACT 的 action chunk 更自然
+$$C_{\mathrm{diffusion}}\approx K C_\epsilon$$
 
-考虑双臂操作：一只手固定布料，另一只手拉拉链，或者一只手扶住工件，另一只手插入连接器。
+Flow Matching 需要 ODE 积分若干步。
 
-这类任务的关键不是“当前这一帧动作是否正确”，而是一段时间内两只手的协调：
+**公式 (16.27)：Flow Matching 推理成本近似**
 
-- 谁先动；
-- 谁保持；
-- 接触后速度如何变化；
-- 力和位姿如何配合；
-- 失败时是否能局部调整。
+$$C_{\mathrm{FM}}\approx N_{\mathrm{ODE}} C_v$$
 
-单步 BC 很容易抖动，因为每一帧都像重新做一次局部决策。ACT 用 action chunk 可以表达局部动作节奏：
+其中 $K$ 是 diffusion 去噪步数，$N_{\mathrm{ODE}}$ 是 ODE 积分步数，$C_\epsilon$ 是一次噪声预测网络前向成本，$C_v$ 是一次速度场网络前向成本。
 
-<div class="math">\[
-A_t=(a_t,a_{t+1},\dots,a_{t+H-1}) \tag{16.39}\]</div>
+这几个式子不是精确性能模型，而是工程提醒：
 
-在推理时，temporal ensemble 可以融合多个重叠动作块，让执行更平滑。这个机制对真实机器人很有意义，因为机械臂不是在数学纸面上移动，任何高频抖动都可能变成夹爪颤抖、接触异常或控制器报警。
+> 生成式策略的表达能力越强，越要认真计算推理延迟和控制频率是否匹配。
 
-### 8.3 案例三：多模态连续控制，Diffusion Policy 才有发挥空间
+在真实机器人中，经常使用 receding horizon execution：生成 $H$ 步，只执行前 $H_e$ 步，然后重新观测。
 
-考虑推方块任务：方块在桌面上，目标区域在另一侧，中间可能有障碍。专家可能有多种策略：
+**公式 (16.28)：生成 horizon 与执行 horizon**
 
-- 从左侧推过去；
-- 从右侧绕过去；
-- 先把方块调整角度，再向目标推；
-- 先短距离接触，再连续推进。
+$$A_t=a_{t:t+H-1},\quad \text{execute } a_{t:t+H_e-1},\quad H_e\le H$$
 
-这就是典型多模态连续控制。朴素 MSE 可能输出一条夹在多种轨迹之间的平均轨迹，实际执行时碰不到正确接触点。ACT 可以通过 <span class="math">\\(z\\)</span> 表示部分风格，但如果动作分布形状很复杂，Diffusion Policy 的迭代生成能力会更有优势。
-
-这里适合学习：
-
-<div class="math">\[
-A\sim p_\theta(A|obs) \tag{16.40}\]</div>
-
-而不是只学习：
-
-<div class="math">\[
-\hat A=f_\theta(obs) \tag{16.41}\]</div>
-
-但工程上要补三件事：
-
-1. 生成动作的范围约束；
-2. 与碰撞检测或任务约束结合；
-3. 对生成失败样本做回收和再训练。
-
-Diffusion Policy 可以更好地表达候选动作，不代表它自动知道工厂安全规范。策略模型负责“想怎么做”，安全系统负责“哪些事情不能做”。这两者不能互相甩锅。
-
-### 8.4 案例四：自动驾驶轨迹预测的类比
-
-自动驾驶里，多模态轨迹预测是老问题。一个路口场景中，车辆可能直行、左转、右转、减速等待。若模型输出平均轨迹，车辆可能朝着路口中间走出一条谁也不会开的路线。
-
-这和机器人动作生成非常像：
-
-- 观测条件：道路 / 障碍物 / 交通规则，对应机器人中的图像 / 状态 / 任务条件；
-- 多模态输出：多条可行轨迹，对应机器人中的多种操作方式；
-- 安全约束：车道线 / 碰撞 / 舒适性，对应机器人中的关节限位 / 碰撞 / 力控边界。
-
-所以，从自动驾驶经验看机器人策略时，要特别警惕“平均轨迹”。在泊车、绕障、低速操作中，多解不是异常情况，而是算法必须面对的现实。
-
-![图16-4 方法适用场景矩阵](../images/图16-4_方法适用场景矩阵.png)
-
-**图16-4 说明**：
-- 规则短动作优先用 BC baseline，先确认数据和控制链路是否成立；
-- 需要局部时间结构的精细操作，ACT 通常是很好的中间方案；
-- 多解、连续、多接触任务更适合考虑 Diffusion Policy；
-- 安全边界严格时，复杂策略更需要外部约束，而不是更少约束。
+这样做的原因是：动作块提供局部计划，但真实环境会变化，只执行前几步可以保留反馈能力。
 
 ---
 
-## 9. 方法边界与工程风险
+## 9. 工程选型决策树
 
-### 9.1 BC 的边界：快，但容易平均和分布偏移
+可以用下面这棵决策树做初步判断。
 
-BC 的边界主要有三类。
+```text
+第一问：任务是否短周期、动作单峰、控制频率要求高？
+是 → 先做 BC baseline。
+否 → 进入第二问。
 
-第一，多模态动作被平均。
+第二问：任务是否明显需要局部时间结构？
+例如接近、对齐、接触、推进必须连贯发生。
+是 → 考虑 ACT。
+否 → 继续增强 BC 或检查数据/观测。
 
-当 <span class="math">\\(p(a|o)\\)</span> 有多个峰时，MSE 点估计可能落在峰之间。这个问题在第7章已经讲过，本章再次强调，因为它是从 BC 升级到生成式策略的核心动机之一。
+第三问：同一观测下是否存在多个合理动作模式？
+例如左抓/右抓、左绕/右绕、先碰左边/先碰右边。
+是 → 考虑 Diffusion Policy 或 Flow Matching。
+否 → ACT 或概率 BC 可能已经足够。
 
-第二，闭环分布偏移。
+第四问：部署系统是否承受多步采样或 ODE 积分延迟？
+不能 → 优先 ACT、少步生成、蒸馏或传统规划兜底。
+能 → 可以试 Diffusion Policy / Flow Matching。
 
-训练时数据来自专家分布 <span class="math">\\(d^{\pi\_E}\\)</span>，执行时状态来自模型自己的分布 <span class="math">\\(d^{\pi\_\theta}\\)</span>。如果模型犯了一点错，就可能进入专家数据没有覆盖的区域。
+第五问：是否已经有安全过滤、闭环评估和失败回收？
+没有 → 不要急着上复杂生成式策略。
+有 → 再比较不同生成式策略的收益。
+```
 
-第三，单步动作缺少短期计划。
+这棵树的核心原则是：
 
-对于接触操作，单步预测可能导致动作抖动或前后不一致。
-
-但 BC 的优点也不能忽视：快、稳、便宜、容易 debug。工程中一个好 BC baseline 是非常有价值的参照物。
-
-### 9.2 ACT 的边界：chunk 不是万能药
-
-ACT 解决了单步动作的局部时间结构问题，但它也有边界。
-
-第一，chunk 长度难选。
-
-<span class="math">\\(H\\)</span> 太短，模型仍然像短视学生；<span class="math">\\(H\\)</span> 太长，模型预测未来太多不确定内容。
-
-第二，动作块可能与闭环反馈冲突。
-
-如果执行太长的 chunk，中间环境已经变化，后半段动作可能过期。
-
-第三，隐变量 <span class="math">\\(z\\)</span> 的解释性有限。
-
-我们希望 <span class="math">\\(z\\)</span> 表示动作风格，但模型实际学到的 latent 空间未必按人类想象排列。某个维度不一定就是“左抓 / 右抓”，可能混合了速度、姿态、数据采集者习惯和场景偏差。
-
-第四，ACT 仍然可能覆盖不了复杂多峰分布。
-
-如果任务的多模态结构很复杂，单个 latent 或直接 chunk decoder 可能表达不足。
-
-### 9.3 Diffusion Policy 的边界：强表达不等于强安全
-
-Diffusion Policy 的风险更像“能力越大，安全检查越不能少”。
-
-第一，推理延迟。
-
-如果控制环要求 50Hz 或 100Hz，多步去噪可能成为瓶颈。需要减少去噪步数、使用更快网络、异步推理、动作缓存或低层控制器兜底。
-
-第二，动作可行性。
-
-生成模型可能输出数据分布中看似合理、但在当前机器人硬件上不可行的动作。关节限位、速度、加速度、碰撞和接触力都必须检查。
-
-第三，数据质量。
-
-Diffusion Policy 能拟合复杂分布，但不会自动区分专家数据里的好习惯和坏习惯。如果示教数据中有犹豫、抖动、错误恢复不当，模型也可能学进去。
-
-第四，调参复杂。
-
-噪声步数、噪声调度、动作归一化、观测编码、horizon、执行步长都会影响效果。比起 BC，它更像一台精密设备，能做细活，但维护成本也更高。
-
-### 9.4 三类方法共同的工程风险
-
-无论选哪种方法，都绕不开这些问题：
-
-1. 观测是否稳定；
-2. 标定是否可靠；
-3. 数据是否覆盖失败和边界状态；
-4. action representation 是否适合控制器；
-5. open-loop 指标是否能预测 closed-loop 成功；
-6. 是否有安全约束、fallback 和人工接管机制；
-7. 是否有失败数据回流再训练流程。
-
-如果这些基础没有做好，换模型就像给漏水的屋顶换更贵的窗帘：看起来投入很大，问题还是从头顶滴下来。
+> 先用最便宜的方法暴露问题，再用更强的方法解决确实存在的表达能力瓶颈。
 
 ---
 
-## 10. 常见误区
+## 10. 机械臂抓取与精准摆入治具案例
 
-### 10.1 误区一：Diffusion Policy 一定比 ACT 好
+考虑一个“抓取 + 精准摆入治具”的工业任务。
+
+机械臂先抓取规则工件，再把工件放入托盘槽口。托盘可能有轻微变形，位置可能有偏差，工件插入时可能出现卡边、偏斜或接触异常。
+
+### 10.1 第一阶段：BC baseline
+
+如果工件位置稳定、槽口位置可靠、夹具设计合理，可以先做 BC。
+
+BC 要回答的问题是：
+
+```text
+观测是否足够？
+动作标签是否对齐？
+简单策略能否完成大部分样本？
+失败主要来自策略表达，还是来自视觉定位、标定、夹具和控制？
+```
+
+如果 BC 已经闭环成功率很高，继续堆复杂模型不一定划算。
+
+### 10.2 第二阶段：ACT 升级
+
+如果失败主要发生在接触前后，例如：
+
+```text
+接近槽口时动作抖动；
+插入节奏不连贯；
+接触后没有稳定微调；
+一帧动作正确，但连续执行不顺。
+```
+
+这时 ACT 更自然。它让模型一次输出一段局部动作，表达“对齐—接触—微调—插入”的短期结构。
+
+### 10.3 第三阶段：Diffusion Policy 或 Flow Matching 升级
+
+如果同一个插入场景存在多种合理调整方式，例如：
+
+```text
+先靠左边定位再滑入；
+先靠右边定位再旋入；
+先后退一点重新对齐；
+先轻碰槽边再沿边缘修正。
+```
+
+这就是多模态连续控制。朴素 MSE 可能把几种插入方式平均成一种“既不靠左也不靠右”的坏动作。生成式策略才可能发挥价值。
+
+但这时必须同步加入：
+
+```text
+动作范围过滤；
+速度和加速度限制；
+碰撞检测；
+力/位置异常监控；
+失败回退动作；
+闭环指标记录；
+失败样本回收再训练。
+```
+
+否则，生成式策略只是更高级的动作生成器，不是可靠的工业系统。
+
+---
+
+## 11. 常见误解
+
+### 11.1 误解一：Flow Matching 一定比 Diffusion Policy 更好
 
 不一定。
 
-Diffusion Policy 通常有更强的复杂分布表达能力，但 ACT 在推理速度、结构清晰度和工程实现上可能更有优势。对于需要高频控制、动作模式不太复杂的任务，ACT 甚至 BC 可能更合适。
+Flow Matching 提供了连续速度场视角，可能减少采样步数，也可能更适合某些生成建模框架。但真实效果取决于数据、网络结构、积分步数、动作约束和部署条件。它不是自动替代 Diffusion Policy 的银弹。
 
-评价方法不能只看论文任务成功率，还要看：
+### 11.2 误解二：Diffusion Policy 一定比 ACT 好
 
-- 你的数据规模；
-- 你的机器人频率；
-- 你的部署算力；
-- 你的安全边界；
-- 你的任务是否真的多模态。
+也不一定。
 
-### 10.2 误区二：BC 太老了，不值得做
+ACT 在推理速度、结构清晰度和实现复杂度上有优势。对于需要高频控制、动作模式不太复杂但需要短期连贯性的任务，ACT 可能比 Diffusion Policy 更合适。
+
+### 11.3 误解三：BC 太老，不值得做
 
 BC 不但值得做，而且应该优先做。
 
-一个可靠的 BC baseline 可以回答很多问题：
+一个可靠的 BC baseline 能帮你判断问题来自哪里：数据、观测、标签、控制器、分布偏移，还是模型表达能力。没有 baseline 直接上复杂模型，失败时很难定位问题。
 
-- 数据是否能支撑任务；
-- observation 是否包含足够信息；
-- action 表示是否合理；
-- 训练和评测管线是否打通；
-- 闭环主要失败来自模型表达，还是来自感知、标定、控制。
-
-没有 baseline 直接上复杂模型，后面失败时很难定位问题。你不知道是 diffusion 不行，还是相机标定在偷偷打摆子。
-
-### 10.3 误区三：action chunk 越长越智能
+### 11.4 误解四：action chunk 越长越智能
 
 chunk 长度不是智商测试。
 
-长 chunk 可以表达更长计划，但也会承担更多未来不确定性。真实世界不是训练集里的静态表格，物体可能滑动、夹爪可能打滑、传感器可能延迟、工件可能变形。
+chunk 太短，时间结构不足；chunk 太长，模型要预测太远未来，容易失去反馈能力。工程上通常生成 $H$ 步，只执行 $H_e$ 步，并保持 $H_e\le H$。
 
-工程上常见策略是：生成 <span class="math">\\(H\\)</span> 步，只执行 <span class="math">\\(H\_e\\)</span> 步，并且 <span class="math">\\(H\_e\le H\\)</span>。这是一种在计划和反馈之间做折中的方式。
+### 11.5 误解五：多模态生成等于随机多试几次
 
-### 10.4 误区四：多模态生成等于多随机试几次
+多模态生成不是让机器人摇骰子。
 
-多模态生成不是让机器人随机抽奖。
-
-真正可用的多模态策略需要：
-
-1. 生成多个合理候选；
-2. 能根据任务约束筛选候选；
-3. 能避免危险动作；
-4. 能在失败后恢复或重新规划。
-
-如果只是每次随机出一条轨迹，没有约束、没有评分、没有安全过滤，那不是多模态智能，而是高维摇骰子。
-
-### 10.5 误区五：open-loop loss 最低的方法就是最好方法
-
-open-loop loss 只说明模型在数据集上预测得像不像，不代表闭环执行一定成功。
-
-尤其是 Diffusion Policy，训练 loss 是噪声预测误差，不是直接的任务成功率。ACT 的重构 loss 也不等于插孔成功率。BC 的 MSE 更不等于机器人不会夹空气。
-
-最终仍然要看：
-
-- closed-loop success rate；
-- 失败恢复能力；
-- 动作平滑性；
-- 安全违规次数；
-- 延迟和吞吐；
-- 对扰动的鲁棒性。
+真正可用的多模态策略需要生成合理候选、排除危险动作、和任务约束结合，并且能够在失败时回退或重新规划。
 
 ---
 
-## 11. 本章小结：从“预测答案”到“生成候选”
+## 12. 读完本章，你应该能判断什么
 
-本章把 BC、ACT、Diffusion Policy 放到统一框架下比较。
+读完本章后，你应该能形成以下判断：
 
-BC 的核心是单步动作预测。它简单、快速、便宜，非常适合作为 baseline。但在多模态动作、闭环分布偏移和局部时间结构上容易遇到问题。
-
-ACT 的核心是 action chunk。它让模型一次预测未来一小段动作，并可结合 CVAE 隐变量表示动作风格。它适合双臂操作、精细接触、需要局部时间节奏的任务。
-
-Diffusion Policy 的核心是条件去噪生成。它把动作块看成生成对象，通过多步去噪表达复杂连续多模态动作分布。它适合多解、连续、多接触任务，但推理成本、安全过滤和数据质量要求更高。
-
-最重要的是，三类方法不是线性替代关系，而是工程工具箱里的不同工具。成熟的实验路线通常不是一上来就用最复杂模型，而是：
-
-1. 先做 BC baseline，确认数据和闭环链路；
-2. 如果单步动作不稳定，升级到 action chunk / ACT；
-3. 如果任务多模态复杂，考虑 Diffusion Policy；
-4. 无论模型多强，都保留安全约束、评测体系和失败数据闭环。
-
-一句话收束本章：
-
-> 机器人学习不是模型选美比赛，而是任务、数据、控制、算力和安全约束之间的工程谈判。
+1. **BC 不是过时方法**：它是最重要、最便宜、最应该优先做的 baseline。
+2. **ACT 不是简单加长输出**：它真正补的是局部时间结构和动作连续性。
+3. **Diffusion Policy 不是实机随机试动作**：噪声采样发生在模型内部，真实机器人只执行最终动作块。
+4. **Flow Matching 不是魔法加速器**：它把生成过程表示成连续速度场，但仍然要面对积分步数、约束和安全问题。
+5. **表达能力不等于工程可靠性**：越强的生成能力，越需要安全过滤、闭环评估和失败回收。
+6. **选型要从任务出发**：短周期单峰任务先 BC；局部连续操作看 ACT；复杂多模态控制再考虑 Diffusion Policy / Flow Matching。
 
 ---
 
-## 12. 本章公式索引
+## 13. 本章公式索引
 
-### 12.1 BC 单步动作预测
+### 公式 (16.1)：BC 的动作点估计形式
 
-<div class="math">\[
-\hat a_t=f_\theta(o_t) \tag{16.42}\]</div>
+$$\hat a_t=f_\theta(o_t)$$
 
-含义：给定当前观测，输出一个动作点估计。
+- **含义**：给定观测，直接输出一个动作。
+- **需要掌握到什么程度**：理解它是最简单的策略表达，也是 BC baseline 的核心形式。
 
----
+### 公式 (16.2)：ACT 的动作块对象
 
-### 12.2 BC 条件概率策略
+$$A_t=a_{t:t+H-1}=(a_t,a_{t+1},\dots,a_{t+H-1})$$
 
-<div class="math">\[
-\pi_\theta(a_t|o_t) \tag{16.43}\]</div>
+- **含义**：从当前时刻开始的一段动作序列。
+- **需要掌握到什么程度**：理解 action chunk 是 ACT 相比单步 BC 的关键变化。
 
-含义：给定观测 <span class="math">\\(o\_t\\)</span>，模型对动作 <span class="math">\\(a\_t\\)</span> 的条件概率。
+### 公式 (16.3)：Diffusion Policy 的加噪动作块
 
----
+$$A^{(k)}=\sqrt{\bar\alpha_k}A^{(0)}+\sqrt{1-\bar\alpha_k}\,\epsilon$$
 
-### 12.3 BC 负对数似然
+- **含义**：把专家动作块逐步加噪。
+- **需要掌握到什么程度**：理解 diffusion 训练为什么需要带噪动作块。
 
-<div class="math">\[
-\mathcal{L}_{\mathrm{BC\text{-}NLL}}(\theta)
-=
--
-\mathbb{E}_{(o,a)\sim\mathcal{D}}
-\left[
-\log \pi_\theta(a|o)
-\right] \tag{16.44}\]</div>
+### 公式 (16.4)：Flow Matching 的连续流场采样
 
-含义：让模型给专家动作更高概率。
+$$\frac{dX_\tau}{d\tau}=v_\theta(X_\tau,\tau,o_t)$$
 
----
+- **含义**：样本沿着学习到的速度场从噪声端点流向数据端点。
+- **需要掌握到什么程度**：理解 Flow Matching 和离散去噪的核心区别。
 
-### 12.4 BC MSE 损失
+### 公式 (16.11)：BC 的 MSE 训练目标
 
-<div class="math">\[
-\mathcal{L}_{\mathrm{BC\text{-}MSE}}(\theta)
-=
-\mathbb{E}_{(o,a)\sim\mathcal{D}}
-\left[
-\|a-f_\theta(o)\|^2
-\right] \tag{16.45}\]</div>
+$$\mathcal{L}_{\mathrm{BC\text{-}MSE}}(\theta)=\mathbb{E}_{(o,a)\sim\mathcal{D}}\left[\left\|a-f_\theta(o)\right\|^2\right]$$
 
-含义：让模型输出接近专家动作的点估计。
+- **含义**：让预测动作接近专家动作。
+- **需要掌握到什么程度**：理解 MSE 为什么容易得到点估计。
 
----
+### 公式 (16.12)：MSE 点估计的条件均值形式
 
-### 12.5 MSE 下的条件均值直觉
+$$f^*(o)=\mathbb{E}[A\mid O=o]$$
 
-<div class="math">\[
-f^*(o)=\mathbb{E}[A|O=o] \tag{16.46}\]</div>
+- **含义**：平方误差下，单点预测的理想解是条件均值。
+- **需要掌握到什么程度**：理解多模态动作被平均掉的数学原因。
 
-含义：平方误差下，单点预测倾向于条件均值；多模态任务中条件均值可能不是可执行动作。
+### 公式 (16.14)：ACT 的重构加 KL 目标
 
----
+$$\mathcal{L}_{\mathrm{ACT}}(\theta,\phi)=\mathbb{E}\left[\left\|A_t-f_\theta(o_{\le t},z)\right\|^2\right]+\beta D_{\mathrm{KL}}\left(q_\phi(z\mid o_{\le t},A_t)\|p(z)\right)$$
 
-### 12.6 ACT 动作块
+- **含义**：动作块要重构好，隐变量后验不要偏离先验太远。
+- **需要掌握到什么程度**：理解 ACT / CVAE 训练中的两个核心目标。
 
-<div class="math">\[
-A_t=a_{t:t+H-1} \tag{16.47}\]</div>
+### 公式 (16.16)：Diffusion Policy 的噪声预测目标
 
-含义：从当前时刻开始的未来 <span class="math">\\(H\\)</span> 步动作序列。
+$$\mathcal{L}_{\mathrm{diffusion}}(\theta)=\mathbb{E}_{A^{(0)},\epsilon,k,o_t}\left[\left\|\epsilon-\epsilon_\theta(A^{(k)},k,o_t)\right\|^2\right]$$
 
----
+- **含义**：训练网络预测动作块中加入的噪声。
+- **需要掌握到什么程度**：理解 diffusion loss 不是直接的任务成功率。
 
-### 12.7 ACT 条件动作块生成
+### 公式 (16.19)：Flow Matching 的速度场训练目标
 
-<div class="math">\[
-p_\theta(A_t|o_{\le t},z) \tag{16.48}\]</div>
+$$\mathcal{L}_{\mathrm{FM}}(\theta)=\mathbb{E}_{\tau,X_0,X_1,o_t}\left[\left\|v_\theta(X_\tau,\tau,o_t)-(X_1-X_0)\right\|^2\right]$$
 
-含义：在观测历史和隐变量条件下生成动作块。
+- **含义**：训练速度场预测路径中间点的运动方向。
+- **需要掌握到什么程度**：理解 Flow Matching 学的是速度，不是直接预测噪声。
+
+### 公式 (16.28)：生成 horizon 与执行 horizon
+
+$$A_t=a_{t:t+H-1},\quad \text{execute } a_{t:t+H_e-1},\quad H_e\le H$$
+
+- **含义**：生成一段动作，只执行前几步，然后重新观测。
+- **需要掌握到什么程度**：理解 action chunk 不是 open-loop 执行许可证。
 
 ---
 
-### 12.8 ACT 简化训练目标
+## 14. 本章定义索引
 
-<div class="math">\[
-\mathcal{L}_{\mathrm{ACT}}
-=
-\mathbb{E}
-\left[
-\|A-f_\theta(o,z)\|^2
-\right]
-+
-\beta D_{\mathrm{KL}}
-\left(q_\phi(z|o,A)\|p(z)\right) \tag{16.49}\]</div>
-
-含义：动作块重构损失加隐变量 KL 正则。
+| 编号 | 概念 | 一句话含义 |
+|---|---|---|
+| 定义 16.1 | 动作点估计 | 给定观测后只输出一个动作点或代表值 |
+| 定义 16.2 | 条件动作分布 | 给定观测条件下，多个动作模式形成的概率分布 |
+| 定义 16.3 | 动作块 | 从当前时刻开始的一段未来动作序列 |
+| 定义 16.4 | 离散去噪生成过程 | 从噪声动作块开始，经过有限步去噪得到动作块 |
+| 定义 16.5 | 连续速度场生成过程 | 学习速度场，让样本从噪声分布流向动作分布 |
 
 ---
 
-### 12.9 Diffusion 加噪动作块
+## 15. 建议阅读的附录条目
 
-<div class="math">\[
-A^{(k)}
-=
-\sqrt{\bar\alpha_k}A^{(0)}
-+
-\sqrt{1-\bar\alpha_k}\,\epsilon \tag{16.50}\]</div>
+1. **附录 C：最大似然、负对数似然、交叉熵与 KL 散度**  
+   用于理解 BC NLL、ACT 中的 KL 项，以及为什么不同训练目标不能直接横向比较 loss 数值。
 
-含义：把干净动作块加噪到第 <span class="math">\\(k\\)</span> 个 diffusion 步。
+2. **附录 D：高斯分布、MSE 与连续动作回归**  
+   用于理解 MSE 为什么对应固定方差高斯策略，以及为什么 MSE 点估计会倾向条件均值。
 
----
+3. **附录 G：生成模型基础**  
+   用于复习 CVAE、Diffusion、Flow Matching 等生成模型的基本思想。
 
-### 12.10 Diffusion 去噪训练目标
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{diffusion}}(\theta)
-=
-\mathbb{E}
-\left[
-\|\epsilon-\epsilon_\theta(A^{(k)},k,obs)\|^2
-\right] \tag{16.51}\]</div>
-
-含义：训练网络预测带噪动作块中的噪声。
-
----
-
-### 12.11 执行步长与生成 horizon
-
-<div class="math">\[
-A_t=a_{t:t+H-1},
-\quad
-\text{execute } a_{t:t+H_e-1},
-\quad
-H_e\le H \tag{16.52}\]</div>
-
-含义：生成一段动作，但只执行前几步，然后重新观测。
-
----
-
-### 12.12 推理成本粗略比较
-
-<div class="math">\[
-C_{\mathrm{BC}}\approx C_f,
-\quad
-C_{\mathrm{ACT}}\approx C_g,
-\quad
-C_{\mathrm{diffusion}}\approx K C_\epsilon \tag{16.53}\]</div>
-
-含义：Diffusion Policy 多步去噪通常带来更高推理成本。
-
----
-
-## 13. 建议阅读的附录条目
-
-本章建议配合以下附录阅读：
-
-1. **附录 C：最大似然、负对数似然、交叉熵与 KL 散度**
-   用于理解 BC NLL、ACT 中的 KL 项，以及为什么不同训练目标不能直接用数值大小横向比较。
-
-2. **附录 D：高斯分布、MSE 与连续动作回归**
-   用于理解 BC 中 MSE 与固定方差高斯策略之间的关系，以及为什么 MSE 会倾向条件均值。
-
-3. **附录 G：生成模型基础**
-   用于复习 CVAE、隐变量、ELBO、Diffusion 正向加噪和反向去噪。
-
-4. **附录 H：实验与代码基础**
+4. **附录 H：实验与代码基础**  
    用于理解 open-loop 评估、closed-loop rollout、成功率、动作平滑性和实验记录方式。
 
-5. **附录 F：强化学习与序列决策基础**
-   用于回顾 rollout、策略诱导分布和闭环执行中的状态分布变化。
+5. **附录 I：熵、最大熵与 Score Matching**  
+   用于理解 diffusion / score / 生成式动作分布之间的关系。
 
 ---
 
-## 14. 本章核心概念回顾
+## 16. 思考题
 
-1. **point estimate**：只输出一个动作点，常见于朴素 BC。
-2. **conditional density estimation**：学习观测条件下动作的完整分布。
-3. **action chunk**：从当前时刻开始的一段未来动作序列。
-4. **action horizon**：模型一次生成的动作长度 <span class="math">\\(H\\)</span>。
-5. **execute horizon**：实际执行的前几步 <span class="math">\\(H\_e\\)</span>。
-6. **multimodal distribution**：同一观测下存在多种合理动作模式。
-7. **likelihood objective**：让模型给专家数据更高概率，如 BC NLL。
-8. **reconstruction + KL**：ACT / CVAE 常见训练骨架。
-9. **denoising objective**：Diffusion Policy 训练噪声预测网络。
-10. **inference cost**：推理延迟和控制频率之间的工程约束。
-11. **baseline-first**：先做 BC baseline，再判断是否需要复杂方法。
-12. **safety filter**：生成策略必须经过动作范围、碰撞、速度和任务约束检查。
+1. 对于一个固定位置抓取任务，如果 BC 的 closed-loop 成功率已经达到 98%，你还会考虑 ACT、Diffusion Policy 或 Flow Matching 吗？为什么？
 
----
+2. 某个任务中，同一观测下专家有左抓和右抓两种模式。请用公式 $f^*(o)=\mathbb{E}[A\mid O=o]$ 解释为什么 MSE 可能输出坏动作。
 
-## 15. 思考题
-
-1. 对于一个固定位置抓取任务，如果 BC 的 closed-loop 成功率已经达到 98%，你还会考虑 ACT 或 Diffusion Policy 吗？请说明理由。
-
-2. 某个任务中，同一观测下专家有左抓和右抓两种模式。请用 <span class="math">\\(f^*(o)=\mathbb{E}[A|O=o]\\)</span> 解释为什么 MSE 可能输出坏动作。
-
-3. ACT 的 action chunk 长度 <span class="math">\\(H\\)</span> 变大时，可能带来哪些好处和风险？如何通过 <span class="math">\\(H\_e\le H\\)</span> 缓解风险？
+3. ACT 的 action chunk 长度 $H$ 变大时，可能带来哪些好处和风险？为什么通常只执行前 $H_e$ 步？
 
 4. Diffusion Policy 的训练 loss 是噪声预测误差。为什么这个 loss 不能直接等价于实机成功率？
 
-5. 如果你的机器人控制频率要求 100Hz，而 diffusion 推理需要 80ms，你有哪些工程改造思路？
+5. Flow Matching 学的是速度场。请解释它和 Diffusion Policy 的“多步去噪”在推理形式上有什么不同。
 
-6. 在自动泊车任务中，哪些部分适合用 BC？哪些部分可能需要多模态轨迹生成？请结合泊车入库、避障和路径修正分析。
+6. 如果机器人控制频率要求 100Hz，而 diffusion 推理需要 80ms，你有哪些工程改造思路？
 
-7. 如果一个 ACT 模型 open-loop 重构误差很低，但闭环执行抖动严重，你会优先排查哪些问题？
+7. 在自动泊车任务中，哪些部分适合用 BC？哪些部分可能需要多模态轨迹生成？请结合泊车入库、避障和路径修正分析。
 
-8. 请为一个“抓取 + 精准摆入治具”任务设计三阶段实验：BC baseline、ACT 升级、Diffusion Policy 升级。每阶段分别记录哪些指标？
+8. 如果一个 ACT 模型 open-loop 重构误差很低，但闭环执行抖动严重，你会优先排查哪些问题？
 
-9. 为什么生成式策略更需要安全过滤，而不是更少需要安全过滤？
+9. 请为一个“抓取 + 精准摆入治具”任务设计三阶段实验：BC baseline、ACT 升级、生成式策略升级。每阶段分别记录哪些指标？
 
-10. 请用自己的话解释：BC、ACT、Diffusion Policy 不是线性替代关系，而是工具箱关系。
-
----
-
-## 16. 本章配图清单
-
-1. **图16-1 三类方法输入输出对比**
-   解释 BC、ACT、Diffusion Policy 在输入输出对象上的差异。
-
-2. **图16-2 动作分布建模能力对比**
-   解释点估计、隐变量风格和复杂多峰生成之间的区别。
-
-3. **图16-3 推理成本与控制频率对比**
-   解释表达能力、推理延迟和控制频率之间的工程权衡。
-
-4. **图16-4 方法适用场景矩阵**
-   给出规则短动作、精细连续操作、多模态连续控制、高频部署和安全约束下的选型建议。
+10. 请用自己的话解释：BC、ACT、Diffusion Policy、Flow Matching 不是线性替代关系，而是工具箱关系。
 
 ---
 
-## 17. 下一章预告：从模仿动作到理解目标
+## 17. 本章配图清单
 
-到目前为止，我们主要讨论的是“如何让策略输出像专家一样的动作”。BC、ACT、Diffusion Policy 虽然建模能力不同，但它们基本都在围绕专家动作分布做文章。
+本章建议配套以下概念讲解图。已有图片若仍准确，可以优先复用；如果旧图只覆盖三类方法，应更新为四类方法版本。
 
-下一章开始，我们进入另一条路线：
+1. **图16-1 四类方法输入输出对比**  
+   展示 BC 输出单步动作、ACT 输出动作块、Diffusion Policy 多步去噪生成动作块、Flow Matching 沿速度场生成动作块。
 
-> 如果不直接模仿动作，而是学习专家背后的目标或奖励，会发生什么？
+2. **图16-2 动作分布建模能力对比**  
+   对比点估计、隐变量动作块、离散去噪生成、连续流场生成对多峰动作分布的表达能力。
 
-第11章将介绍 GAIL。它会把判别器请进模仿学习现场，让模型不只看某个动作像不像专家，而是比较整条行为分布是否像专家。这一步会把我们从“动作监督学习”推进到“占用度量、对抗训练和隐式奖励”的世界。
+3. **图16-3 推理成本与控制频率对比**  
+   展示一次前向、动作块前向、多步去噪、ODE 积分对控制频率的影响。
 
-别紧张，判别器不会咬人。它只是会让公式看起来更像在开会。
+4. **图16-4 工程选型决策树**  
+   按任务周期、多模态程度、时间结构、部署延迟和安全条件给出方法选择路径。
 
-## 推荐阅读与深入材料
-
-### 阅读目的
-
-本章是工程选型章，不需要引入太多新论文，而是要帮助读者建立方法选择标准：任务多峰性、控制频率、推理延迟、数据规模、稳定性和可解释性。
-
-### 推荐材料
-
-1. **Zhao et al., 2023, ACT / ALOHA**
-   - 链接：https://arxiv.org/abs/2304.13705
-   - 阅读目的：作为 action chunk + CVAE + Transformer 的代表。
-
-2. **Chi et al., 2023, Diffusion Policy**
-   - 链接：https://arxiv.org/abs/2303.04137
-   - 阅读目的：作为 diffusion action policy 的代表。
-
-3. **Black et al., 2024, π0**
-   - 链接：https://arxiv.org/abs/2410.24164
-   - 阅读目的：作为 flow matching + VLA action head 的代表。
-
-4. **Mandlekar et al., 2021, RoboMimic**
-   - 链接：https://arxiv.org/abs/2108.03298
-   - 阅读目的：为方法对比提供统一实验和离线模仿评估视角。
-
-### 阅读提示
-
-建议把每篇论文整理成同一张表：输入观测、输出动作形式、是否生成动作块、是否概率建模、采样步数、控制频率、需要多少数据、适合哪些任务。这样比逐篇摘摘要更有价值。
+5. **图16-5 抓取 + 精准摆入治具案例对比**  
+   展示同一工业任务如何从 BC baseline、ACT 升级到生成式策略。
 
 ---
+
+## 18. 下一章预告：Decision Transformer
+
+第四篇到这里完成了一个阶段性收束：我们已经从单步动作点估计，一路走到动作块、离散去噪生成和连续流场生成。
+
+但这些方法大多仍围绕一个问题：
+
+> 给定当前观测，怎样生成接下来的一步或一段动作？
+
+下一篇会继续拉长视野，进入长序列架构与多模态策略。第17章将介绍 Decision Transformer。它会把决策问题改写成条件序列建模问题，把状态、动作、回报或目标放进同一个序列里，让策略学习看起来更像语言建模。
+
+换句话说，第四篇关心的是“动作怎么生成”；第五篇会进一步追问：
+
+> 如果把整个决策历史都看成序列，策略还能学到什么？
+
+---
+
+## 19. 推荐阅读与深入材料
+
+### 19.1 Zhao et al., 2023, ACT / ALOHA
+
+- **材料类型**：经典机器人模仿学习工程论文。
+- **阅读目的**：理解 action chunk、CVAE、Transformer policy 和 temporal ensemble 为什么适合双臂操作。
+- **重点看什么**：动作块构造、训练推理差异、temporal ensemble、实机任务设置。
+- **对应本章**：ACT 与动作块建模。
+
+### 19.2 Chi et al., 2023, Diffusion Policy
+
+- **材料类型**：生成式机器人动作策略代表论文。
+- **阅读目的**：理解为什么把动作作为 diffusion 生成对象，而不是直接回归动作。
+- **重点看什么**：动作 horizon、noise prediction objective、receding horizon control、实机评估。
+- **对应本章**：Diffusion Policy 的离散去噪生成过程。
+
+### 19.3 Flow Matching / Rectified Flow 相关材料
+
+- **材料类型**：生成模型基础与前沿方法。
+- **阅读目的**：理解从噪声分布到数据分布的连续流场建模思想。
+- **重点看什么**：路径构造、速度场训练目标、ODE 采样、采样步数与稳定性。
+- **对应本章**：Flow Matching 的连续速度场生成过程。
+
+### 19.4 Black et al., 2024, π0
+
+- **材料类型**：VLA 与 flow matching action head 代表工作。
+- **阅读目的**：理解大规模视觉语言动作模型中，flow matching 如何作为动作生成头使用。
+- **重点看什么**：动作表示、模型输入输出、训练数据规模、推理流程。
+- **对应本章**：Flow Matching 在现代机器人策略中的位置。
+
+### 19.5 Mandlekar et al., 2021, RoboMimic
+
+- **材料类型**：机器人模仿学习基准与工程框架。
+- **阅读目的**：学习如何统一比较不同策略模型，而不是只看单个论文的效果。
+- **重点看什么**：数据集、评估指标、open-loop 与 closed-loop 差异、任务难度划分。
+- **对应本章**：方法选型与实验对比框架。
+
+建议阅读时把每篇材料整理成同一张表：输入观测、输出动作形式、是否生成动作块、是否显式概率建模、采样步数、控制频率、所需数据规模、适合任务、主要工程风险。这样比逐篇摘摘要更能服务方法选型。
