@@ -631,28 +631,28 @@ Flow Matching 值得学，
 
 ## 17. 本章公式索引
 
-| 编号 | 名称 | 作用 |
+| 编号 | 公式 | 作用 |
 |---|---|---|
-| 公式 (15.1) | 条件动作块策略 | 把策略写成给定观测下的动作块分布 |
-| 公式 (15.2) | Diffusion 式动作加噪 | 承接第14章的去噪生成视角 |
-| 公式 (15.3) | Flow Matching 的线性 probability path | 构造从噪声到数据的连续路径 |
-| 公式 (15.4) | 线性路径上的目标速度 | 给出速度监督信号 |
-| 公式 (15.5) | 线性路径展开 | 命题 15.1 的起点 |
-| 公式 (15.6) | 线性路径求导 | 推出 $X_1-X_0$ |
-| 公式 (15.7) | Flow Matching 速度场回归损失 | 本章核心训练目标 |
-| 公式 (15.8) | 线性路径下的目标速度 | 训练标签的具体形式 |
-| 公式 (15.9) | 最优速度场的条件期望形式 | 说明速度场 MSE 学到什么 |
-| 公式 (15.10) | 线性路径下的最优条件平均速度 | 把命题 15.2 落回线性路径 |
-| 公式 (15.11) | 固定输入下的条件平方误差风险 | 命题 15.2 的证明起点 |
-| 公式 (15.12) | 条件平方误差分解 | 证明 MSE 最优解是条件均值 |
-| 公式 (15.13) | 条件风险最小化解 | 得到最优速度预测 |
-| 公式 (15.14) | 推理时的条件 ODE | 描述采样动力系统 |
-| 公式 (15.15) | ODE sampling 生成动作块 | 从噪声积分得到动作 |
-| 公式 (15.16) | Euler 少步积分近似 | 连接采样步数和工程延迟 |
-| 公式 (15.17) | 条件编码 | 把观测、历史和任务目标编码成条件 |
-| 公式 (15.18) | 条件速度场 | 定义机器人条件 Flow action head |
-| 公式 (15.19) | 由速度场隐式定义的条件动作分布 | 说明 Flow 策略的分布含义 |
-| 公式 (15.20) | 机械臂动作块表示 | 落到机器人控制接口 |
+| 公式 (15.1)：条件动作块策略 | $A_t \sim \pi_\theta(A_t \mid o_t),\quad A_t=(a_t,a_{t+1},\ldots,a_{t+H-1})$ | 把策略写成给定观测下的动作块分布 |
+| 公式 (15.2)：Diffusion 式动作加噪 | $X_\tau = \alpha_\tau A + \sigma_\tau \epsilon,\quad \epsilon \sim \mathcal{N}(0,I)$ | 承接第14章的去噪生成视角 |
+| 公式 (15.3)：Flow Matching 的线性 probability path | $X_\tau = (1-\tau)X_0+\tau X_1,\quad \tau\in[0,1]$ | 构造从噪声到数据的连续路径 |
+| 公式 (15.4)：线性路径上的目标速度 | $u_\tau(X_\tau \mid X_0,X_1)=\frac{dX_\tau}{d\tau}=X_1-X_0$ | 给出速度监督信号 |
+| 公式 (15.5)：线性路径展开 | $X_\tau=(1-\tau)X_0+\tau X_1$ | 命题 15.1 的起点 |
+| 公式 (15.6)：线性路径求导 | $\frac{dX_\tau}{d\tau}=\frac{d}{d\tau}\left((1-\tau)X_0+\tau X_1\right)=-X_0+X_1=X_1-X_0$ | 推出 $X_1-X_0$ |
+| 公式 (15.7)：Flow Matching 速度场回归损失 | $\mathcal{L}_{FM}(\theta)=\mathbb{E}_{o_t,X_0,X_1,\tau}\left[\lVert v_\theta(X_\tau,\tau,o_t)-u_\tau(X_\tau \mid X_0,X_1)\rVert_2^2\right]$ | 本章核心训练目标 |
+| 公式 (15.8)：线性路径下的目标速度 | $u_\tau(X_\tau \mid X_0,X_1)=X_1-X_0$ | 训练标签的具体形式 |
+| 公式 (15.9)：最优速度场的条件期望形式 | $v^*(X_\tau,\tau,o_t)=\mathbb{E}\left[u_\tau(X_\tau \mid X_0,X_1)\mid X_\tau,\tau,o_t\right]$ | 说明速度场 MSE 学到什么 |
+| 公式 (15.10)：线性路径下的最优条件平均速度 | $v^*(X_\tau,\tau,o_t)=\mathbb{E}\left[X_1-X_0\mid X_\tau,\tau,o_t\right]$ | 把命题 15.2 落回线性路径 |
+| 公式 (15.11)：固定输入下的条件平方误差风险 | $R(v\mid z)=\mathbb{E}\left[\lVert v-U\rVert_2^2\mid z\right]$ | 命题 15.2 的证明起点 |
+| 公式 (15.12)：条件平方误差分解 | $\mathbb{E}\left[\lVert v-U\rVert_2^2\mid z\right]=\lVert v-\mu(z)\rVert_2^2+\mathbb{E}\left[\lVert U-\mu(z)\rVert_2^2\mid z\right]$ | 证明 MSE 最优解是条件均值 |
+| 公式 (15.13)：条件风险最小化解 | $v^*(z)=\mu(z)=\mathbb{E}[U\mid z]$ | 得到最优速度预测 |
+| 公式 (15.14)：推理时的条件 ODE | $\frac{dX_\tau}{d\tau}=v_\theta(X_\tau,\tau,o_t),\quad X_0\sim p_0$ | 描述采样动力系统 |
+| 公式 (15.15)：ODE sampling 生成动作块 | $A_t=X_1^\theta=\mathrm{ODESolve}(v_\theta,X_0,o_t,0\rightarrow 1)$ | 从噪声积分得到动作 |
+| 公式 (15.16)：Euler 少步积分近似 | $X_{k+1}=X_k+\Delta\tau\,v_\theta(X_k,\tau_k,o_t),\quad k=0,1,\ldots,N-1$ | 连接采样步数和工程延迟 |
+| 公式 (15.17)：条件编码 | $c_t=\mathrm{Enc}_\phi(o_t,h_t,g)$ | 把观测、历史和任务目标编码成条件 |
+| 公式 (15.18)：条件速度场 | $v_\theta=v_\theta(X_\tau,\tau,c_t)$ | 定义机器人条件 Flow action head |
+| 公式 (15.19)：由速度场隐式定义的条件动作分布 | $A_t\sim p_\theta(A\mid c_t),\quad p_\theta \text{由 } X_0\sim p_0 \text{ 和 ODE 积分过程定义}$ | 说明 Flow 策略的分布含义 |
+| 公式 (15.20)：机械臂动作块表示 | $A_t=[\Delta x_t,\Delta R_t,\Delta q_t,g_t]_{t:t+H-1}$ | 落到机器人控制接口 |
 
 ---
 
