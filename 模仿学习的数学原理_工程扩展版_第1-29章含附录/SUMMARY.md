@@ -48,7 +48,7 @@
 ## 第五篇：长序列架构与多模态策略
 
 - [第五篇导读：长序列架构与多模态策略](导读/05_第五篇_长序列架构与多模态策略.md)
-- [第17章 Decision Transformer：把决策问题伪装成语言建模](chapters/第17章_Decision_Transformer_把决策问题伪装成语言建模.md)
+- [第17章 序列策略模型：从 Decision Transformer 到 Transformer Policy](chapters/第17章_Decision_Transformer_把决策问题伪装成语言建模.md)
 - [第18章 Transformer Policy：它不是魔法棒，是超大号条件建模器](chapters/第18章_Transformer_Policy_它不是魔法棒_是超大号条件建模器.md)
 - [第19章 SSM 与 Mamba：长时域机器人控制的线性序列骨架](chapters/第19章_SSM_与_Mamba_长时域机器人控制的线性序列骨架.md)
 - [第20章 VLA：当视觉、语言和动作坐到一张麻将桌上](chapters/第20章_VLA_当视觉语言和动作坐到一张麻将桌上.md)
