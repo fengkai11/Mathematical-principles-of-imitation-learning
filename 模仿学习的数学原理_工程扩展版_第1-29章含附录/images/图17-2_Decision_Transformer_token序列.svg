@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+  <rect width="1200" height="520" fill="#ffffff"/>
+  <text x="600" y="42" text-anchor="middle" font-size="28" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700">图17-2 Decision Transformer 的 token 序列</text>
+  <text x="600" y="82" text-anchor="middle" font-size="18" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#57606a">把 return-to-go、状态和动作交替放入上下文，用前缀预测下一个动作</text>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker></defs>
+  <g font-family="Arial, 'Microsoft YaHei', sans-serif" font-size="20">
+    <rect x="70" y="160" width="95" height="70" rx="12" fill="#f6f8fa" stroke="#24292f" stroke-width="2"/><text x="117" y="202" text-anchor="middle">G_0</text>
+    <rect x="185" y="160" width="95" height="70" rx="12" fill="#ffffff" stroke="#24292f" stroke-width="2"/><text x="232" y="202" text-anchor="middle">s_0</text>
+    <rect x="300" y="160" width="95" height="70" rx="12" fill="#ffffff" stroke="#24292f" stroke-width="2"/><text x="347" y="202" text-anchor="middle">a_0</text>
+    <rect x="430" y="160" width="95" height="70" rx="12" fill="#f6f8fa" stroke="#24292f" stroke-width="2"/><text x="477" y="202" text-anchor="middle">G_1</text>
+    <rect x="545" y="160" width="95" height="70" rx="12" fill="#ffffff" stroke="#24292f" stroke-width="2"/><text x="592" y="202" text-anchor="middle">s_1</text>
+    <rect x="660" y="160" width="95" height="70" rx="12" fill="#ffffff" stroke="#24292f" stroke-width="2"/><text x="707" y="202" text-anchor="middle">a_1</text>
+    <rect x="790" y="160" width="95" height="70" rx="12" fill="#f6f8fa" stroke="#24292f" stroke-width="2"/><text x="837" y="202" text-anchor="middle">G_t</text>
+    <rect x="905" y="160" width="95" height="70" rx="12" fill="#ffffff" stroke="#24292f" stroke-width="2"/><text x="952" y="202" text-anchor="middle">s_t</text>
+    <rect x="1020" y="160" width="105" height="70" rx="12" fill="#ffffff" stroke="#24292f" stroke-width="2"/><text x="1072" y="202" text-anchor="middle">a_t ?</text>
+  </g>
+  <path d="M1125 195 L1160 195" stroke="#24292f" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="1168" y="202" font-size="20" font-family="Arial">predict</text>
+  <rect x="140" y="305" width="920" height="92" rx="18" fill="#f6f8fa" stroke="#57606a" stroke-width="2"/>
+  <text x="600" y="342" text-anchor="middle" font-size="21" font-family="Arial, 'Microsoft YaHei', sans-serif">causal attention 只能看左侧历史，不能偷看未来动作</text>
+  <text x="600" y="374" text-anchor="middle" font-size="18" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#57606a">训练时学习 pθ(a_t | G≤t, s≤t, a&lt;t)，推理时给定目标回报和历史继续生成动作</text>
+</svg>
