@@ -45,9 +45,9 @@
 - [第15章 Flow Matching：从扩散去噪到连续流场生成动作](chapters/第15章_Flow_Matching_从扩散去噪到连续流场生成动作.md)
 - [第16章 BC / ACT / Diffusion Policy / Flow Matching 对比](chapters/第16章_BC_ACT_Diffusion_Policy_Flow_Matching_对比.md)
 
-## 第五篇：长序列架构与多模态策略
+## 第五篇：从历史上下文到多模态条件策略
 
-- [第五篇导读：长序列架构与多模态策略](导读/05_第五篇_长序列架构与多模态策略.md)
+- [第五篇导读：从历史上下文到多模态条件策略](导读/05_第五篇_长序列架构与多模态策略.md)
 - [第17章 序列策略模型：从 Decision Transformer 到 Transformer Policy](chapters/第17章_Decision_Transformer_把决策问题伪装成语言建模.md)
 - [第18章 VLA：视觉、语言与动作的统一策略模型](chapters/第18章_VLA_视觉语言与动作的统一策略模型.md)
 
