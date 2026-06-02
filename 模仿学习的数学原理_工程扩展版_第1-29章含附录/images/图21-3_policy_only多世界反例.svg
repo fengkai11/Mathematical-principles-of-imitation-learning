@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333" />
+    </marker>
+    <style>
+      text { font-family: "Noto Sans CJK SC", "Microsoft YaHei", Arial, sans-serif; fill: #222; }
+      .title { font-size: 28px; font-weight: 700; }
+      .subtitle { font-size: 18px; fill: #555; }
+      .box-title { font-size: 20px; font-weight: 700; }
+      .body { font-size: 17px; }
+      .formula { font-size: 19px; font-family: "Times New Roman", "Noto Sans CJK SC", serif; }
+      .small { font-size: 15px; fill: #555; }
+      .box { fill: #ffffff; stroke: #333; stroke-width: 2; rx: 16; }
+      .policy { fill: #eef5ff; stroke: #2d5fa8; }
+      .world-a { fill: #f0fff4; stroke: #2f855a; }
+      .world-b { fill: #fff5f5; stroke: #c53030; }
+      .note { fill: #fffbea; stroke: #b7791f; }
+      .arrow { stroke: #333; stroke-width: 2.5; fill: none; marker-end: url(#arrow); }
+      .dashed { stroke-dasharray: 8 6; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="560" fill="#fafafa" />
+  <text x="600" y="44" text-anchor="middle" class="title">图21-3 policy-only 的多世界反例</text>
+  <text x="600" y="76" text-anchor="middle" class="subtitle">同一个观测条件策略可以对应不同世界转移；只知道动作分布，不能推出动作后果</text>
+
+  <rect x="70" y="150" width="300" height="170" class="box policy" />
+  <text x="220" y="188" text-anchor="middle" class="box-title">同一个 policy</text>
+  <text x="220" y="228" text-anchor="middle" class="formula">πθ(aₜ | oₜ)</text>
+  <text x="220" y="266" text-anchor="middle" class="body">当前观测相同</text>
+  <text x="220" y="294" text-anchor="middle" class="body">输出同一个推进动作 aₜ</text>
+
+  <line x1="370" y1="210" x2="510" y2="155" class="arrow" />
+  <line x1="370" y1="270" x2="510" y2="385" class="arrow" />
+
+  <rect x="510" y="105" width="290" height="160" class="box world-a" />
+  <text x="655" y="142" text-anchor="middle" class="box-title">世界 A：孔位对准</text>
+  <text x="655" y="180" text-anchor="middle" class="formula">P₁(sₜ₊₁ | sₜ, aₜ)</text>
+  <text x="655" y="218" text-anchor="middle" class="body">继续推进 → 成功插入</text>
+  <text x="655" y="242" text-anchor="middle" class="small">后果分布偏向安全状态</text>
+
+  <rect x="510" y="335" width="290" height="160" class="box world-b" />
+  <text x="655" y="372" text-anchor="middle" class="box-title">世界 B：孔位偏 1 mm</text>
+  <text x="655" y="410" text-anchor="middle" class="formula">P₂(sₜ₊₁ | sₜ, aₜ)</text>
+  <text x="655" y="448" text-anchor="middle" class="body">继续推进 → 卡住 / 损坏</text>
+  <text x="655" y="472" text-anchor="middle" class="small">后果分布偏向风险状态</text>
+
+  <line x1="800" y1="185" x2="925" y2="225" class="arrow" />
+  <line x1="800" y1="415" x2="925" y2="285" class="arrow" />
+
+  <rect x="925" y="190" width="225" height="140" class="box note" />
+  <text x="1037" y="226" text-anchor="middle" class="box-title">结论</text>
+  <text x="1037" y="262" text-anchor="middle" class="body">πθ 只回答“怎么动”</text>
+  <text x="1037" y="292" text-anchor="middle" class="body">不能唯一推出 P(sₜ₊₁ | sₜ,aₜ)</text>
+
+  <line x1="655" y1="265" x2="655" y2="335" class="arrow dashed" />
+  <text x="695" y="306" class="small">同一动作，不同世界</text>
+</svg>
