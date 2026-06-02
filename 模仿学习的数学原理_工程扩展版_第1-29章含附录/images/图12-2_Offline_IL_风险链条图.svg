@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="620" viewBox="0 0 1400 620">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#333"/>
+    </marker>
+    <style>
+      .title { font: 700 32px sans-serif; fill: #222; }
+      .box-title { font: 700 22px sans-serif; fill: #222; }
+      .box-text { font: 18px sans-serif; fill: #333; }
+      .small { font: 16px sans-serif; fill: #555; }
+      .box { fill: #fff; stroke: #333; stroke-width: 2; rx: 18; }
+      .risk { fill: #fff5f5; stroke: #b42318; stroke-width: 2; rx: 18; }
+      .safe { fill: #f0fff4; stroke: #2f855a; stroke-width: 2; rx: 18; }
+      .data { fill: #f7fbff; stroke: #2b6cb0; stroke-width: 2; rx: 18; }
+      .arrow { stroke: #333; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #b42318; stroke-width: 3; fill: none; stroke-dasharray: 10 8; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <text x="700" y="48" text-anchor="middle" class="title">图12-2 Offline IL 的风险链条：从数据覆盖到 OOD 滚雪球</text>
+
+  <rect x="60" y="105" width="250" height="125" class="data"/>
+  <text x="185" y="145" text-anchor="middle" class="box-title">behavior policy β</text>
+  <text x="185" y="180" text-anchor="middle" class="box-text">人类 / 旧模型 / 规则系统</text>
+  <text x="185" y="207" text-anchor="middle" class="small">决定数据从哪里来</text>
+
+  <rect x="370" y="105" width="250" height="125" class="data"/>
+  <text x="495" y="145" text-anchor="middle" class="box-title">离线数据 D</text>
+  <text x="495" y="180" text-anchor="middle" class="box-text">只覆盖 ρβ 的一部分</text>
+  <text x="495" y="207" text-anchor="middle" class="small">正常 / 边界 / 恢复是否被录入</text>
+
+  <rect x="680" y="105" width="250" height="125" class="data"/>
+  <text x="805" y="145" text-anchor="middle" class="box-title">训练目标</text>
+  <text x="805" y="180" text-anchor="middle" class="box-text">在 ρβ 上最小化 loss</text>
+  <text x="805" y="207" text-anchor="middle" class="small">open-loop 指标主要看数据分布内</text>
+
+  <rect x="990" y="105" width="250" height="125" class="risk"/>
+  <text x="1115" y="145" text-anchor="middle" class="box-title">部署策略 πθ</text>
+  <text x="1115" y="180" text-anchor="middle" class="box-text">诱导 ρπθ</text>
+  <text x="1115" y="207" text-anchor="middle" class="small">真实闭环会访问新区域</text>
+
+  <path d="M310 168 L370 168" class="arrow"/>
+  <path d="M620 168 L680 168" class="arrow"/>
+  <path d="M930 168 L990 168" class="arrow"/>
+
+  <rect x="140" y="330" width="270" height="135" class="risk"/>
+  <text x="275" y="370" text-anchor="middle" class="box-title">support mismatch</text>
+  <text x="275" y="405" text-anchor="middle" class="box-text">ρπθ 访问数据覆盖外区域</text>
+  <text x="275" y="434" text-anchor="middle" class="small">模型从插值变成外推</text>
+
+  <rect x="525" y="330" width="270" height="135" class="risk"/>
+  <text x="660" y="370" text-anchor="middle" class="box-title">OOD action</text>
+  <text x="660" y="405" text-anchor="middle" class="box-text">动作缺少数据支撑</text>
+  <text x="660" y="434" text-anchor="middle" class="small">仍可能高置信输出</text>
+
+  <rect x="910" y="330" width="270" height="135" class="risk"/>
+  <text x="1045" y="370" text-anchor="middle" class="box-title">OOD state</text>
+  <text x="1045" y="405" text-anchor="middle" class="box-text">环境转移放大偏差</text>
+  <text x="1045" y="434" text-anchor="middle" class="small">下一步输入更陌生</text>
+
+  <path d="M1115 230 C1115 285 275 275 275 330" class="dash"/>
+  <path d="M410 398 L525 398" class="dash"/>
+  <path d="M795 398 L910 398" class="dash"/>
+  <path d="M1045 465 C1045 555 660 555 660 465" class="dash"/>
+  <text x="850" y="548" text-anchor="middle" class="small">闭环滚雪球：陌生状态 → 外推动作 → 更陌生状态</text>
+
+  <rect x="60" y="500" width="360" height="80" class="safe"/>
+  <text x="240" y="535" text-anchor="middle" class="box-title">recovery data</text>
+  <text x="240" y="562" text-anchor="middle" class="small">把偏差后的可控区域重新纳入数据覆盖</text>
+
+  <path d="M240 500 C240 465 240 465 275 465" class="arrow"/>
+</svg>
