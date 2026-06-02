@@ -51,12 +51,12 @@
 - [第17章 序列策略模型：从 Decision Transformer 到 Transformer Policy](chapters/第17章_Decision_Transformer_把决策问题伪装成语言建模.md)
 - [第18章 VLA：视觉、语言与动作的统一策略模型](chapters/第18章_VLA_视觉语言与动作的统一策略模型.md)
 
-## 第六篇：世界模型、快慢系统与认知架构
+## 第六篇：从动作模仿到世界预测
 
-- [第六篇导读：世界模型、快慢系统与认知架构](导读/06_第六篇_世界模型、快慢系统与认知架构.md)
-- [第21章 从动作模仿到世界理解：机器人不能只会背动作表](chapters/第21章_从动作模仿到世界理解_机器人不能只会背动作表.md)
-- [第22章 World Models、World Action Models 与 JEPA：机器人要学会预测世界](chapters/第22章_World_ModelsWorld_Action_Models_与_JEPA_机器人要学会预测世界.md)
-- [第23章 快慢模型：通用机器人为什么需要双系统架构](chapters/第23章_快慢模型_通用机器人为什么需要双系统架构.md)
+- [第六篇导读：从动作模仿到世界预测](导读/06_第六篇_世界模型、快慢系统与认知架构.md)
+- [第21章 从动作模仿到世界预测：机器人不能只会背动作表](chapters/第21章_从动作模仿到世界理解_机器人不能只会背动作表.md)
+- [第22章 World Models、World Action Models 与 JEPA：机器人要学会预测动作后果](chapters/第22章_World_ModelsWorld_Action_Models_与_JEPA_机器人要学会预测世界.md)
+- [第23章 世界预测如何进入机器人策略系统：计划、验证与安全边界](chapters/第23章_快慢模型_通用机器人为什么需要双系统架构.md)
 
 ## 第七篇：后训练、对齐与实机部署
 
