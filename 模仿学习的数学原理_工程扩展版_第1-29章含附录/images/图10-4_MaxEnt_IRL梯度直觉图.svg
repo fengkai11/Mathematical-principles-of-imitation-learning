@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="620" viewBox="0 0 1100 620">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333"/>
+    </marker>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans CJK SC', 'Microsoft YaHei', Arial, sans-serif; fill:#222; }
+      .title { font-size: 30px; font-weight: 700; }
+      .subtitle { font-size: 18px; fill:#555; }
+      .box-title { font-size: 20px; font-weight: 700; }
+      .body { font-size: 17px; }
+      .small { font-size: 15px; fill:#555; }
+      .box { fill:#f8f9fb; stroke:#333; stroke-width:2; rx:16; }
+      .expert { fill:#e8f1fb; stroke:#4c78a8; stroke-width:2; rx:16; }
+      .model { fill:#fff0df; stroke:#f58518; stroke-width:2; rx:16; }
+      .grad { fill:#f0f7ec; stroke:#54a24b; stroke-width:2; rx:16; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1100" height="620" fill="#fff"/>
+  <text x="550" y="48" text-anchor="middle" class="title">图10-4 MaxEnt IRL 梯度直觉</text>
+  <text x="550" y="82" text-anchor="middle" class="subtitle">梯度不是神秘公式，而是在比较专家统计和模型统计。</text>
+
+  <rect x="70" y="145" width="250" height="150" class="expert"/>
+  <text x="195" y="185" text-anchor="middle" class="box-title">专家轨迹数据</text>
+  <text x="195" y="225" text-anchor="middle" class="body">计算专家特征期望</text>
+  <text x="195" y="260" text-anchor="middle" class="body">μ_E</text>
+
+  <rect x="70" y="365" width="250" height="150" class="model"/>
+  <text x="195" y="405" text-anchor="middle" class="box-title">当前 reward 下采样</text>
+  <text x="195" y="445" text-anchor="middle" class="body">估计模型特征期望</text>
+  <text x="195" y="480" text-anchor="middle" class="body">μ_w</text>
+
+  <line x1="330" y1="220" x2="470" y2="300" stroke="#333" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="330" y1="440" x2="470" y2="360" stroke="#333" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="470" y="250" width="250" height="160" class="grad"/>
+  <text x="595" y="290" text-anchor="middle" class="box-title">梯度方向</text>
+  <text x="595" y="335" text-anchor="middle" class="body">∇L(w) = μ_E − μ_w</text>
+  <text x="595" y="375" text-anchor="middle" class="small">专家多、模型少：提高权重</text>
+  <text x="595" y="398" text-anchor="middle" class="small">模型多、专家少：降低权重</text>
+
+  <line x1="730" y1="330" x2="825" y2="330" stroke="#333" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="825" y="240" width="220" height="180" class="box"/>
+  <text x="935" y="280" text-anchor="middle" class="box-title">更新 reward 权重</text>
+  <text x="935" y="322" text-anchor="middle" class="body">w ← w + η(μ_E − μ_w)</text>
+  <text x="935" y="365" text-anchor="middle" class="small">让模型轨迹统计</text>
+  <text x="935" y="390" text-anchor="middle" class="small">更接近专家轨迹统计</text>
+
+  <path d="M925 430 C 880 545, 245 550, 195 520" fill="none" stroke="#777" stroke-width="3" stroke-dasharray="8 8" marker-end="url(#arrow)"/>
+  <text x="560" y="565" text-anchor="middle" class="subtitle">真实训练难点：μ_w 往往需要采样、规划或 RL，因此工程代价很高。</text>
+</svg>
