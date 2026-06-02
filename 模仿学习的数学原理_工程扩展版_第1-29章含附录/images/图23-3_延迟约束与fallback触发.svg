@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="620" viewBox="0 0 1100 620">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333"/>
+    </marker>
+    <style>
+      .title { font: 700 28px sans-serif; fill: #222; }
+      .subtitle { font: 18px sans-serif; fill: #555; }
+      .label { font: 700 18px sans-serif; fill: #222; }
+      .text { font: 16px sans-serif; fill: #333; }
+      .small { font: 14px sans-serif; fill: #555; }
+      .formula { font: 18px serif; fill: #222; }
+      .axis { stroke: #333; stroke-width: 2.5; marker-end: url(#arrow); }
+      .good { fill: #dcfce7; stroke: #16a34a; stroke-width: 2; rx: 10; }
+      .bad { fill: #fee2e2; stroke: #dc2626; stroke-width: 2; rx: 10; }
+      .warn { fill: #fef3c7; stroke: #d97706; stroke-width: 2; rx: 10; }
+      .line { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+      .dash { stroke: #666; stroke-width: 2; fill: none; stroke-dasharray: 7 6; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <text x="550" y="42" text-anchor="middle" class="title">图23-3 延迟约束与 fallback 触发</text>
+  <text x="550" y="74" text-anchor="middle" class="subtitle">当推理耗时超过控制周期或缓存条件过期时，系统不能阻塞快控制循环</text>
+
+  <line x1="120" y1="170" x2="980" y2="170" class="axis"/>
+  <text x="105" y="175" text-anchor="end" class="label">时间</text>
+
+  <rect x="160" y="125" width="150" height="90" class="good"/>
+  <text x="235" y="158" text-anchor="middle" class="label">快模型</text>
+  <text x="235" y="185" text-anchor="middle" class="formula">T_fast &lt; Δt_fast</text>
+  <text x="235" y="207" text-anchor="middle" class="small">可逐周期执行</text>
+
+  <rect x="405" y="125" width="260" height="90" class="bad"/>
+  <text x="535" y="158" text-anchor="middle" class="label">慢模型同步控制</text>
+  <text x="535" y="185" text-anchor="middle" class="formula">T_slow &gt; Δt_fast</text>
+  <text x="535" y="207" text-anchor="middle" class="small">阻塞控制循环</text>
+
+  <rect x="745" y="125" width="190" height="90" class="warn"/>
+  <text x="840" y="158" text-anchor="middle" class="label">架构分工</text>
+  <text x="840" y="185" text-anchor="middle" class="formula">慢条件 + 快执行</text>
+  <text x="840" y="207" text-anchor="middle" class="small">异步缓存</text>
+
+  <path d="M310 170 C350 170 365 170 405 170" class="line"/>
+  <path d="M665 170 C700 170 715 170 745 170" class="line"/>
+
+  <rect x="150" y="305" width="270" height="115" class="good"/>
+  <text x="285" y="340" text-anchor="middle" class="label">正常执行</text>
+  <text x="178" y="372" class="text">缓存条件仍有效</text>
+  <text x="178" y="400" class="formula">δ_t ≤ δ_max</text>
+
+  <rect x="465" y="305" width="270" height="115" class="warn"/>
+  <text x="600" y="340" text-anchor="middle" class="label">风险上升</text>
+  <text x="493" y="372" class="text">条件变旧或不确定性升高</text>
+  <text x="493" y="400" class="formula">δ_t → δ_max</text>
+
+  <rect x="780" y="305" width="220" height="115" class="bad"/>
+  <text x="890" y="340" text-anchor="middle" class="label">fallback</text>
+  <text x="808" y="372" class="text">减速 / 保持</text>
+  <text x="808" y="400" class="text">重规划 / 接管</text>
+
+  <path d="M420 362 C440 362 445 362 465 362" class="dash"/>
+  <path d="M735 362 C755 362 760 362 780 362" class="dash"/>
+
+  <text x="550" y="505" text-anchor="middle" class="formula">核心判断：实时控制要求 T &lt; Δt_fast；慢模型不能同步逐周期输出低层动作。</text>
+  <text x="550" y="545" text-anchor="middle" class="subtitle">读者要记住：fallback 不是失败后的补丁，而是快慢系统必须设计的安全出口。</text>
+</svg>
