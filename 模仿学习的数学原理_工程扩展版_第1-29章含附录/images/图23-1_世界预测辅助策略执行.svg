@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="640" viewBox="0 0 1200 640">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#333"/></marker>
+    <style>
+      .title{font:700 28px sans-serif;fill:#222}.sub{font:18px sans-serif;fill:#555}.box{fill:#f8fafc;stroke:#334155;stroke-width:2;rx:18}.policy{fill:#eef6ff;stroke:#2563eb;stroke-width:2;rx:18}.wm{fill:#f0fdf4;stroke:#16a34a;stroke-width:2;rx:18}.risk{fill:#fff7ed;stroke:#ea580c;stroke-width:2;rx:18}.exec{fill:#fdf2f8;stroke:#db2777;stroke-width:2;rx:18}.bt{font:700 20px sans-serif;fill:#222}.txt{font:16px sans-serif;fill:#333}.f{font:18px serif;fill:#111}.arr{stroke:#333;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.dash{stroke:#666;stroke-width:2;fill:none;stroke-dasharray:7 6;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <text x="600" y="42" text-anchor="middle" class="title">图23-1 世界预测如何辅助策略执行</text>
+  <text x="600" y="75" text-anchor="middle" class="sub">策略提出候选动作，世界模型预测后果，风险与目标评分决定执行、修正或 fallback</text>
+
+  <rect x="70" y="160" width="220" height="140" class="policy"/>
+  <text x="180" y="195" text-anchor="middle" class="bt">动作策略</text>
+  <text x="105" y="232" class="txt">生成候选动作</text>
+  <text x="105" y="262" class="f">a_t^(1), a_t^(2), ...</text>
+
+  <rect x="360" y="145" width="250" height="170" class="wm"/>
+  <text x="485" y="180" text-anchor="middle" class="bt">世界预测模型</text>
+  <text x="395" y="218" class="txt">预测候选动作后果</text>
+  <text x="395" y="248" class="f">ĥ_{t+1}^{(j)}=Fθ(h_t,a_t^{(j)})</text>
+  <text x="395" y="280" class="txt">短期 rollout / 任务变量</text>
+
+  <rect x="690" y="145" width="250" height="170" class="risk"/>
+  <text x="815" y="180" text-anchor="middle" class="bt">评估与安全边界</text>
+  <text x="725" y="218" class="txt">目标评分 / 风险预测</text>
+  <text x="725" y="248" class="f">J(ĥ,q), R_t</text>
+  <text x="725" y="280" class="txt">选择、拒绝或重规划</text>
+
+  <rect x="480" y="400" width="250" height="140" class="exec"/>
+  <text x="605" y="435" text-anchor="middle" class="bt">真实机器人执行</text>
+  <text x="515" y="472" class="txt">执行动作 / 动作块</text>
+  <text x="515" y="502" class="txt">观测反馈与误差检测</text>
+
+  <rect x="880" y="400" width="220" height="140" class="box"/>
+  <text x="990" y="435" text-anchor="middle" class="bt">失败恢复</text>
+  <text x="918" y="472" class="txt">修正 / fallback</text>
+  <text x="918" y="502" class="txt">接管 / 数据回流</text>
+
+  <path d="M290 230 C320 230 330 230 360 230" class="arr"/>
+  <path d="M610 230 C640 230 660 230 690 230" class="arr"/>
+  <path d="M815 315 C815 360 730 400 680 400" class="arr"/>
+  <path d="M730 470 C785 470 825 470 880 470" class="dash"/>
+  <path d="M605 400 C550 360 485 330 485 315" class="dash"/>
+  <path d="M990 540 C990 585 180 585 180 300" class="dash"/>
+
+  <text x="317" y="214" class="txt">候选</text>
+  <text x="635" y="214" class="txt">后果</text>
+  <text x="785" y="365" class="txt">选中动作</text>
+  <text x="760" y="455" class="txt">风险过高</text>
+  <text x="448" y="365" class="txt">预测-反馈误差</text>
+  <text x="560" y="595" text-anchor="middle" class="sub">读者要记住：世界模型不替代策略和控制器，而是在执行前后提供“后果检查”。</text>
+</svg>
