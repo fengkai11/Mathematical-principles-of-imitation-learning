@@ -293,21 +293,21 @@ $$\frac{\rho_E(s,a)}{D(s,a)} - \frac{\rho_\pi(s,a)}{1-D(s,a)} = 0$$
 
 **公式 (11.12)：最优判别器形式**
 
-$$D^{*}(s,a) = \frac{\rho_E(s,a)}{\rho_E(s,a)+\rho_\pi(s,a)}$$
+$$D_\star(s,a) = \rho_E(s,a)/(\rho_E(s,a)+\rho_\pi(s,a))$$
 
 这就是 GAIL 中非常重要的直觉。
 
-如果某个状态—动作区域专家经常出现，而当前策略很少出现，那么 $\rho_E(s,a)$ 大、$\rho_\pi(s,a)$ 小，$D^{*}(s,a)$ 接近 1。
+如果某个状态—动作区域专家经常出现，而当前策略很少出现，那么 $\rho_E(s,a)$ 大、$\rho_\pi(s,a)$ 小，$D_\star(s,a)$ 接近 1。
 
-如果某个区域当前策略经常出现，而专家很少出现，那么 $D^{*}(s,a)$ 接近 0。
+如果某个区域当前策略经常出现，而专家很少出现，那么 $D_\star(s,a)$ 接近 0。
 
-如果专家和策略在某个区域出现频率差不多，那么 $D^{*}(s,a)$ 接近 0.5，判别器分不清。
+如果专家和策略在某个区域出现频率差不多，那么 $D_\star(s,a)$ 接近 0.5，判别器分不清。
 
 进一步看密度比：
 
 **公式 (11.13)：最优判别器与密度比**
 
-$$\frac{D^{*}(s,a)}{1-D^{*}(s,a)} = \frac{\rho_E(s,a)}{\rho_\pi(s,a)}$$
+$$D_\star(s,a)/(1-D_\star(s,a)) = \rho_E(s,a)/\rho_\pi(s,a)$$
 
 所以，判别器不是神秘的“奖励 oracle”。它本质上在估计专家分布和策略分布在哪里不一样。
 
@@ -315,7 +315,7 @@ $$\frac{D^{*}(s,a)}{1-D^{*}(s,a)} = \frac{\rho_E(s,a)}{\rho_\pi(s,a)}$$
 
 > **命题 11.2：判别器的密度比解释**
 >
-> 在固定策略 $\pi$ 时，GAIL 判别器的最优形式为 $D^{*}(s,a)=\rho_E(s,a)/(\rho_E(s,a)+\rho_\pi(s,a))$。因此，判别器输出可以反映专家 occupancy measure 与策略 occupancy measure 的相对大小。
+> 在固定策略 $\pi$ 时，GAIL 判别器的最优形式为 $D_\star(s,a)=\rho_E(s,a)/(\rho_E(s,a)+\rho_\pi(s,a))$。因此，判别器输出可以反映专家 occupancy measure 与策略 occupancy measure 的相对大小。
 
 **证明**：
 
@@ -339,11 +339,11 @@ $$\rho_E(s,a)=\left(\rho_E(s,a)+\rho_\pi(s,a)\right)D(s,a)$$
 
 所以最优判别器为：
 
-$$D^{*}(s,a)=\frac{\rho_E(s,a)}{\rho_E(s,a)+\rho_\pi(s,a)}$$
+$$D_\star(s,a)=\rho_E(s,a)/(\rho_E(s,a)+\rho_\pi(s,a))$$
 
 进一步有：
 
-$$\frac{D^{*}(s,a)}{1-D^{*}(s,a)}=\frac{\rho_E(s,a)}{\rho_\pi(s,a)}$$
+$$D_\star(s,a)/(1-D_\star(s,a))=\rho_E(s,a)/\rho_\pi(s,a)$$
 
 因此，最优判别器输出不仅是“像不像专家”的分类概率，也包含专家 occupancy measure 与策略 occupancy measure 的密度比信息。
 
