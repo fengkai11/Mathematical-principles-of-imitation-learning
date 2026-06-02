@@ -95,9 +95,13 @@
 
 BC 的训练目标通常可以写成：
 
-$$\min_\theta \mathbb{E}_{(s,a) \sim \mathcal{D}_E}\left[\ell(\pi_\theta(s),a)\right] \tag{11.1}$$
+**公式 (11.1)：BC 在专家数据分布上的单步 imitation loss**
+
+$$\theta^* = \arg\min_\theta \mathbb{E}_{(s,a) \sim \mathcal{D}_E}\left[\ell\left(\pi_\theta(s),a\right)\right]$$
 
 这个目标关注的是：在专家数据出现过的状态 $s$ 上，模型动作 $\pi_\theta(s)$ 是否接近专家动作 $a$。
+
+这里的 $\mathcal{D}_E$ 是有限专家数据集，而 $\rho_E(s,a)$ 是专家策略在环境中诱导出的状态—动作访问分布。可以把 $\mathcal{D}_E$ 理解成从 $\rho_E(s,a)$ 中采样得到的有限样本集合。也就是说，BC 实际上是在有限专家数据上近似优化专家分布下的单步动作误差。
 
 这当然有用。没有 BC 这个基础，很多机器人模仿学习项目根本跑不起来。
 
@@ -119,7 +123,9 @@ GAIL 要匹配的不是单步动作标签，而是状态—动作访问分布。
 >
 > 给定策略 $\pi$，它的折扣状态—动作占用测度可以写成：
 
-$$\rho_\pi(s,a) = (1-\gamma)\sum_{t=0}^{\infty}\gamma^t \Pr(s_t=s,a_t=a \mid \pi) \tag{11.2}$$
+**公式 (11.2)：discounted occupancy measure 定义**
+
+$$\rho_\pi(s,a) = (1-\gamma)\sum_{t=0}^{\infty}\gamma^t \Pr(s_t=s,a_t=a \mid \pi)$$
 
 如果状态或动作是连续的，可以把 $\rho_\pi(s,a)$ 理解成密度，而不是离散概率。
 
@@ -130,11 +136,21 @@ $$\rho_\pi(s,a) = (1-\gamma)\sum_{t=0}^{\infty}\gamma^t \Pr(s_t=s,a_t=a \mid \pi
 - $(1-\gamma)$ 是归一化因子，让无限时间累计更稳定；
 - $\rho_\pi(s,a)$ 表示策略在闭环执行中有多经常经过某个状态—动作区域。
 
+不同文献对 occupancy measure 的归一化约定不完全一样。有的写法会省略 $(1-\gamma)$，此时它更像折扣访问频率，而不是严格归一化后的概率分布。本书在本章采用带 $(1-\gamma)$ 的归一化写法，便于把它理解为状态—动作分布。
+
 直觉上，occupancy measure 是策略在环境里留下的“脚印热力图”。
 
 如果一个机械臂策略经常靠近治具边缘、经常高速接近目标、经常在夹取前姿态没对齐，那么这些区域的 $\rho_\pi(s,a)$ 就会很高。
 
 如果专家几乎不访问这些危险区域，而学习策略经常访问，那么它们的 occupancy measure 就不匹配。
+
+![图11-2 专家与策略 occupancy measure 对比](../images/图11-2_专家与策略occupancy_measure对比.svg)
+
+**图11-2 说明**：
+
+- 左侧表示专家策略的访问分布，轨迹主要集中在安全接近、稳定对齐和可靠夹取区域；
+- 右侧表示学习策略的访问分布，一部分轨迹偏向治具边缘或危险接近区域；
+- GAIL 关心的不是某一个动作是否完全一样，而是两类状态—动作访问分布是否整体接近。
 
 ### 6.2 命题 11.1：occupancy measure 比单步 action loss 更接近闭环行为
 
@@ -150,17 +166,21 @@ $$\rho_\pi(s,a) = (1-\gamma)\sum_{t=0}^{\infty}\gamma^t \Pr(s_t=s,a_t=a \mid \pi
 
 BC 的目标可以抽象成：
 
-$$\mathcal{L}_{BC}(\theta) = \mathbb{E}_{(s,a) \sim \rho_E}\left[\ell(\pi_\theta(s),a)\right] \tag{11.3}$$
+**公式 (11.3)：BC 在专家分布上的训练目标**
+
+$$\mathcal{L}_{BC}(\theta) = \mathbb{E}_{(s,a) \sim \rho_E}\left[\ell\left(\pi_\theta(s),a\right)\right]$$
 
 这里的期望主要在专家访问过的状态—动作区域上计算。
 
 但学习策略部署后真正产生的是：
 
-$$\rho_{\pi_\theta}(s,a) \tag{11.4}$$
+**公式 (11.4)：学习策略自身诱导出的 occupancy measure**
+
+$$\rho_{\pi_\theta}(s,a)$$
 
 如果 $\rho_{\pi_\theta}(s,a)$ 和 $\rho_E(s,a)$ 差别很大，说明学习策略闭环执行时经常进入专家不常访问的区域。
 
-这时即使式 (11.3) 很小，也不能保证闭环行为像专家。因为式 (11.3) 没有充分评价学习策略自己诱导出来的状态分布。
+这时即使公式 (11.3) 很小，也不能保证闭环行为像专家。因为公式 (11.3) 没有充分评价学习策略自己诱导出来的状态分布。
 
 因此，匹配 $\rho_{\pi_\theta}(s,a)$ 和 $\rho_E(s,a)$，比只在专家数据上最小化动作误差，更接近“整体行为像专家”。
 
@@ -180,15 +200,19 @@ occupancy measure 不是一条轨迹，也不是原始数据集。它是策略�
 
 GAIL 的目标是让学习策略的 occupancy measure 接近专家：
 
-$$\rho_{\pi_\theta}(s,a) \approx \rho_E(s,a) \tag{11.5}$$
+**公式 (11.5)：GAIL 希望匹配专家和策略的 occupancy measure**
 
-但直接计算两个高维分布之间的距离很难。尤其在机器人任务里，状态可能包含图像、本体状态、末端位姿、力传感器信息，动作可能是连续控制量。
+$$\rho_{\pi_\theta}(s,a) \approx \rho_E(s,a)$$
 
-GAIL 引入判别器 $D_\omega(s,a)$ 来做这件事。
+### 7.1 定义 11.2：GAIL 判别器
 
-本章采用如下约定：
+> **定义 11.2：GAIL 判别器**
+>
+> 给定专家 occupancy measure $\rho_E$ 和当前策略 occupancy measure $\rho_\pi$，GAIL 判别器 $D_\omega(s,a)$ 是一个二分类模型。本章约定 $D_\omega(s,a)$ 表示状态—动作对 $(s,a)$ 来自专家数据而不是当前策略 rollout 的概率。
 
-> $D_\omega(s,a)$ 表示判别器认为 $(s,a)$ 来自专家的概率。
+**公式 (11.6)：GAIL 判别器输出约定**
+
+$$D_\omega(s,a)\in(0,1)$$
 
 于是：
 
@@ -196,9 +220,23 @@ GAIL 引入判别器 $D_\omega(s,a)$ 来做这件事。
 - 策略样本希望 $D_\omega(s,a)$ 接近 0；
 - 策略训练的目标则是让自己的样本越来越像专家，使判别器越来越分不清。
 
+### 7.2 定义 11.3：occupancy measure matching
+
+> **定义 11.3：occupancy measure matching**
+>
+> 所谓 occupancy measure matching，是指让学习策略诱导出的状态—动作访问分布 $\rho_{\pi_\theta}(s,a)$ 接近专家访问分布 $\rho_E(s,a)$。
+
+直观地说，这不只是让模型在专家见过的状态上动作像专家，而是让模型闭环执行后“常去哪里、常做什么”整体像专家。
+
+但直接计算两个高维分布之间的距离很难。尤其在机器人任务里，状态可能包含图像、本体状态、末端位姿、力传感器信息，动作可能是连续控制量。
+
+GAIL 引入判别器 $D_\omega(s,a)$ 来做这件事。
+
 GAIL 的一个常见目标可以写成：
 
-$$\min_\pi \max_D \; \mathbb{E}_{(s,a) \sim \rho_E}[\log D(s,a)] + \mathbb{E}_{(s,a) \sim \rho_\pi}[\log(1-D(s,a))] - \lambda H(\pi) \tag{11.6}$$
+**公式 (11.7)：GAIL 的 min-max 目标**
+
+$$\min_\pi \max_D \; \mathbb{E}_{(s,a) \sim \rho_E}[\log D(s,a)] + \mathbb{E}_{(s,a) \sim \rho_\pi}[\log(1-D(s,a))] - \lambda H(\pi)$$
 
 这里：
 
@@ -207,6 +245,8 @@ $$\min_\pi \max_D \; \mathbb{E}_{(s,a) \sim \rho_E}[\log D(s,a)] + \mathbb{E}_{(
 - $H(\pi)$ 是策略熵；
 - $\lambda$ 控制熵正则强度；
 - 熵正则鼓励策略不要过早坍缩成单一动作。
+
+注意这里有一个容易混淆的符号方向：公式 (11.7) 是整体博弈目标。固定判别器时，策略最小化 $\mathbb{E}_{(s,a) \sim \rho_\pi}[\log(1-D(s,a))] - \lambda H(\pi)$，等价于最大化 $-\log(1-D(s,a))$ 加熵正则。因此第9节可以把 $-\log(1-D(s,a))$ 看作隐式 reward。
 
 不同论文和代码可能采用相反约定：让 $D(s,a)$ 表示“来自策略”的概率。那样 $\log D$、$\log(1-D)$ 和 reward 写法会对调。读公式时不要死记符号，要先确认 $D$ 到底给谁贴标签。
 
@@ -225,25 +265,35 @@ $$\min_\pi \max_D \; \mathbb{E}_{(s,a) \sim \rho_E}[\log D(s,a)] + \mathbb{E}_{(
 
 判别器为什么能反映专家分布和策略分布的差异？
 
-先固定策略 $\pi$，只优化判别器。式 (11.6) 中和判别器有关的部分是：
+先固定策略 $\pi$，只优化判别器。公式 (11.7) 中和判别器有关的部分是：
 
-$$J_D(D) = \mathbb{E}_{(s,a) \sim \rho_E}[\log D(s,a)] + \mathbb{E}_{(s,a) \sim \rho_\pi}[\log(1-D(s,a))] \tag{11.7}$$
+**公式 (11.8)：固定策略时的判别器目标**
+
+$$J_D(D) = \mathbb{E}_{(s,a) \sim \rho_E}[\log D(s,a)] + \mathbb{E}_{(s,a) \sim \rho_\pi}[\log(1-D(s,a))]$$
 
 把期望写成对状态—动作空间的求和形式：
 
-$$J_D(D) = \sum_{s,a}\rho_E(s,a)\log D(s,a) + \sum_{s,a}\rho_\pi(s,a)\log(1-D(s,a)) \tag{11.8}$$
+**公式 (11.9)：判别器目标的求和形式**
+
+$$J_D(D) = \sum_{s,a}\rho_E(s,a)\log D(s,a) + \sum_{s,a}\rho_\pi(s,a)\log(1-D(s,a))$$
 
 对于某个固定的 $(s,a)$，判别器要最大化：
 
-$$\rho_E(s,a)\log D(s,a) + \rho_\pi(s,a)\log(1-D(s,a)) \tag{11.9}$$
+**公式 (11.10)：单个状态—动作对上的判别器局部目标**
+
+$$\rho_E(s,a)\log D(s,a) + \rho_\pi(s,a)\log(1-D(s,a))$$
 
 对 $D(s,a)$ 求导：
 
-$$\frac{\rho_E(s,a)}{D(s,a)} - \frac{\rho_\pi(s,a)}{1-D(s,a)} = 0 \tag{11.10}$$
+**公式 (11.11)：最优判别器的一阶条件**
+
+$$\frac{\rho_E(s,a)}{D(s,a)} - \frac{\rho_\pi(s,a)}{1-D(s,a)} = 0$$
 
 整理得到最优判别器：
 
-$$D^*(s,a) = \frac{\rho_E(s,a)}{\rho_E(s,a)+\rho_\pi(s,a)} \tag{11.11}$$
+**公式 (11.12)：最优判别器形式**
+
+$$D^*(s,a) = \frac{\rho_E(s,a)}{\rho_E(s,a)+\rho_\pi(s,a)}$$
 
 这就是 GAIL 中非常重要的直觉。
 
@@ -255,7 +305,9 @@ $$D^*(s,a) = \frac{\rho_E(s,a)}{\rho_E(s,a)+\rho_\pi(s,a)} \tag{11.11}$$
 
 进一步看密度比：
 
-$$\frac{D^*(s,a)}{1-D^*(s,a)} = \frac{\rho_E(s,a)}{\rho_\pi(s,a)} \tag{11.12}$$
+**公式 (11.13)：最优判别器与密度比**
+
+$$\frac{D^*(s,a)}{1-D^*(s,a)} = \frac{\rho_E(s,a)}{\rho_\pi(s,a)}$$
 
 所以，判别器不是神秘的“奖励 oracle”。它本质上在估计专家分布和策略分布在哪里不一样。
 
@@ -264,6 +316,36 @@ $$\frac{D^*(s,a)}{1-D^*(s,a)} = \frac{\rho_E(s,a)}{\rho_\pi(s,a)} \tag{11.12}$$
 > **命题 11.2：判别器的密度比解释**
 >
 > 在固定策略 $\pi$ 时，GAIL 判别器的最优形式为 $D^*(s,a)=\rho_E(s,a)/(\rho_E(s,a)+\rho_\pi(s,a))$。因此，判别器输出可以反映专家 occupancy measure 与策略 occupancy measure 的相对大小。
+
+**证明**：
+
+固定策略 $\pi$ 后，$\rho_\pi(s,a)$ 不随判别器变化。判别器优化可以分解到每个状态—动作对 $(s,a)$ 上。
+
+对某个固定的 $(s,a)$，需要最大化：
+
+$$\rho_E(s,a)\log D(s,a)+\rho_\pi(s,a)\log(1-D(s,a))$$
+
+对 $D(s,a)$ 求导并令其为 0：
+
+$$\frac{\rho_E(s,a)}{D(s,a)}-\frac{\rho_\pi(s,a)}{1-D(s,a)}=0$$
+
+移项得到：
+
+$$\rho_E(s,a)(1-D(s,a))=\rho_\pi(s,a)D(s,a)$$
+
+继续整理：
+
+$$\rho_E(s,a)=\left(\rho_E(s,a)+\rho_\pi(s,a)\right)D(s,a)$$
+
+所以最优判别器为：
+
+$$D^*(s,a)=\frac{\rho_E(s,a)}{\rho_E(s,a)+\rho_\pi(s,a)}$$
+
+进一步有：
+
+$$\frac{D^*(s,a)}{1-D^*(s,a)}=\frac{\rho_E(s,a)}{\rho_\pi(s,a)}$$
+
+因此，最优判别器输出不仅是“像不像专家”的分类概率，也包含专家 occupancy measure 与策略 occupancy measure 的密度比信息。
 
 **这个命题告诉我们什么？**
 
@@ -283,17 +365,29 @@ GAIL 的判别器本身不输出动作。策略要更新，仍然需要一个类
 
 在本章约定中，$D(s,a)$ 表示“来自专家”的概率。一个自然的隐式 reward 是：
 
-$$\hat r_D(s,a) = -\log(1-D(s,a)) \tag{11.13}$$
+**公式 (11.14)：基于非专家概率的隐式 reward**
+
+$$\hat r_D(s,a) = -\log(1-D(s,a))$$
 
 也可以使用：
 
-$$\hat r_D(s,a) = \log D(s,a) \tag{11.14}$$
+**公式 (11.15)：基于专家概率的隐式 reward**
+
+$$\hat r_D(s,a) = \log D(s,a)$$
 
 不同实现会选择不同形式。核心思想一样：
 
 > 如果判别器认为某个状态—动作更像专家，就给策略更高反馈；如果更像当前策略的坏习惯，就给更低反馈。
 
-为什么式 (11.13) 合理？
+两种写法可以这样对比：
+
+| 隐式 reward 写法 | 当 $D(s,a)$ 接近 1 | 当 $D(s,a)$ 接近 0 | 工程直觉 |
+|---|---|---|---|
+| $\hat r_D(s,a)=-\log(1-D(s,a))$ | reward 很大 | reward 接近 0 | 强烈鼓励策略骗过判别器 |
+| $\hat r_D(s,a)=\log D(s,a)$ | reward 接近 0 | reward 是很大的负数 | 直接惩罚明显不像专家的状态—动作 |
+| 二者共同点 | 都偏好更像专家的样本 | 都不鼓励明显不像专家的样本 | 都是判别器诱导的训练信号 |
+
+为什么公式 (11.14) 合理？
 
 - 当 $D(s,a)$ 接近 1，判别器认为样本很像专家，$-\log(1-D(s,a))$ 会变大；
 - 当 $D(s,a)$ 接近 0，判别器认为样本不像专家，$-\log(1-D(s,a))$ 接近 0；
@@ -301,11 +395,15 @@ $$\hat r_D(s,a) = \log D(s,a) \tag{11.14}$$
 
 于是策略优化可以粗略理解成：
 
-$$\max_\pi \mathbb{E}_{(s,a) \sim \rho_\pi}[\hat r_D(s,a)] + \lambda H(\pi) \tag{11.15}$$
+**公式 (11.16)：使用隐式 reward 的策略优化目标**
+
+$$\max_\pi \mathbb{E}_{(s,a) \sim \rho_\pi}[\hat r_D(s,a)] + \lambda H(\pi)$$
 
 这就是“从判别器里偷一个奖励函数”的含义。
 
 它不是专家显式写出来的 reward，也不是第10章 IRL 中先恢复出来的 reward，而是一个由分布判别器动态产生的训练信号。
+
+实际代码中的 reward 写法还会受到判别器标签约定、数值稳定性和 RL 算法实现影响。读代码时必须先确认 $D$ 表示“专家概率”还是“策略概率”。
 
 ### 命题 11.3：GAIL 的隐式 reward 来自分布差异
 
@@ -337,6 +435,16 @@ GAIL 的训练可以理解为一个循环。
 5. 用 RL 或策略优化方法更新 pi_theta。
 6. 回到第1步，重新 rollout。
 ```
+
+![图11-3 GAIL 训练闭环](../images/图11-3_GAIL训练闭环.svg)
+
+**图11-3 说明**：
+
+- GAIL 不是在固定数据集上训练一次就结束；
+- 当前策略会不断 rollout，产生新的策略样本；
+- 判别器根据专家样本和当前策略样本重新学习分布差异；
+- 策略再根据判别器构造的隐式 reward 更新自己；
+- 策略一变，$\rho_\pi(s,a)$ 也会变，所以训练会进入下一轮循环。
 
 这和普通监督学习差别很大。
 
@@ -414,11 +522,15 @@ GAIL 的问题不是“数学不漂亮”，而是“它需要不断知道当前
 
 BC 关注专家数据里的单步映射：
 
-$$s \mapsto a \tag{11.16}$$
+**公式 (11.17)：BC 关注单步状态到动作的映射**
+
+$$s \mapsto a$$
 
 GAIL 关注策略闭环执行后的整体访问分布：
 
-$$\rho_{\pi_\theta}(s,a) \approx \rho_E(s,a) \tag{11.17}$$
+**公式 (11.18)：GAIL 关注 occupancy measure matching**
+
+$$\rho_{\pi_\theta}(s,a) \approx \rho_E(s,a)$$
 
 因此，BC 像是在做“逐题批改”，GAIL 像是在看“整体行为像不像老师傅”。
 
@@ -442,13 +554,13 @@ GAIL 的路线更像是：
 
 它仍然会产生类似 reward 的信号，但这个信号来自判别器，而不是先单独恢复一个稳定可解释的 reward 函数。
 
-### 12.3 GAIL 与第四篇现代策略模型
+### 12.3 GAIL 与后续现代策略模型
 
-GAIL 主要解决的是“匹配什么分布”的问题。
+GAIL 主要解决的是“模仿学习到底应该匹配什么分布”的问题。
 
-第四篇 ACT、Diffusion Policy、Flow Matching 主要解决的是“策略如何表达动作”的问题。
+后面第四篇会看到，ACT、Diffusion Policy、Flow Matching 主要解决的是“策略如何表达动作”的问题。
 
-这两个问题不同。
+这两个问题不是替代关系，而是两个层面的设计问题。
 
 一个策略模型可以很强，但如果离线数据没有覆盖关键失败和恢复状态，它仍然可能在部署时出问题。
 
@@ -487,15 +599,16 @@ GAIL 主要解决的是“匹配什么分布”的问题。
 
 ## 15. 本章公式索引
 
-- 公式 (11.1)：BC 的单步 imitation loss。
+- 公式 (11.1)：BC 在专家数据分布上的单步 imitation loss。
 - 公式 (11.2)：discounted occupancy measure 定义。
 - 公式 (11.3)：BC 在专家分布上的训练目标。
 - 公式 (11.4)：学习策略自身诱导出的 occupancy measure。
 - 公式 (11.5)：GAIL 希望匹配专家和策略的 occupancy measure。
-- 公式 (11.6)：GAIL 的 min-max 目标。
-- 公式 (11.7)—(11.12)：最优判别器与密度比直觉。
-- 公式 (11.13)—(11.15)：判别器输出构造隐式 reward。
-- 公式 (11.16)—(11.17)：BC 与 GAIL 的核心对象对比。
+- 公式 (11.6)：GAIL 判别器输出约定。
+- 公式 (11.7)：GAIL 的 min-max 目标。
+- 公式 (11.8)—(11.13)：最优判别器与密度比推导。
+- 公式 (11.14)—(11.16)：判别器输出构造隐式 reward。
+- 公式 (11.17)—(11.18)：BC 与 GAIL 的核心对象对比。
 
 ---
 
