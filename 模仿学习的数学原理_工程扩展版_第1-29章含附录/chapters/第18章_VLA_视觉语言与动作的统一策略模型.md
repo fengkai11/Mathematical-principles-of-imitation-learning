@@ -125,9 +125,9 @@ $$\pi_\theta(A_t \mid I_{1:t}, q_{1:t}, a_{1:t-1}, l),\quad A_t=(a_t,a_{t+1},\do
 
 **公式 (18.6)：动作 token 条件分布**
 
-$$p_\theta(y_{t,1:M} \mid I_{1:t}, q_{1:t}, y_{<t}, l)$$
+$$p_\theta(y_{t,1:M} \mid I_{1:t}, q_{1:t}, y_{1:t-1}, l)$$
 
-其中，$y_{t,1:M}$ 表示动作对应的一串离散 token。动作 token 化的好处是可以复用语言模型式的序列预测框架；代价是连续控制精度、量化误差和安全边界都需要额外处理。
+其中，$y_{t,1:M}$ 表示当前时刻动作对应的一串离散 token，$y_{1:t-1}$ 表示当前时刻之前已经生成或已经观测到的动作 token 历史。动作 token 化的好处是可以复用语言模型式的序列预测框架；代价是连续控制精度、量化误差和安全边界都需要额外处理。
 
 ![图18-1 VLA输入输出结构](../images/图18-1_VLA输入输出结构.svg)
 
@@ -202,9 +202,9 @@ $$a_t \rightarrow y_t$$
 
 **公式 (18.9)：动作 token 负对数似然**
 
-$$\mathcal{L}_{\mathrm{token}}(\theta) = -\sum_{t=1}^{T}\log p_\theta(y_t \mid I_{1:t}, q_{1:t}, y_{<t}, l)$$
+$$\mathcal{L}_{\mathrm{token}}(\theta) = -\sum_{t=1}^{T}\log p_\theta(y_t \mid I_{1:t}, q_{1:t}, y_{1:t-1}, l)$$
 
-这个公式读作：让模型在多模态上下文条件下，最大化专家动作 token 的概率；等价地，最小化专家动作 token 的负对数似然。
+这个公式读作：让模型在多模态上下文和动作 token 历史条件下，最大化专家动作 token 的概率；等价地，最小化专家动作 token 的负对数似然。
 
 这种形式适合和语言模型结构结合，但动作精度依赖量化设计。量化太粗会影响控制精度，量化太细会增加 token 序列长度和学习难度。
 
@@ -532,9 +532,9 @@ $$\pi_\theta(A_t \mid I_{1:t}, q_{1:t}, a_{1:t-1}, l),\quad A_t=(a_t,a_{t+1},\do
 
 ### 公式 (18.6)：动作 token 条件分布
 
-$$p_\theta(y_{t,1:M} \mid I_{1:t}, q_{1:t}, y_{<t}, l)$$
+$$p_\theta(y_{t,1:M} \mid I_{1:t}, q_{1:t}, y_{1:t-1}, l)$$
 
-- **含义**：把动作预测改写为 token 序列预测。
+- **含义**：把动作预测改写为 token 序列预测，并显式条件在历史动作 token 上。
 
 ### 公式 (18.7)：连续动作 VLA
 
@@ -550,7 +550,7 @@ $$a_t \rightarrow y_t$$
 
 ### 公式 (18.9)：动作 token 负对数似然
 
-$$\mathcal{L}_{\mathrm{token}}(\theta) = -\sum_{t=1}^{T}\log p_\theta(y_t \mid I_{1:t}, q_{1:t}, y_{<t}, l)$$
+$$\mathcal{L}_{\mathrm{token}}(\theta) = -\sum_{t=1}^{T}\log p_\theta(y_t \mid I_{1:t}, q_{1:t}, y_{1:t-1}, l)$$
 
 - **含义**：最大化专家动作 token 的条件概率。
 
