@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#555"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="720" fill="#ffffff"/>
+  <text x="600" y="50" text-anchor="middle" font-size="30" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-weight="700" fill="#222">图11-3 GAIL 训练闭环</text>
+  <text x="600" y="88" text-anchor="middle" font-size="17" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#555">策略 rollout 改变 ρ_π(s,a)，判别器重新估计分布差异，再把差异变成隐式 reward</text>
+
+  <rect x="90" y="160" width="220" height="82" rx="16" fill="#eaf3ff" stroke="#74a8dd" stroke-width="2"/>
+  <text x="200" y="195" text-anchor="middle" font-size="20" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-weight="700" fill="#204f7a">当前策略 π_θ</text>
+  <text x="200" y="222" text-anchor="middle" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#385d7d">控制机器人执行</text>
+
+  <rect x="420" y="160" width="230" height="82" rx="16" fill="#eef8ee" stroke="#7fb77e" stroke-width="2"/>
+  <text x="535" y="195" text-anchor="middle" font-size="20" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-weight="700" fill="#2e6b33">rollout</text>
+  <text x="535" y="222" text-anchor="middle" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#466b47">收集策略样本</text>
+
+  <rect x="790" y="160" width="240" height="82" rx="16" fill="#fff4e6" stroke="#d8a35d" stroke-width="2"/>
+  <text x="910" y="195" text-anchor="middle" font-size="20" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-weight="700" fill="#8a561c">策略样本</text>
+  <text x="910" y="222" text-anchor="middle" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#7a5a33">来自 ρ_π(s,a)</text>
+
+  <rect x="790" y="350" width="240" height="82" rx="16" fill="#f3edff" stroke="#9a7cd6" stroke-width="2"/>
+  <text x="910" y="385" text-anchor="middle" font-size="20" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-weight="700" fill="#5a3f9c">判别器 D_ω</text>
+  <text x="910" y="412" text-anchor="middle" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#604c88">区分专家 / 策略样本</text>
+
+  <rect x="420" y="350" width="230" height="82" rx="16" fill="#fff0f0" stroke="#d77f7f" stroke-width="2"/>
+  <text x="535" y="385" text-anchor="middle" font-size="20" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-weight="700" fill="#923a3a">隐式 reward</text>
+  <text x="535" y="412" text-anchor="middle" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#854646">由 D_ω 输出构造</text>
+
+  <rect x="90" y="350" width="220" height="82" rx="16" fill="#eef7f7" stroke="#71adad" stroke-width="2"/>
+  <text x="200" y="385" text-anchor="middle" font-size="20" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-weight="700" fill="#236767">策略优化</text>
+  <text x="200" y="412" text-anchor="middle" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#3e7070">RL / policy gradient</text>
+
+  <rect x="420" y="545" width="230" height="82" rx="16" fill="#f7f7f7" stroke="#aaaaaa" stroke-width="2"/>
+  <text x="535" y="579" text-anchor="middle" font-size="20" font-family="Arial, 'Noto Sans CJK SC', sans-serif" font-weight="700" fill="#444">专家样本</text>
+  <text x="535" y="607" text-anchor="middle" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#666">来自 ρ_E(s,a)</text>
+
+  <line x1="310" y1="201" x2="410" y2="201" stroke="#555" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="650" y1="201" x2="780" y2="201" stroke="#555" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="910" y1="242" x2="910" y2="340" stroke="#555" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="790" y1="391" x2="660" y2="391" stroke="#555" stroke-width="3" marker-end="url(#arrow)"/>
+  <line x1="420" y1="391" x2="320" y2="391" stroke="#555" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M200 350 C170 300, 160 260, 180 245" fill="none" stroke="#555" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M650 586 C755 586, 862 500, 900 435" fill="none" stroke="#777" stroke-width="3" stroke-dasharray="8 8" marker-end="url(#arrow)"/>
+
+  <text x="360" y="188" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#555">执行</text>
+  <text x="705" y="188" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#555">产生</text>
+  <text x="930" y="300" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#555">训练判别器</text>
+  <text x="693" y="378" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#555">构造反馈</text>
+  <text x="344" y="378" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#555">更新策略</text>
+  <text x="735" y="555" font-size="15" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#555">与专家样本对比</text>
+
+  <rect x="135" y="655" width="930" height="38" rx="10" fill="#f5f5f5" stroke="#cccccc"/>
+  <text x="600" y="680" text-anchor="middle" font-size="17" font-family="Arial, 'Noto Sans CJK SC', sans-serif" fill="#333">关键差异：BC 主要在固定专家数据上拟合；GAIL 需要当前策略不断 rollout，因此更接近分布匹配，也更昂贵。</text>
+</svg>
