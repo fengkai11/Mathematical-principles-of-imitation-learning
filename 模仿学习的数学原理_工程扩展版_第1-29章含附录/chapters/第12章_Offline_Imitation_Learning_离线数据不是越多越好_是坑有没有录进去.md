@@ -222,7 +222,11 @@ $$\mathcal{C}_\epsilon(\mathcal{D}) = \{(s,a) : d((s,a), \mathcal{D}) \le \epsil
 
 这个公式读作：所有距离离线数据集 $\mathcal{D}$ 不超过 $\epsilon$ 的状态—动作对，构成数据的近似覆盖区域。
 
-其中，$\mathcal{C}_\epsilon(\mathcal{D})$ 是近似覆盖区域；$d((s,a),\mathcal{D})$ 是状态—动作对到数据集的距离；$\epsilon$ 是允许被认为“足够接近数据”的阈值。
+符号解释：
+
+- $\mathcal{C}_\epsilon(\mathcal{D})$：数据的近似覆盖区域；
+- $d((s,a),\mathcal{D})$：状态—动作对 $(s,a)$ 到数据集 $\mathcal{D}$ 的距离；
+- $\epsilon$：判断“足够接近数据”的阈值。
 
 ### 定义 12.5：support mismatch
 
