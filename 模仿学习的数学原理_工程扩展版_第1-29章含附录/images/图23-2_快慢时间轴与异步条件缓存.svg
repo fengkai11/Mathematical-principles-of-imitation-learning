@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#333"/>
+    </marker>
+    <style>
+      .title { font: 700 28px sans-serif; fill: #222; }
+      .subtitle { font: 18px sans-serif; fill: #555; }
+      .label { font: 700 18px sans-serif; fill: #222; }
+      .text { font: 16px sans-serif; fill: #333; }
+      .small { font: 14px sans-serif; fill: #555; }
+      .formula { font: 18px serif; fill: #222; }
+      .axis { stroke: #333; stroke-width: 2.5; marker-end: url(#arrow); }
+      .slow { fill: #dbeafe; stroke: #2563eb; stroke-width: 2; rx: 10; }
+      .fast { fill: #dcfce7; stroke: #16a34a; stroke-width: 2; rx: 8; }
+      .cache { fill: #fef3c7; stroke: #d97706; stroke-width: 2; rx: 10; }
+      .fallback { fill: #fee2e2; stroke: #dc2626; stroke-width: 2; rx: 10; }
+      .dash { stroke: #666; stroke-width: 2; stroke-dasharray: 6 5; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <text x="600" y="42" text-anchor="middle" class="title">图23-2 快慢时间轴与异步条件缓存</text>
+  <text x="600" y="74" text-anchor="middle" class="subtitle">慢模型低频更新条件，快模型高频执行；慢模型未返回时，快模型使用最近一次可用条件</text>
+
+  <line x1="120" y1="155" x2="1080" y2="155" class="axis"/>
+  <text x="75" y="160" class="label">慢时间 k</text>
+
+  <rect x="160" y="115" width="150" height="70" class="slow"/>
+  <text x="235" y="145" text-anchor="middle" class="label">k = 0</text>
+  <text x="235" y="172" text-anchor="middle" class="formula">z_0</text>
+
+  <rect x="500" y="115" width="150" height="70" class="slow"/>
+  <text x="575" y="145" text-anchor="middle" class="label">k = 1</text>
+  <text x="575" y="172" text-anchor="middle" class="formula">z_1</text>
+
+  <rect x="840" y="115" width="150" height="70" class="slow"/>
+  <text x="915" y="145" text-anchor="middle" class="label">k = 2</text>
+  <text x="915" y="172" text-anchor="middle" class="formula">z_2</text>
+
+  <line x1="120" y1="345" x2="1080" y2="345" class="axis"/>
+  <text x="75" y="350" class="label">快时间 t</text>
+
+  <g>
+    <rect x="150" y="310" width="55" height="60" class="fast"/><text x="177" y="345" text-anchor="middle" class="small">t0</text>
+    <rect x="215" y="310" width="55" height="60" class="fast"/><text x="242" y="345" text-anchor="middle" class="small">t1</text>
+    <rect x="280" y="310" width="55" height="60" class="fast"/><text x="307" y="345" text-anchor="middle" class="small">t2</text>
+    <rect x="345" y="310" width="55" height="60" class="fast"/><text x="372" y="345" text-anchor="middle" class="small">t3</text>
+    <rect x="410" y="310" width="55" height="60" class="fast"/><text x="437" y="345" text-anchor="middle" class="small">t4</text>
+    <rect x="475" y="310" width="55" height="60" class="fast"/><text x="502" y="345" text-anchor="middle" class="small">t5</text>
+    <rect x="540" y="310" width="55" height="60" class="fast"/><text x="567" y="345" text-anchor="middle" class="small">t6</text>
+    <rect x="605" y="310" width="55" height="60" class="fast"/><text x="632" y="345" text-anchor="middle" class="small">t7</text>
+    <rect x="670" y="310" width="55" height="60" class="fast"/><text x="697" y="345" text-anchor="middle" class="small">t8</text>
+    <rect x="735" y="310" width="55" height="60" class="fast"/><text x="762" y="345" text-anchor="middle" class="small">t9</text>
+    <rect x="800" y="310" width="55" height="60" class="fast"/><text x="827" y="345" text-anchor="middle" class="small">t10</text>
+    <rect x="865" y="310" width="55" height="60" class="fast"/><text x="892" y="345" text-anchor="middle" class="small">t11</text>
+  </g>
+
+  <path d="M235 185 C235 235 235 270 235 310" class="dash"/>
+  <path d="M575 185 C575 235 575 270 575 310" class="dash"/>
+  <path d="M915 185 C915 235 915 270 915 310" class="dash"/>
+
+  <rect x="155" y="425" width="330" height="70" class="cache"/>
+  <text x="320" y="454" text-anchor="middle" class="label">缓存条件：z_0</text>
+  <text x="320" y="480" text-anchor="middle" class="formula">z̄_t = z_{κ(t)}</text>
+
+  <rect x="505" y="425" width="330" height="70" class="cache"/>
+  <text x="670" y="454" text-anchor="middle" class="label">缓存条件：z_1</text>
+  <text x="670" y="480" text-anchor="middle" class="formula">快模型继续执行</text>
+
+  <rect x="855" y="425" width="220" height="70" class="fallback"/>
+  <text x="965" y="454" text-anchor="middle" class="label">条件过期</text>
+  <text x="965" y="480" text-anchor="middle" class="formula">触发 fallback</text>
+
+  <text x="600" y="555" text-anchor="middle" class="subtitle">这张图想说明：异步不是让快模型等待慢模型，而是让快模型在有效条件下不中断地闭环执行。</text>
+</svg>
