@@ -1,303 +1,209 @@
 # 第13章：ACT：一次别只想一步，机器人也需要动作小套餐
 
 > **新版布局位置**：本章属于 **第四篇：现代机器人策略模型**。本章编号、公式编号与交叉引用已按新版八篇结构统一调整。
+>
+> **本章一句话导读**：本章把策略输出从单步动作扩展为 action chunk，解释 ACT 为什么适合机器人局部连续操作，并说明它如何承接第9章 CVAE、铺垫第14章 Diffusion Policy。
 
+第9章讲 CVAE 时，我们已经看到一个核心问题：同一个观测下，合理动作可能不止一个。第13章进入 ACT，Action Chunking with Transformers。ACT 的核心变化不是“把网络换成 Transformer 就会变强”，而是把策略的输出对象从单步动作扩展成一段动作，也就是 action chunk。
 
-> **本章一句话导读**：本章把策略输出从单步动作扩展为 action chunk，解释 ACT 为什么适合机器人局部连续操作。
-
-
-
-
-> 本章继续遵守 v2.0 总控文档：先讲动机，再给公式；公式不仅写出来，还要解释动机、符号、直觉、工程含义和常见误解。第9章我们讲了 CVAE：训练时用 encoder 推断隐藏风格，推理时从 prior 采样 latent，再由 decoder 生成动作。本章进入 ACT。ACT 的核心变化不是“又换了一个更酷的网络名字”，而是把动作从单步预测扩展成 action chunk：一次预测一小段动作，让机器人不要每一帧都像选择困难症一样重新纠结。
+单步动作像“下一帧末端往哪动”；action chunk 像“接下来一小段时间如何接近、对准、插入、释放”。对机器人操作来说，这个变化很重要。很多任务不是每一帧都重新纠结，而是需要一段局部连贯、低抖动、有短期意图的动作过程。
 
 ---
 
-## 1. 本章开场：为什么机器人不要只预测下一步？
+## 1. 本章要解决的问题
 
-前面几章，我们一直在写类似这样的策略：
+前面几章常见的策略写法是：给定当前输入，只预测当前动作。
 
-<div class="math">\[
-\pi_\theta(a_t\mid x_t) \tag{13.1}\]</div>
+**公式 (13.1)：单步动作策略**
 
-或者加上 latent：
+$$\pi_\theta(a_t \mid x_t)$$
 
-<div class="math">\[
-p_\theta(a_t\mid x_t,z) \tag{13.2}\]</div>
+如果引入隐变量，可以写成：
 
-这里的重点是“当前条件下的当前动作”。如果你做的是非常简单的控制任务，这个形式已经能工作。比如机械臂末端离目标还有一点点距离，模型输出一个小的位移；自动驾驶车道保持，模型输出当前方向盘角度；泊车低速调整，模型输出当前速度和转角。
+**公式 (13.2)：带 latent 的单步动作生成**
 
-但真实机器人操作经常不是“一步一步凑出来”的。很多任务具有明显的局部过程：
+$$p_\theta(a_t \mid x_t,z)$$
 
-- 拉开拉链，不是下一帧往哪动一下，而是沿着拉链方向连续移动一段；
-- 插线，不是每一帧重新问“我该去哪”，而是接近、对准、插入、微调这几步要连起来；
-- 抓取后精准摆入治具，不是只要下一步动作，而是需要一段平滑、低抖动、有接近方向约束的轨迹；
-- 双臂整理物体时，两只手的动作要在一小段时间内协调，否则就会出现“左手刚想扶住，右手已经把东西扒拉飞”的喜剧现场。
+这里的重点是“当前条件下的当前动作”。这对简单控制任务可以工作，但真实机器人操作经常具有明显的局部过程：拉拉链、插线、抓取后精准摆入治具、双臂协作整理物体，都不是孤立动作拼起来就自然成功。
 
-单步预测的问题在于：它看起来很灵活，但容易短视。
-
-每一帧都重新预测动作，像一个人每走一步都打开导航，问：“我现在该抬左脚还是右脚？”理论上也能走路，现实中大概率会把自己走成 Windows 更新进度条。
-
-ACT，Action Chunking with Transformers，想解决的核心问题是：
+单步预测的问题在于：局部看每一步都可能合理，连起来却可能抖动、迟疑、动作不连续。ACT 想解决的核心问题是：
 
 > 与其每次只预测一个动作，不如一次预测未来一小段动作序列，让策略具备局部时间结构。
 
-这个小段动作序列就叫 action chunk。
+这个小段动作序列就是 action chunk。
 
 ---
 
-## 2. 本章要解决的核心问题
+## 2. 本章公式主线
 
-本章围绕 10 个问题展开：
+本章推进的数学对象是：
 
-1. 什么是 action chunk？它和单步动作有什么区别？
-2. 为什么 action chunk 能提升机器人操作的稳定性？
-3. ACT 为什么要把 CVAE 和 Transformer 结合起来？
-4. 公式 <span class="math">\\(a\_{t:t+H}\\)</span> 到底表示什么？边界是否包含 <span class="math">\\(t+H\\)</span>？
-5. 为什么 ACT 可以写成 <span class="math">\\(p\_\theta(a\_{t:t+H}\mid x\_t,z)\\)</span>？
-6. ACT 的训练损失和第9章 CVAE 损失有什么关系？
-7. temporal ensemble 到底在平均什么？为什么它能减少动作抖动？
-8. action chunk 是不是预测出来就全部执行完？为什么还要 receding execution？
-9. ACT 适合哪些机器人任务？不适合哪些任务？
-10. 从工程角度看，ACT 可能在哪些地方翻车？
+```text
+单步动作 a_t
+→ 动作块 a_{t:t+H}
+→ 条件动作块分布 p_theta(a_{t:t+H} | x_t, z)
+→ ACT 的 chunk 重建 + KL 训练目标
+→ temporal ensemble 与 receding execution
+```
 
-本章会用到这些公式：
+第9章 CVAE 解决的是“同一条件下可能有多个合理动作”的问题，但主要以单步动作为生成对象。本章把生成对象从单步动作扩展为动作块。
 
-<div class="math">\[
-a_{t:t+H}=(a_t,a_{t+1},\dots,a_{t+H-1}) \tag{13.3}\]</div>
+**公式 (13.3)：action chunk 定义**
 
-<div class="math">\[
-p_\theta(a_{t:t+H}\mid x_t,z) \tag{13.4}\]</div>
+$$a_{t:t+H}=(a_t,a_{t+1},\dots,a_{t+H-1})$$
 
-<div class="math">\[
-q_\phi(z\mid x_t,a_{t:t+H}) \tag{13.5}\]</div>
+**公式 (13.4)：ACT 的条件动作块分布**
 
-<div class="math">\[
-\mathcal{L}_{\mathrm{ACT}}
-=
-\underbrace{\mathcal{L}_{\mathrm{chunk}}(a_{t:t+H},\hat a_{t:t+H})}_{\text{动作块重建损失}}
-+
-\beta
-\underbrace{D_{\mathrm{KL}}(q_\phi(z\mid x_t,a_{t:t+H})\|p(z))}_{\text{latent 约束}} \tag{13.6}\]</div>
+$$p_\theta(a_{t:t+H} \mid x_t,z)$$
 
-以及 temporal ensemble 的加权平均形式：
+**公式 (13.5)：动作块预测函数**
 
-<div class="math">\[
-\bar a_t
-=
-\frac{\sum_{i=0}^{K-1}w_i\hat a_t^{(t-i)}}{\sum_{i=0}^{K-1}w_i} \tag{13.7}\]</div>
+$$\hat a_{t:t+H}=f_\theta(x_t,z)$$
 
-这些公式看起来比单步 BC 多了一些下标，但本质不复杂。它们只是在说：
+**公式 (13.6)：ACT encoder / 近似后验**
 
-> 不要只学“这一帧怎么动”，还要学“接下来一小段怎么连贯地动”。
+$$q_\phi(z \mid x_t,a_{t:t+H})$$
+
+**公式 (13.7)：ACT 训练目标的基本形式**
+
+$$\mathcal{L}_{\mathrm{ACT}}=\mathcal{L}_{\mathrm{chunk}}+\beta\mathcal{L}_{\mathrm{KL}}$$
+
+本章解决的问题是：如何让策略输出一段局部连贯的动作，而不是每一帧孤立决策。
+
+本章留下的问题是：ACT 常见实现仍然依赖一次性解码、重建损失和 latent 条件生成。当动作块分布更复杂、更高维、更多峰时，仅靠单次回归或简单 latent 采样可能不够稳定。下一章 Diffusion Policy 会把动作块生成改写为从噪声逐步去噪的过程。
 
 ---
 
+## 3. 核心定义
 
-### 主线定位与统一例子
+### 定义 13.1：单步动作策略
 
-为了让本章不变成孤立知识点，读本章时请始终把公式落回两个统一例子：
+单步动作策略是指在时间步 $t$，根据当前输入 $x_t$ 输出当前动作 $a_t$ 的策略。它可以是确定性函数，也可以是条件概率分布。
 
-- **二维点机器人跟随专家轨迹**：状态可写成位置/速度，动作可写成二维控制量，适合观察状态分布、轨迹分布和误差累积。
-- **机械臂末端运动/抓取轨迹模仿**：观测包含图像或本体状态，动作包含末端位姿增量或关节控制量，适合理解连续动作、多模态动作、动作块和实机闭环。
+连续动作场景中，常见确定性写法是：
 
-- **承接前文**：承接第9章 CVAE。
-- **本章推进**：把动作建模从单步扩展到 action chunk，解释短期意图和执行平滑。
-- **铺垫后文**：为第14章 Diffusion Policy 继续把动作块作为生成对象做准备。
-- **公式阅读抓手**：动作块不是简单多预测几帧，而是让策略输出一段局部一致的短期计划。
-- **建议同步回看**：附录 G、H。
+**公式 (13.8)：确定性单步动作预测**
 
-## 3. 从单步动作到 action chunk
+$$\hat a_t=f_\theta(x_t)$$
 
-### 3.1 单步动作的写法
+它适合描述“当前观测下下一步怎么动”，但不直接建模未来一段动作的局部结构。
 
-最基础的行为克隆通常把数据写成：
+### 定义 13.2：action chunk
 
-<div class="math">\[
-\mathcal{D}=\{(x_t,a_t)\}_{t=1}^N \tag{13.8}\]</div>
+action chunk 是从当前时间步 $t$ 开始、长度为 $H$ 的动作序列。
 
-训练目标是让模型在看到 <span class="math">\\(x\_t\\)</span> 时预测专家动作 <span class="math">\\(a\_t\\)</span>。如果是连续动作，可以写成：
+**公式 (13.9)：action chunk 的左闭右开写法**
 
-<div class="math">\[
-\hat a_t=f_\theta(x_t) \tag{13.9}\]</div>
+$$a_{t:t+H}=(a_t,a_{t+1},\dots,a_{t+H-1})$$
 
-<div class="math">\[
-\mathcal{L}_{\mathrm{step}}(\theta)
-=
-\frac{1}{N}\sum_{t=1}^{N}\|a_t-\hat a_t\|^2 \tag{13.10}\]</div>
+这里不包含 $a_{t+H}$。这个约定和 Python 切片 $[t:t+H]$ 类似：左闭右开。
 
-这个形式适合把模仿学习当成监督学习。但第3章到第6章已经反复提醒过：机器人活在时间里。动作不是孤立发生的。
+这个边界非常重要。如果代码里把 $a_{t:t+H}$ 写成包含 $a_{t+H}$，动作长度会多一帧。模型训练可能不报错，但输入输出维度、时间对齐和评测都会悄悄错位。
 
-一个动作 <span class="math">\\(a\_t\\)</span> 之后，会改变状态、改变观测、改变下一步可行空间。你今天往左偏了一点，明天不是简单地重新开始；你已经在左边的坑里了。
+### 定义 13.3：条件动作块分布
 
-### 3.2 action chunk 的定义
+条件动作块分布表示：给定当前输入 $x_t$ 和 latent $z$，模型生成未来长度为 $H$ 的动作块。
+
+**公式 (13.10)：条件动作块分布**
+
+$$p_\theta(a_{t:t+H} \mid x_t,z)$$
+
+其中：
+
+- $x_t$：当前时刻策略可见的信息，可以包含图像、机器人状态、历史观测、任务目标、语言指令等；
+- $z$：隐变量，表示动作块背后的风格、模式或短期策略选择；
+- $a_{t:t+H}$：未来 $H$ 步动作组成的 action chunk；
+- $\theta$：策略网络、Transformer、decoder 等参数。
+
+### 定义 13.4：temporal ensemble
+
+temporal ensemble 是指：多个历史 action chunk 都可能覆盖当前时刻 $t$，于是把它们对当前动作的预测做加权融合，得到最终执行动作。
+
+**公式 (13.11)：temporal ensemble 加权平均**
+
+$$\bar a_t=\frac{\sum_{i=0}^{K-1}w_i\hat a_t^{(t-i)}}{\sum_{i=0}^{K-1}w_i}$$
+
+其中 $\hat a_t^{(t-i)}$ 表示在 $t-i$ 时刻预测出的 chunk 中，对当前时刻 $t$ 的动作估计。
+
+### 定义 13.5：receding execution
+
+receding execution 是指：每次预测一个 action chunk，但实际只执行前面一小段，然后根据新观测重新预测。
+
+**公式 (13.12)：滚动执行的新一轮动作块预测**
+
+$$\hat a_{t+k:t+k+H}=f_\theta(x_{t+k},z')$$
+
+其中 $k\leq H$。如果 $k=1$，每一步都重新预测 chunk；如果 $k$ 较大，决策频率降低，但闭环修正也变慢。
+
+---
+
+## 4. 从单步动作到 action chunk
+
+行为克隆最基础的数据形式通常是：
+
+**公式 (13.13)：单步行为克隆数据集**
+
+$$\mathcal{D}_{\mathrm{step}}=\{(x_t,a_t)\}_{t=1}^{N}$$
+
+对应的连续动作 MSE 损失可以写成：
+
+**公式 (13.14)：单步动作 MSE 损失**
+
+$$\mathcal{L}_{\mathrm{step}}(\theta)=\frac{1}{N}\sum_{t=1}^{N}\lVert a_t-\hat a_t\rVert^2$$
+
+这个形式适合把模仿学习当成监督学习。但第3章到第6章已经反复提醒过：机器人活在时间里。动作不是孤立发生的。一个动作之后，会改变状态、改变观测、改变下一步可行空间。
 
 ACT 把训练目标从单个动作扩展为一段动作：
 
-<div class="math">\[
-a_{t:t+H}=(a_t,a_{t+1},\dots,a_{t+H-1}) \tag{13.11}\]</div>
+**公式 (13.15)：动作块作为学习对象**
 
-这里有一个很容易让人踩坑的小细节：
+$$a_{t:t+H}=(a_t,a_{t+1},\dots,a_{t+H-1})$$
 
-<div class="math">\[
-a_{t:t+H} \tag{13.12}\]</div>
+如果控制频率是 50Hz，$H=25$ 表示动作块覆盖约 0.5 秒；$H=100$ 表示覆盖约 2 秒。$H$ 不是越大越好。太小，模型仍然缺少局部意图；太大，远期预测更容易过期，也更依赖未来观测。
 
-在本书中表示从 <span class="math">\\(t\\)</span> 开始、长度为 <span class="math">\\(H\\)</span> 的动作块，也就是包含：
-
-<div class="math">\[
-a_t,a_{t+1},\dots,a_{t+H-1} \tag{13.13}\]</div>
-
-不包含 <span class="math">\\(a\_{t+H}\\)</span>。这种写法和 Python 切片 <span class="math">\\([t:t+H]\\)</span> 的习惯一致：左闭右开。
-
-如果你在代码里把它写成包含 <span class="math">\\(a\_{t+H}\\)</span>，动作长度就会多一帧。模型训练时可能不报错，但维度、对齐和评测会悄悄错位。真实工程里的 bug 很多不是红色报错，而是“看起来能跑，但是越跑越怪”。
-
-### 公式拆解：<span class="math">\\(a\_{t:t+H}=(a\_t,a\_{t+1},\dots,a\_{t+H-1})\\)</span>
-
-**1. 这个公式要解决什么问题？**
-
-它把动作学习的基本单位从“一个动作”改成“一段动作”。这样模型不只预测下一步，还预测接下来一小段局部执行过程。
-
-**2. 符号解释**
-
-- <span class="math">\\(t\\)</span>：当前时间步；
-- <span class="math">\\(H\\)</span>：动作块长度，也叫 horizon 或 chunk size；
-- <span class="math">\\(a\_t\\)</span>：当前时间步的专家动作；
-- <span class="math">\\(a\_{t:t+H}\\)</span>：从 <span class="math">\\(t\\)</span> 开始的 <span class="math">\\(H\\)</span> 个动作组成的序列；
-- <span class="math">\\(a\_{t+H-1}\\)</span>：这个动作块的最后一个动作。
-
-**3. 直觉解释**
-
-单步动作像“下一秒方向盘打多少”；action chunk 像“接下来 1 秒内方向盘、油门、刹车应该怎么连续变化”。
-
-机械臂里，单步动作像“末端下一帧往右 2 毫米”；action chunk 像“接下来 20 帧沿着插孔方向慢慢推进”。
-
-**4. 工程含义**
-
-如果控制频率是 50Hz，<span class="math">\\(H=25\\)</span>，那么 action chunk 覆盖约 0.5 秒动作。如果 <span class="math">\\(H=100\\)</span>，覆盖约 2 秒动作。
-
-<span class="math">\\(H\\)</span> 不是越大越好。太小，模型仍然短视；太大，远期动作预测难度上升，并且环境一变化，后半段动作可能变成“过期食品”。
-
-**5. 常见误解**
-
-不要把 action chunk 理解成开环一次执行到底。ACT 常配合滚动执行和 temporal ensemble。它预测一段，但真实系统可以只执行其中一部分，然后根据新观测重新预测。
+不要把 action chunk 理解成开环一次执行到底。ACT 常配合滚动执行和 temporal ensemble。它预测一段，但真实系统通常只执行其中一部分，然后根据新观测重新预测。
 
 ![图13-1 单步动作 vs action chunk 对比](../images/图13-1_单步动作_vs_action_chunk对比.png)
 
 **图13-1 说明**：
+
 - 单步动作预测每一帧只输出一个动作，灵活但容易抖动；
 - action chunk 一次输出未来一段动作，能表达局部时间结构；
 - action chunk 不是让机器人“闭眼冲到底”，而是给策略一个短期计划。
 
 ---
 
-## 4. 为什么 action chunk 对机器人操作很重要？
+## 5. ACT 的策略形式：动作块条件生成
 
-### 4.1 机器人动作需要连续性
+第9章 CVAE 的一般 decoder 可以写成：
 
-很多机器人任务对动作连续性非常敏感。比如插线、穿孔、开拉链、折叠衣物、拧瓶盖、夹取薄片、把工件放入变形托盘槽口。这些任务不是“每一帧都对就行”，而是要求一段动作整体连贯。
+**公式 (13.16)：CVAE 的单步条件生成**
 
-单步预测有一个典型问题：局部看都对，连起来很奇怪。
+$$p_\theta(a \mid x,z)$$
 
-比如模型每一帧都预测一个看似合理的末端位移，但方向在小范围内来回抖动。人眼看像抽风，夹爪看像喝多了，工件看了想报警。
+ACT 的变化是把单个动作 $a$ 换成动作块 $a_{t:t+H}$：
 
-action chunk 的优势是：它把未来一段动作一起输出。模型在训练时看到的是一个动作序列，因此更有机会学到局部速度、方向和节奏。
+**公式 (13.17)：ACT 的动作块条件生成**
 
-### 4.2 action chunk 能表达短期意图
+$$p_\theta(a_{t:t+H} \mid x_t,z)$$
 
-单步动作只告诉你下一下怎么动，action chunk 则可以表达短期意图。
+这个公式读作：在当前输入 $x_t$ 和 latent $z$ 给定时，策略生成未来 $H$ 步动作组成的动作块。
 
-举个机械臂精准摆入治具的例子。假设工件要放入一个槽口，但托盘位置有轻微偏差。一个合理动作过程可能是：
+实现时，模型通常不会显式输出完整概率密度，而是输出动作块预测：
 
-1. 接近槽口上方；
-2. 沿着槽口方向微调；
-3. 低速下探；
-4. 接触后轻微释放；
-5. 遇到阻力时停止或回退。
+**公式 (13.18)：动作块预测函数**
 
-如果每一步都独立预测，模型可能在第 2 步和第 3 步之间来回犹豫。action chunk 则更像把“接近并下探”作为一个局部动作意图来生成。
+$$\hat a_{t:t+H}=f_\theta(x_t,z)$$
 
-### 4.3 action chunk 缓解高频控制噪声
+如果动作维度是 $d_a$，chunk 长度是 $H$，那么输出形状通常是 $H\times d_a$。例如单臂 7 维动作、$H=50$，输出就是 $50\times 7$；双臂每只手 7 维，输出可能是 $50\times 14$。
 
-真实机器人控制通常有高频执行和低频感知决策之间的矛盾。
-
-视觉模型可能 10Hz 或 20Hz 运行，底层控制可能 50Hz、100Hz 甚至更高。每个控制周期都重新跑一次复杂策略并不现实。action chunk 可以让高层策略低频输出一段动作，再由底层控制器高频执行。
-
-这就像厨师不会每切一刀都重新读菜谱，而是先理解“接下来切丝”，然后连续执行一小段。否则一盘土豆丝能切出软件需求评审的节奏。
-
----
-
-## 5. ACT 的策略形式：从单步分布到动作块分布
-
-第9章的 CVAE 可以写成：
-
-<div class="math">\[
-p_\theta(a\mid x,z) \tag{13.14}\]</div>
-
-ACT 把单个动作 <span class="math">\\(a\\)</span> 换成动作块 <span class="math">\\(a\_{t:t+H}\\)</span>：
-
-<div class="math">\[
-p_\theta(a_{t:t+H}\mid x_t,z) \tag{13.15}\]</div>
-
-这里 <span class="math">\\(x\_t\\)</span> 表示当前时刻策略可见的条件信息。它可以包含：
-
-- 当前图像观测；
-- 当前关节角和末端位姿；
-- 历史观测；
-- 任务目标；
-- 语言指令编码；
-- 双臂状态；
-- 触觉或力反馈特征。
-
-本章先采用简化写法 <span class="math">\\(x\_t\\)</span>，避免每个公式都写成一辆信息大货车。
-
-### 公式拆解：<span class="math">\\(p\_\theta(a\_{t:t+H}\mid x\_t,z)\\)</span>
-
-**1. 这个公式要解决什么问题？**
-
-它表示：在当前条件 <span class="math">\\(x\_t\\)</span> 和 latent <span class="math">\\(z\\)</span> 给定时，模型生成未来 <span class="math">\\(H\\)</span> 步动作的条件分布。
-
-注意，这里生成的不是一个动作，而是一段动作序列。
-
-**2. 符号解释**
-
-- <span class="math">\\(x\_t\\)</span>：当前时刻可用输入，可以是观测、状态、历史和任务上下文；
-- <span class="math">\\(z\\)</span>：隐变量，表示动作块背后的风格或模式；
-- <span class="math">\\(a\_{t:t+H}\\)</span>：未来 <span class="math">\\(H\\)</span> 步动作组成的 action chunk；
-- <span class="math">\\(p\_\theta(\cdot)\\)</span>：由模型参数 <span class="math">\\(\theta\\)</span> 定义的条件分布；
-- <span class="math">\\(\theta\\)</span>：策略网络、Transformer、decoder 等参数集合。
-
-**3. 直觉解释**
-
-这个公式像是在说：
-
-> 当前看到环境 <span class="math">\\(x\_t\\)</span>，再选一个动作风格 <span class="math">\\(z\\)</span>，然后生成接下来一小段操作。
-
-比如同样是拿起拉链头，<span class="math">\\(z\\)</span> 可以对应“从左手辅助右手拉”“右手单独拉”“先调整姿态再拉”。每个 <span class="math">\\(z\\)</span> 对应的是一段动作，而不是一个孤立动作。
-
-**4. 工程含义**
-
-实现时，模型通常不会显式输出完整概率密度，而是输出动作块的均值：
-
-<div class="math">\[
-\hat a_{t:t+H}=f_\theta(x_t,z) \tag{13.16}\]</div>
-
-如果动作维度是 <span class="math">\\(d\_a\\)</span>，chunk 长度是 <span class="math">\\(H\\)</span>，那么输出形状通常是：
-
-<div class="math">\[
-H\times d_a \tag{13.17}\]</div>
-
-比如单臂 7 维动作，<span class="math">\\(H=50\\)</span>，输出就是 <span class="math">\\(50\times 7\\)</span>。如果是双臂，每只手 7 维，输出可能是 <span class="math">\\(50\times 14\\)</span>。维度一上来，模型训练就不再是“小动作回归”，而是“动作序列生成”。
-
-**5. 常见误解**
-
-不要把 <span class="math">\\(p\_\theta(a\_{t:t+H}\mid x\_t,z)\\)</span> 理解成“预测未来真实世界一定会发生什么”。它预测的是“策略打算执行的一段动作”。环境可能变化，接触可能提前发生，物体可能滑动，所以后续仍要闭环修正。
+这时模型已经不是“小动作回归器”，而是在生成一个短期动作序列。
 
 ---
 
 ## 6. ACT 为什么还需要 CVAE？
 
-第8章和第9章反复讲过一个问题：同一个条件下，合理动作可能不止一个。到了 action chunk，这个问题更严重。
-
-因为多模态不只发生在单个动作上，也发生在整段操作方式上。
+同一个条件下，合理动作可能不止一个。到了 action chunk，这个问题更明显：多模态不只发生在单个动作上，也发生在整段操作方式上。
 
 同一个“打开抽屉”任务，可能有多种 action chunk：
 
@@ -306,303 +212,183 @@ H\times d_a \tag{13.17}\]</div>
 - 双臂任务中，一只手固定抽屉，另一只手拉；
 - 如果把手位置偏了，先探索接触，再拉动。
 
-如果直接对动作块做 MSE，模型可能把多种动作块平均。单步平均已经很糟糕，动作块平均更像把三个人的舞蹈动作逐帧平均，最后得到一种没有民族、没有节奏、没有膝盖健康的动作。
+如果直接对动作块做 MSE，模型可能把多种动作块平均。单步平均已经很糟糕，动作块平均更像把几个人的操作轨迹逐帧平均，最后得到一种谁也没真正执行过的动作。
 
-所以 ACT 继承了 CVAE 的思想：训练时用 encoder 看专家动作块，推断 latent；推理时从 prior 采样 latent，再生成动作块。
+所以 ACT 继承 CVAE 的思想：训练时用 encoder 看专家动作块，推断 latent；推理时从 prior 采样 latent，再生成动作块。
 
 训练阶段的 encoder 写成：
 
-<div class="math">\[
-q_\phi(z\mid x_t,a_{t:t+H}) \tag{13.18}\]</div>
+**公式 (13.19)：ACT encoder / 近似后验**
+
+$$q_\phi(z \mid x_t,a_{t:t+H})$$
 
 decoder 或 policy 写成：
 
-<div class="math">\[
-p_\theta(a_{t:t+H}\mid x_t,z) \tag{13.19}\]</div>
+**公式 (13.20)：ACT decoder / 条件动作块生成**
 
-这和第9章的 CVAE 结构完全对应，只是把 <span class="math">\\(a\\)</span> 换成了 <span class="math">\\(a\_{t:t+H}\\)</span>。
+$$p_\theta(a_{t:t+H} \mid x_t,z)$$
 
-### 公式拆解：<span class="math">\\(q\_\phi(z\mid x\_t,a\_{t:t+H})\\)</span>
+这和第9章 CVAE 结构对应，只是把 $a$ 换成了 $a_{t:t+H}$。
 
-**1. 这个公式要解决什么问题？**
+如果 encoder 输出高斯分布，可以写成：
 
-训练数据里没有显式标注动作块属于哪种风格，所以 encoder 根据当前条件和专家动作块，反推一个 latent <span class="math">\\(z\\)</span>。
+**公式 (13.21)：高斯近似后验**
 
-**2. 符号解释**
+$$q_\phi(z \mid x_t,a_{t:t+H})=\mathcal{N}\left(z;\mu_\phi(x_t,a_{t:t+H}),\mathrm{diag}(\sigma_\phi^2(x_t,a_{t:t+H}))\right)$$
 
-- <span class="math">\\(q\_\phi\\)</span>：近似后验，也就是 encoder；
-- <span class="math">\\(z\\)</span>：隐藏动作模式；
-- <span class="math">\\(x\_t\\)</span>：当前条件；
-- <span class="math">\\(a\_{t:t+H}\\)</span>：专家示范动作块；
-- <span class="math">\\(\phi\\)</span>：encoder 参数。
+训练时使用重参数化技巧：
 
-**3. 直觉解释**
+**公式 (13.22)：重参数化采样**
 
-encoder 像一个动作分析师。它看着当前场景和老师傅接下来一段操作，判断老师傅用了哪种操作套路。
+$$z=\mu_\phi(x_t,a_{t:t+H})+\sigma_\phi(x_t,a_{t:t+H})\odot\epsilon,\quad \epsilon\sim\mathcal{N}(0,I)$$
 
-它不是为了推理部署时直接使用，而是为了训练 decoder 学会“不同套路生成不同动作块”。
-
-**4. 工程含义**
-
-如果 encoder 输出高斯分布：
-
-<div class="math">\[
-q_\phi(z\mid x_t,a_{t:t+H})
-=
-\mathcal{N}(z;\mu_\phi(x_t,a_{t:t+H}),\mathrm{diag}(\sigma_\phi^2(x_t,a_{t:t+H}))) \tag{13.20}\]</div>
-
-那么训练时可以用重参数化技巧：
-
-<div class="math">\[
-z=\mu_\phi(x_t,a_{t:t+H})+
-\sigma_\phi(x_t,a_{t:t+H})\odot\epsilon,
-\quad
-\epsilon\sim\mathcal{N}(0,I) \tag{13.21}\]</div>
-
-这和第9章 CVAE 完全一致，只是输入动作从单步变成了 chunk。
-
-**5. 常见误解**
-
-不要在部署时把未来专家动作块输入 encoder。部署时没有专家动作块。评测时如果这么做，就相当于考试时把标准答案塞给模型，然后夸它“推理能力很强”。这不是强，这是开卷还装闭卷。
+注意：部署时不能把未来专家动作块输入 encoder。部署时没有专家动作块。评测时如果这么做，就相当于考试时把标准答案塞给模型，然后夸它“推理能力很强”。这不是强，这是开卷还装闭卷。
 
 ![图13-2 ACT结构图](../images/图13-2_ACT结构图_CVAE_Transformer_ActionChunk.png)
 
 **图13-2 说明**：
+
 - ACT 可以理解为把 CVAE 的动作生成对象从单步动作扩展为 action chunk；
 - Transformer 负责处理观测、机器人状态和 latent，输出未来一段动作；
 - 训练时 encoder 可以看专家 action chunk，推理时只能从 prior 采样 latent。
 
 ---
 
-## 7. Transformer 在 ACT 中做什么？
+## 7. ACT 损失：从 CVAE ELBO 到 chunk loss + KL
 
-ACT 名字里的 T 是 Transformer。这里的 Transformer 不应被理解成“把模型换成 Transformer，效果就会自动变好”。Transformer 的作用要放在机器人动作序列建模里理解。
+本节把 ACT 损失从第9章 CVAE 的 ELBO 主线推出来。为避免公式太长，记：
 
-### 7.1 输入不是一个向量，而是一组 token
+**公式 (13.23)：动作块简写**
 
-现代机器人策略的输入常常是多源信息：
+$$A_t=a_{t:t+H}$$
 
-- 图像特征；
-- 关节状态；
-- 末端位姿；
-- 双臂状态；
-- 历史动作；
-- latent <span class="math">\\(z\\)</span>；
-- 任务条件。
+ACT 希望最大化条件似然 $p_\theta(A_t \mid x_t)$。由于 latent $z$ 是隐藏变量，直接优化通常不方便，于是引入近似后验 $q_\phi(z \mid x_t,A_t)$。
 
-这些信息可以被编码成 token，让 Transformer 通过 attention 建模它们之间的关系。
+**命题 13.1：ACT 损失可以看成 CVAE ELBO 在动作块上的负目标**
 
-比如：
+如果把动作块 $A_t$ 看成条件生成对象，则条件对数似然可以用 ELBO 下界近似优化。
 
-<div class="math">\[
-h_t=\mathrm{Transformer}_\theta(\mathrm{tokens}(x_t),z) \tag{13.22}\]</div>
+**公式 (13.24)：动作块条件似然的 ELBO**
 
-再由输出头生成动作块：
+$$\log p_\theta(A_t \mid x_t)\geq \mathbb{E}_{z\sim q_\phi(z\mid x_t,A_t)}\left[\log p_\theta(A_t \mid x_t,z)\right]-D_{\mathrm{KL}}\left(q_\phi(z\mid x_t,A_t)\,\Vert\,p(z)\right)$$
 
-<div class="math">\[
-\hat a_{t:t+H}=g_\theta(h_t) \tag{13.23}\]</div>
+这个式子有两项：
 
-### 公式拆解：<span class="math">\\(\hat a\_{t:t+H}=g\_\theta(\mathrm{Transformer}\_\theta(\mathrm{tokens}(x\_t),z))\\)</span>
+- 第一项要求 decoder 在给定 $x_t$ 和 $z$ 时，能重建专家动作块 $A_t$；
+- 第二项要求 encoder 推出的 latent 分布不要离 prior $p(z)$ 太远。
 
-**1. 这个公式要解决什么问题？**
+训练时通常最小化负 ELBO。于是得到：
 
-它描述 ACT 的一个工程实现直觉：先把观测和状态编码成 token，再让 Transformer 融合信息，最后输出动作块。
+**公式 (13.25)：ACT 的负 ELBO 目标**
 
-**2. 符号解释**
+$$\mathcal{L}_{\mathrm{ACT}}=-\mathbb{E}_{z\sim q_\phi(z\mid x_t,A_t)}\left[\log p_\theta(A_t \mid x_t,z)\right]+\beta D_{\mathrm{KL}}\left(q_\phi(z\mid x_t,A_t)\,\Vert\,p(z)\right)$$
 
-- <span class="math">\\(\mathrm{tokens}(x\_t)\\)</span>：把当前输入转成 token 序列；
-- <span class="math">\\(z\\)</span>：CVAE latent；
-- <span class="math">\\(\mathrm{Transformer}\_\theta\\)</span>：序列建模网络；
-- <span class="math">\\(h\_t\\)</span>：Transformer 输出的上下文表示；
-- <span class="math">\\(g\_\theta\\)</span>：动作预测头；
-- <span class="math">\\(\hat a\_{t:t+H}\\)</span>：预测动作块。
+如果 decoder 的动作块分布采用固定方差高斯，负对数似然可以对应到动作块重建损失。于是工程中常写成：
 
-**3. 直觉解释**
+**公式 (13.26)：ACT 的 chunk loss + KL 形式**
 
-Transformer 像一个会议主持人，把视觉、关节、目标、latent 都叫到会议室里，让它们互相看一眼，然后决定接下来一小段动作。
+$$\mathcal{L}_{\mathrm{ACT}}=\mathcal{L}_{\mathrm{chunk}}+\beta\mathcal{L}_{\mathrm{KL}}$$
 
-如果没有这种融合，模型可能只看图像不看关节，或者只看当前末端位置不看任务目标，最后输出一个“看着很神经网络，其实很冒失”的动作。
+其中：
 
-**4. 工程含义**
+**公式 (13.27)：平均动作块重建损失**
 
-ACT 中的 Transformer 通常不是为了做长文本推理，而是为了处理多 token 输入和动作序列输出。对于小数据机器人任务，Transformer 的容量、正则、数据增强和训练稳定性都很重要。
+$$\mathcal{L}_{\mathrm{chunk}}=\frac{1}{H}\sum_{j=0}^{H-1}\lVert a_{t+j}-\hat a_{t+j}\rVert^2$$
 
-**5. 常见误解**
+**公式 (13.28)：KL 约束项**
 
-Transformer 不是魔法棒。数据质量差、动作标定错、相机外参飘、控制延迟大，Transformer 不会自动替你把工程债还清。它最多把这些债编码得更高维、更难查。
+$$\mathcal{L}_{\mathrm{KL}}=D_{\mathrm{KL}}\left(q_\phi(z\mid x_t,a_{t:t+H})\,\Vert\,p(z)\right)$$
 
----
+$\beta$ 控制重建质量和 latent 规整之间的平衡。
 
-## 8. ACT 的训练目标
-
-有了 CVAE 和 action chunk，ACT 的训练目标可以写成：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{ACT}}
-=
-\mathcal{L}_{\mathrm{chunk}}
-+
-\beta\mathcal{L}_{\mathrm{KL}} \tag{13.24}\]</div>
-
-更具体地：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{ACT}}
-=
-\underbrace{\mathcal{L}_{\mathrm{chunk}}(a_{t:t+H},\hat a_{t:t+H})}_{\text{动作块重建损失}}
-+
-\beta
-\underbrace{D_{\mathrm{KL}}(q_\phi(z\mid x_t,a_{t:t+H})\|p(z))}_{\text{latent 约束}} \tag{13.25}\]</div>
-
-这里第一项负责让预测动作块接近专家动作块，第二项负责让 encoder 推出的 latent 不要离 prior 太远。
-
-### 8.1 动作块重建损失
-
-动作块重建损失可以用 L1、MSE 或高斯 NLL 等形式。比如 MSE 形式：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{chunk}}
-=
-\sum_{j=0}^{H-1}\|a_{t+j}-\hat a_{t+j}\|^2 \tag{13.26}\]</div>
-
-如果使用平均形式：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{chunk}}
-=
-\frac{1}{H}\sum_{j=0}^{H-1}\|a_{t+j}-\hat a_{t+j}\|^2 \tag{13.27}\]</div>
-
-两者差别在于尺度。前者随 <span class="math">\\(H\\)</span> 增大而增大，后者对不同 chunk 长度更容易比较。
-
-### 公式拆解：<span class="math">\\(\mathcal{L}\_{\mathrm{chunk}}=\frac1H\sum\_{j=0}^{H-1}\|a\_{t+j}-\hat a\_{t+j}\|^2\\)</span>
-
-**1. 这个公式要解决什么问题？**
-
-它衡量预测动作块和专家动作块之间的差异。不是只看当前动作，而是把未来 <span class="math">\\(H\\)</span> 步都纳入训练目标。
-
-**2. 符号解释**
-
-- <span class="math">\\(H\\)</span>：动作块长度；
-- <span class="math">\\(j\\)</span>：动作块内部的偏移；
-- <span class="math">\\(a\_{t+j}\\)</span>：专家在第 <span class="math">\\(t+j\\)</span> 步的动作；
-- <span class="math">\\(\hat a\_{t+j}\\)</span>：模型预测的第 <span class="math">\\(t+j\\)</span> 步动作；
-- <span class="math">\\(\|\cdot\|^2\\)</span>：平方误差；
-- <span class="math">\\(\frac1H\\)</span>：对 chunk 长度做平均。
-
-**3. 直觉解释**
-
-这个损失像在比较两段舞蹈动作：不仅第一拍要像，后面每一拍也要对上节奏。
-
-**4. 工程含义**
-
-如果不同动作维度尺度差异很大，比如位置单位是米，旋转单位是弧度，夹爪开合又是另一个范围，直接 MSE 可能让某些维度主导训练。实际工程中经常要做动作归一化、维度加权或 separate loss。
-
-**5. 常见误解**
-
-chunk loss 低不代表闭环成功。它仍然是 open-loop imitation loss。模型可能在数据集动作块上拟合很好，但真实执行时遇到偏差就滚进第3章那个老坑：分布偏移。
-
-### 8.2 KL 约束项
-
-KL 项继承自 CVAE：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{KL}}
-=
-D_{\mathrm{KL}}(q_\phi(z\mid x_t,a_{t:t+H})\|p(z)) \tag{13.28}\]</div>
-
-它的作用是约束 encoder 推出的 latent 分布接近 prior。否则训练时 decoder 总是收到 posterior 产生的 <span class="math">\\(z\\)</span>，推理时却从 prior 采样，二者对不上。
-
-这就是第9章说过的 prior mismatch。到了 ACT，prior mismatch 的后果更明显，因为一次生成的是一段动作。latent 采样稍微不靠谱，可能不是一个动作偏一点，而是一整段动作都开始自由发挥。
-
-### 8.3 <span class="math">\\(\beta\\)</span> 的作用
-
-完整损失中常有一个系数 <span class="math">\\(\beta\\)</span>：
-
-<div class="math">\[
-\mathcal{L}_{\mathrm{ACT}}
-=
-\mathcal{L}_{\mathrm{chunk}}+
-\beta\mathcal{L}_{\mathrm{KL}} \tag{13.29}\]</div>
-
-<span class="math">\\(\beta\\)</span> 控制重建质量和 latent 规整之间的平衡。
-
-- <span class="math">\\(\beta\\)</span> 太小：encoder 可以把很多细节塞进 <span class="math">\\(z\\)</span>，训练重建很好，但推理从 prior 采样时可能接不上；
-- <span class="math">\\(\beta\\)</span> 太大：latent 被压得太狠，decoder 可能忽略 <span class="math">\\(z\\)</span>，多模态能力下降；
-- <span class="math">\\(\beta\\)</span> 合适：latent 既携带动作风格，又能和 prior 保持可采样关系。
+- $\beta$ 太小：encoder 可能把太多细节塞进 $z$，训练重建很好，但推理从 prior 采样时接不上；
+- $\beta$ 太大：latent 被压得太狠，decoder 可能忽略 $z$，多模态能力下降；
+- $\beta$ 合适：latent 既携带动作风格，又能和 prior 保持可采样关系。
 
 这不是玄学调参，而是在平衡“训练时解释数据”和“推理时可生成”。
 
 ---
 
+## 8. Transformer 在 ACT 中做什么？
+
+ACT 名字里的 T 是 Transformer。这里的 Transformer 不应被理解成“把模型换成 Transformer，效果就会自动变好”。它的作用要放在多源输入融合和动作块输出里理解。
+
+现代机器人策略输入常常不是一个向量，而是一组 token：图像特征、关节状态、末端位姿、双臂状态、历史动作、latent、任务条件等。Transformer 用 attention 建模这些 token 之间的关系。
+
+可以写成：
+
+**公式 (13.29)：Transformer 编码多源输入**
+
+$$h_t=\mathrm{Transformer}_\theta(\mathrm{tokens}(x_t),z)$$
+
+再由输出头生成动作块：
+
+**公式 (13.30)：动作预测头输出 action chunk**
+
+$$\hat a_{t:t+H}=g_\theta(h_t)$$
+
+Transformer 像一个信息融合器，把视觉、关节、目标和 latent 放到同一个上下文里。它不是魔法棒。数据质量差、动作标定错、相机外参飘、控制延迟大，Transformer 不会自动替你把工程债还清。
+
+---
+
 ## 9. Temporal Ensemble：多个 chunk 对同一动作投票
 
-ACT 中另一个重要技巧是 temporal ensemble。它解决的问题很朴素：
-
-> 如果模型每个时刻都会预测一个未来动作块，那么同一个未来时刻的动作，可能会被多个历史 chunk 预测到。我们该用哪个？
+ACT 中另一个重要技巧是 temporal ensemble。它解决的问题很朴素：如果模型每个时刻都会预测一个未来动作块，那么同一个当前时刻 $t$ 的动作，可能被多个历史 chunk 预测到。应该用哪个？
 
 比如：
 
-- 在 <span class="math">\\(t-2\\)</span> 时刻预测的 chunk 里，包含了对 <span class="math">\\(a\_t\\)</span> 的预测；
-- 在 <span class="math">\\(t-1\\)</span> 时刻预测的 chunk 里，也包含了对 <span class="math">\\(a\_t\\)</span> 的预测；
-- 在 <span class="math">\\(t\\)</span> 时刻重新预测的 chunk 中，也直接给出了 <span class="math">\\(a\_t\\)</span>。
+- 在 $t-2$ 时刻预测的 chunk 里，包含对 $a_t$ 的预测；
+- 在 $t-1$ 时刻预测的 chunk 里，也包含对 $a_t$ 的预测；
+- 在 $t$ 时刻重新预测的 chunk 中，也直接给出对 $a_t$ 的预测。
 
 这些预测可能不完全一样。如果每次只用最新预测，动作可能抖动；如果完全相信旧预测，又可能反应迟钝。temporal ensemble 用加权平均在二者之间折中。
 
-### 9.1 temporal ensemble 的基本公式
+**公式 (13.31)：多个历史 chunk 对当前动作的预测**
 
-假设对当前时刻 <span class="math">\\(t\\)</span> 的动作有 <span class="math">\\(K\\)</span> 个预测：
+$$\hat a_t^{(t)},\hat a_t^{(t-1)},\dots,\hat a_t^{(t-K+1)}$$
 
-<div class="math">\[
-\hat a_t^{(t)},
-\hat a_t^{(t-1)},
-\dots,
-\hat a_t^{(t-K+1)} \tag{13.30}\]</div>
+加权平均写成：
 
-其中 <span class="math">\\(\hat a\_t^{(t-i)}\\)</span> 表示在 <span class="math">\\(t-i\\)</span> 时刻预测出的 action chunk 中，对当前 <span class="math">\\(t\\)</span> 时刻动作的估计。
+**公式 (13.32)：temporal ensemble 加权融合**
 
-加权平均可以写成：
+$$\bar a_t=\frac{\sum_{i=0}^{K-1}w_i\hat a_t^{(t-i)}}{\sum_{i=0}^{K-1}w_i}$$
 
-<div class="math">\[
-\bar a_t
-=
-\frac{\sum_{i=0}^{K-1}w_i\hat a_t^{(t-i)}}{\sum_{i=0}^{K-1}w_i} \tag{13.31}\]</div>
+常见权重让新预测权重大、旧预测权重小：
 
-常见权重可以让新预测权重大、旧预测权重小，比如：
+**公式 (13.33)：指数衰减权重**
 
-<div class="math">\[
-w_i=\exp(-\lambda i) \tag{13.32}\]</div>
+$$w_i=\exp(-\lambda i),\quad \lambda>0$$
 
-其中 <span class="math">\\(\lambda>0\\)</span>。<span class="math">\\(i\\)</span> 越大，预测越旧，权重越小。
+### 命题 13.2：temporal ensemble 可以降低预测抖动，但可能引入滞后
 
-### 公式拆解：<span class="math">\\(\bar a\_t=\frac{\sum\_iw\_i\hat a\_t^{(t-i)}}{\sum\_iw\_i}\\)</span>
+如果多个 chunk 对同一动作的预测误差近似独立、均值接近 0，那么加权平均后的方差会小于单个高噪声预测的方差。因此 temporal ensemble 有平滑动作的效果。
 
-**1. 这个公式要解决什么问题？**
+用简化的一维情形说明。设多个预测为：
 
-它把多个 chunk 对同一时刻动作的预测融合成一个最终执行动作，减少高频抖动。
+**公式 (13.34)：预测值分解为真实动作与噪声**
 
-**2. 符号解释**
+$$\hat a_t^{(t-i)}=a_t+\epsilon_i$$
 
-- <span class="math">\\(\bar a\_t\\)</span>：最终要执行的动作；
-- <span class="math">\\(\hat a\_t^{(t-i)}\\)</span>：在 <span class="math">\\(t-i\\)</span> 时刻预测的 chunk 中，对 <span class="math">\\(t\\)</span> 时刻动作的估计；
-- <span class="math">\\(w\_i\\)</span>：该预测的权重；
-- <span class="math">\\(K\\)</span>：参与融合的预测数量；
-- 分母 <span class="math">\\(\sum\_iw\_i\\)</span>：归一化权重，避免动作尺度被放大或缩小。
+其中 $\epsilon_i$ 是预测噪声。加权平均误差为：
 
-**3. 直觉解释**
+**公式 (13.35)：temporal ensemble 的融合误差**
 
-这像多个导航建议对当前方向进行投票。最新导航最重要，但刚才的规划也不完全扔掉。否则方向盘会在每次重新规划时猛地抽一下。
+$$\bar a_t-a_t=\frac{\sum_{i=0}^{K-1}w_i\epsilon_i}{\sum_{i=0}^{K-1}w_i}$$
 
-**4. 工程含义**
+如果这些噪声彼此独立，且方差相同为 $\sigma^2$，则融合误差方差为：
 
-temporal ensemble 本质是平滑器，但它不是万能滤波器。它能减少抖动，也可能引入延迟。对于接触丰富、变化很快的任务，过度平滑可能让机器人反应慢半拍。
+**公式 (13.36)：融合误差方差**
 
-**5. 常见误解**
+$$\mathrm{Var}(\bar a_t-a_t)=\sigma^2\frac{\sum_{i=0}^{K-1}w_i^2}{\left(\sum_{i=0}^{K-1}w_i\right)^2}$$
 
-不要把 temporal ensemble 当成“把模型错的动作平均一下就对了”。如果多个 chunk 都错，平均只会得到一个更稳定的错误。稳定地错，在机器人里并不值得骄傲。
+当多个权重都参与平均时，上式通常小于 $\sigma^2$，所以动作更平滑。
+
+但这只是“降噪”直觉，不是“保证正确”。如果旧 chunk 已经过期，或者环境变化很快，平均旧预测会引入滞后。也就是说，temporal ensemble 能减少抖动，也可能让机器人反应慢半拍。
 
 ![图13-3 temporal ensemble 图解](../images/图13-3_temporal_ensemble图解.png)
 
 **图13-3 说明**：
+
 - 多个历史 action chunk 可能都覆盖当前时刻；
 - temporal ensemble 将这些候选动作按权重融合；
 - 它主要缓解抖动，不直接解决分布偏移或任务理解错误。
@@ -611,616 +397,358 @@ temporal ensemble 本质是平滑器，但它不是万能滤波器。它能减�
 
 ## 10. Receding Execution：预测一段，但别一口吃完
 
-action chunk 容易带来一个误解：模型预测了未来 <span class="math">\\(H\\)</span> 步动作，是不是就把这 <span class="math">\\(H\\)</span> 步全部执行完？
+action chunk 容易带来一个误解：模型预测了未来 $H$ 步动作，是不是就把这 $H$ 步全部执行完？
 
-在真实机器人系统中，这通常不是好主意。
+真实机器人系统中通常不这么做，因为环境会变：物体可能滑动，接触可能提前发生，夹爪可能没完全夹住，人可能进入工作空间，视觉观测可能突然更新，底层控制误差也可能积累。
 
-原因很简单：环境会变。
+所以更合理的做法是 receding execution：每次预测一个 action chunk，但只执行前面一小部分，然后根据新观测重新预测。
 
-- 物体可能滑动；
-- 抓取接触可能提前发生；
-- 夹爪可能没完全夹住；
-- 人可能伸手进入工作空间；
-- 视觉观测可能突然更新；
-- 底层控制误差可能积累。
+假设策略每 $k$ 步运行一次，每次输出长度为 $H$ 的动作块：
 
-如果机器人预测了 2 秒动作，然后闭着眼睛执行完，结果可能非常有论文视频感：前半段还行，后半段像失恋后随缘。
+**公式 (13.37)：当前时刻预测动作块**
 
-所以更合理的做法是 receding execution：
+$$\hat a_{t:t+H}=f_\theta(x_t,z)$$
 
-> 每次预测一个 action chunk，但只执行前面一小部分，然后根据新观测重新预测。
+系统只执行前 $k$ 步：
 
-这和 MPC 的滚动优化有相似直觉：计划一段，执行一小段，再重新计划。
+**公式 (13.38)：只执行前 k 步**
 
-### 10.1 低频决策，高频执行
+$$\hat a_{t:t+k}=(\hat a_t,\hat a_{t+1},\dots,\hat a_{t+k-1})$$
 
-假设策略每 <span class="math">\\(k\\)</span> 步运行一次，每次输出长度为 <span class="math">\\(H\\)</span> 的动作块：
+到 $t+k$ 时刻，拿到新观测 $x_{t+k}$，再预测：
 
-<div class="math">\[
-\hat a_{t:t+H}=f_\theta(x_t,z) \tag{13.33}\]</div>
+**公式 (13.39)：下一轮滚动预测**
 
-系统只执行前 <span class="math">\\(k\\)</span> 步：
+$$\hat a_{t+k:t+k+H}=f_\theta(x_{t+k},z')$$
 
-<div class="math">\[
-\hat a_{t:t+k} \tag{13.34}\]</div>
+$H$ 和 $k$ 的选择很关键：
 
-到 <span class="math">\\(t+k\\)</span> 时刻，拿到新观测 <span class="math">\\(x\_{t+k}\\)</span>，再预测：
+- $H$ 太短：局部意图弱；
+- $H$ 太长：远期预测不可靠；
+- $k$ 太小：计算压力大，动作可能频繁变化；
+- $k$ 太大：闭环修正慢，接触变化时容易翻车。
 
-<div class="math">\[
-\hat a_{t+k:t+k+H}=f_\theta(x_{t+k},z') \tag{13.35}\]</div>
-
-这里 <span class="math">\\(k\le H\\)</span>。如果 <span class="math">\\(k=1\\)</span>，每一步都重新预测 chunk；如果 <span class="math">\\(k\\)</span> 较大，决策频率降低，执行更像开环。
-
-### 公式拆解：<span class="math">\\(\hat a\_{t+k:t+k+H}=f\_\theta(x\_{t+k},z')\\)</span>
-
-**1. 这个公式要解决什么问题？**
-
-它表达滚动执行：执行一小段后，用新观测重新生成新的 action chunk。
-
-**2. 符号解释**
-
-- <span class="math">\\(t+k\\)</span>：下一次策略更新的时间；
-- <span class="math">\\(x\_{t+k}\\)</span>：执行前一小段动作后得到的新观测；
-- <span class="math">\\(z'\\)</span>：新一轮采样或选择的 latent；
-- <span class="math">\\(\hat a\_{t+k:t+k+H}\\)</span>：新生成的动作块。
-
-**3. 直觉解释**
-
-机器人像开车一样：导航可以规划 500 米，但你不会 500 米都不看路。你会走一小段，看新路况，再调整。
-
-**4. 工程含义**
-
-<span class="math">\\(H\\)</span> 和 <span class="math">\\(k\\)</span> 的选择很关键：
-
-- <span class="math">\\(H\\)</span> 太短：局部意图弱；
-- <span class="math">\\(H\\)</span> 太长：远期预测不可靠；
-- <span class="math">\\(k\\)</span> 太小：计算压力大，动作可能频繁变化；
-- <span class="math">\\(k\\)</span> 太大：闭环修正慢，遇到接触变化容易翻车。
-
-**5. 常见误解**
-
-ACT 不是替代底层控制器。action chunk 通常仍需要底层位置控制、速度控制、阻抗控制或安全控制器执行。策略给的是高层动作序列，不是让电机直接听神经网络讲相声。
+ACT 不是替代底层控制器。action chunk 通常仍需要位置控制、速度控制、阻抗控制或安全控制器执行。策略给的是高层动作序列，不是让电机直接听神经网络讲相声。
 
 ![图13-4 低频决策高频执行示意图](../images/图13-4_低频决策高频执行示意图.png)
 
 **图13-4 说明**：
+
 - 每次预测未来一段动作；
 - 实际只执行前面一小部分；
 - 根据新观测继续滚动预测，避免开环一把梭。
 
 ---
 
-## 11. ACT 与第9章 CVAE 的关系
+## 11. 数据组织：从轨迹中切出 action chunk
 
-第9章讲 CVAE 时，我们使用的是一般形式：
+ACT 的训练数据来自专家轨迹。为了避免边界歧义，本章采用常见轨迹写法：一条长度为 $T$ 的轨迹有 $T$ 个动作，从 $a_0$ 到 $a_{T-1}$。
 
-<div class="math">\[
-q_\phi(z\mid x,a) \tag{13.36}\]</div>
+**公式 (13.40)：专家轨迹**
 
-<div class="math">\[
-p_\theta(a\mid x,z) \tag{13.37}\]</div>
+$$\tau=(x_0,a_0,x_1,a_1,\dots,x_{T-1},a_{T-1},x_T)$$
 
-ACT 的对应关系是：
+从这条轨迹中，可以用滑窗构造训练样本：
 
-<div class="math">\[
-q_\phi(z\mid x_t,a_{t:t+H}) \tag{13.38}\]</div>
+**公式 (13.41)：单个动作块训练样本**
 
-<div class="math">\[
-p_\theta(a_{t:t+H}\mid x_t,z) \tag{13.39}\]</div>
+$$(x_t,a_{t:t+H})$$
 
-也就是说，ACT 没有推翻 CVAE，而是把 CVAE 用到了动作块上。
+由于 $a_{t:t+H}$ 包含 $a_t$ 到 $a_{t+H-1}$，最后一个合法起点是 $t=T-H$。因此数据集写成：
 
-你可以把第9章的 CVAE 看成“学一个动作的多模态生成”，把第13章的 ACT 看成“学一段动作的多模态生成”。
+**公式 (13.42)：动作块数据集**
 
-这个变化看起来只是在 <span class="math">\\(a\\)</span> 上多了几个下标，但工程意义很大：
+$$\mathcal{D}_{\mathrm{chunk}}=\{(x_t,a_{t:t+H})\}_{t=0}^{T-H}$$
 
-1. 输出维度变大；
-2. 时间一致性更重要；
-3. 数据对齐更敏感；
-4. 控制频率和策略频率要协调；
-5. 评测不能只看单步误差；
-6. 部署时必须考虑滚动执行和安全检查。
+这个修正避免了一个常见 bug：如果轨迹写成包含 $a_T$，但又用 $t=0$ 到 $T-H$，读者会不清楚到底有 $T$ 个动作还是 $T+1$ 个动作。对 ACT 来说，边界错一帧就可能导致整个 chunk 对齐错位。
 
-数学符号多了一截，工程坑也多了一排。公式不会白白变长，它通常是在提醒你：现实也变复杂了。
-
----
-
-## 12. ACT 适合什么任务？
-
-ACT 尤其适合具有以下特点的任务。
-
-### 12.1 动作有局部连续结构
-
-比如：
-
-- 拉链；
-- 插线；
-- 折叠；
-- 推拉抽屉；
-- 整理物体；
-- 双臂协作；
-- 精准摆放；
-- 轻接触操作。
-
-这些任务中，一段动作通常比单步动作更有意义。
-
-### 12.2 示范数据包含多种合理风格
-
-如果同一个任务有多种操作方式，CVAE latent 可以帮助表达风格差异。比如同一个插线任务，有人先对准再插，有人边对准边插；同一个整理任务，有人从左往右，有人从右往左。
-
-ACT 可以把这种差异表达为不同 action chunk 模式。
-
-### 12.3 高频控制需要平滑
-
-机械臂执行时，动作抖动会带来关节冲击、接触不稳定和安全风险。temporal ensemble 和 chunk 输出可以帮助平滑动作。
-
-不过要注意：平滑不等于正确。把错误动作平滑成丝滑错误，仍然是错误。
-
-### 12.4 感知决策频率低于控制频率
-
-如果视觉策略计算较慢，但底层控制需要高频动作，action chunk 可以作为桥梁。高层策略低频输出一段动作，底层控制器高频跟踪。
-
-这在真实系统中很常见。神经网络不是每一毫秒都能优雅登场，硬件也不会因为你用了 Transformer 就自动涨算力。
-
----
-
-## 13. ACT 不适合什么任务？
-
-### 13.1 环境变化极快的任务
-
-如果环境在很短时间内剧烈变化，长 action chunk 可能过期。比如高速避障、快速动态抓取、多人协作空间中的突然干扰。此时需要更强的闭环反应和安全控制。
-
-### 13.2 接触反馈非常关键但观测不足
-
-如果任务强依赖力觉、触觉，而输入里没有相关信息，ACT 可能只能凭视觉和关节状态猜。猜得准时像智能，猜不准时像算命。
-
-比如插孔、卡扣、柔性物体操作，如果没有力反馈或接触状态建模，action chunk 可能在接触发生后仍按原计划推进，导致卡住或损坏。
-
-### 13.3 数据里动作模式混乱
-
-如果示范数据质量差，动作风格不稳定，标定延迟严重，ACT 会学习这些混乱。动作块模型不是数据净化器。
-
-比如同一个任务，有些示范是高手稳定操作，有些是新手犹豫乱动，有些夹爪延迟一拍，有些图像时间戳对不上。模型可能把这些差异当成 latent 风格学进去。
-
-### 13.4 安全边界很硬的任务
-
-对于自动驾驶、泊车、工业机械臂安全区，人机共域等任务，ACT 输出动作块后必须经过安全约束。不能因为模型输出了一段动作，就绕过碰撞检测、速度限制、关节限位和 emergency stop。
-
-策略负责建议，安全系统负责兜底。不要让神经网络同时扮演司机、交警、保险公司和事故鉴定中心。
-
----
-
-## 14. 从自动驾驶和泊车视角理解 ACT
-
-虽然 ACT 常出现在机器人操作任务中，但它的思想对自动驾驶和泊车也有启发。
-
-自动驾驶里，单步控制量预测可能写成：
-
-<div class="math">\[
-\hat u_t=f_\theta(x_t) \tag{13.40}\]</div>
-
-其中 <span class="math">\\(u\_t\\)</span> 可能是方向盘角、加速度或轨迹点控制量。
-
-但更常见的规划形式其实是输出未来一段轨迹或控制序列：
-
-<div class="math">\[
-\hat u_{t:t+H}=f_\theta(x_t) \tag{13.41}\]</div>
-
-或者输出未来轨迹点：
-
-<div class="math">\[
-\hat y_{t:t+H}=f_\theta(x_t) \tag{13.42}\]</div>
-
-这和 action chunk 的思想很接近：不要只问下一步怎么打方向，而是问接下来一小段路径应该怎么走。
-
-在自动泊车中，这个思想更直观。泊车不是每一帧孤立输出转角，而是有局部 maneuver：
-
-- 倒车入库第一把；
-- 回正；
-- 二次调整；
-- 贴边微调；
-- 停止。
-
-如果策略只预测当前控制量，很容易局部抖动；如果预测一个短期控制序列或轨迹片段，就能表达“这一把要往哪个方向修”。
-
-当然，泊车和机械臂 ACT 仍有差异。车辆有强运动学约束、碰撞约束、法规和安全边界，通常不能只靠模仿学习动作块直接执行。更合理的方式是把 action chunk 思想用于候选轨迹生成、轨迹补全、局部策略辅助，再接入传统规划、安全检查和控制器。
-
-换句话说：ACT 的思想可以借鉴，但不要把机械臂论文里的动作块直接塞进车辆域控，然后期待车位线感动到自己对齐。
-
----
-
-## 15. 从“抓取 + 精准摆入治具”理解 ACT
-
-前面章节多次提到“抓取 + 精准摆入治具”这个任务。它很适合解释 ACT 的价值。
-
-这个任务的难点不一定是抓起工件，而是把工件稳定放入有偏差、可能变形、位置不完全准确的治具槽口中。
-
-传统视觉方案通常做：
-
-1. 相机定位治具；
-2. 估计纠正量；
-3. 机械臂执行修正后的轨迹；
-4. 如果放不进去，再靠人工或规则补救。
-
-这里面有很多工程坑：
-
-- 相机支架震动；
-- 治具变形；
-- 光照变化；
-- 标定误差；
-- 接触不确定；
-- 工件姿态微偏；
-- 托盘重复使用导致尺寸漂移。
-
-ACT 的思路不是完全替代传统几何，而是可能学习一段“接近—对准—轻放—微调”的局部操作策略。
-
-动作块可以表达：
-
-<div class="math">\[
-\text{approach} \rightarrow \text{align} \rightarrow \text{insert} \rightarrow \text{release} \tag{13.43}\]</div>
-
-如果输入包含视觉、末端位姿、夹爪状态，甚至力觉信息，模型有机会学习到老师傅在这些微小偏差下如何连续调整。
-
-但这里必须强调边界：
-
-- 没有足够异常数据，ACT 不会自动处理所有变形治具；
-- 没有安全约束，动作块可能把工件硬怼进去；
-- 没有接触反馈，插入阶段容易猜错；
-- 没有传统几何和工装约束，策略泛化会很难。
-
-所以更合理的工程结构是：
-
-> 传统几何提供粗定位和安全边界，ACT 学习局部柔顺操作和短期动作模式，底层控制器保证执行稳定。
-
-这比“全靠神经网络端到端”更像工程，也更像能活到验收的方案。
-
----
-
-## 16. ACT 的数据组织方式
-
-### 16.1 从轨迹中切出 action chunk
-
-假设一条专家轨迹是：
-
-<div class="math">\[
-\tau=(x_0,a_0,x_1,a_1,\dots,x_T,a_T) \tag{13.44}\]</div>
-
-我们可以从中构造训练样本：
-
-<div class="math">\[
-(x_t,a_{t:t+H}) \tag{13.45}\]</div>
-
-对多个时间步滑窗，可以得到：
-
-<div class="math">\[
-\mathcal{D}_{\mathrm{chunk}}
-=
-\{(x_t,a_{t:t+H})\}_{t=0}^{T-H} \tag{13.46}\]</div>
-
-### 公式拆解：<span class="math">\\(\mathcal{D}\_{\mathrm{chunk}}=\{(x\_t,a\_{t:t+H})\}\_{t=0}^{T-H}\\)</span>
-
-**1. 这个公式要解决什么问题？**
-
-它说明如何从专家轨迹中构造 ACT 的监督学习数据：每个当前输入配一段未来专家动作。
-
-**2. 符号解释**
-
-- <span class="math">\\(\tau\\)</span>：一条专家轨迹；
-- <span class="math">\\(T\\)</span>：轨迹长度；
-- <span class="math">\\(H\\)</span>：chunk 长度；
-- <span class="math">\\(x\_t\\)</span>：当前输入；
-- <span class="math">\\(a\_{t:t+H}\\)</span>：从当前开始的未来动作块；
-- <span class="math">\\(T-H\\)</span>：保证动作块不会越过轨迹末尾。
-
-**3. 直觉解释**
-
-这就是滑窗切片。像把一部长视频切成很多小片段，每个片段都从某个当前画面开始，包含后面一小段动作。
-
-**4. 工程含义**
-
-数据构造时必须处理轨迹尾部。如果 <span class="math">\\(t\\)</span> 太靠近终点，后面不够 <span class="math">\\(H\\)</span> 步，可以选择丢弃、padding 或缩短。不同处理会影响训练稳定性。
-
-**5. 常见误解**
+数据构造时还必须处理轨迹尾部。如果 $t$ 太靠近终点，后面不够 $H$ 步，可以选择丢弃、padding 或缩短。不同处理方式会影响训练稳定性。
 
 不要把不同 episode 的动作强行拼接成一个 chunk。轨迹边界必须保留。否则模型会学到一种很神奇的动作：上一秒还在拿杯子，下一秒突然开始拉拉链。这不是多任务学习，这是数据集穿越。
 
-### 16.2 时间对齐很重要
+---
 
-ACT 对时间对齐非常敏感。因为它不是只预测单步，而是预测一段动作。如果图像和动作延迟 3 帧，单步 BC 已经会受影响，ACT 会把这个延迟扩展到整个 chunk。
+## 12. 时间对齐、评测与工程边界
 
-需要特别检查：
+### 12.1 时间对齐
 
-- 相机时间戳；
-- 机器人状态时间戳；
-- 动作命令时间戳；
-- 示教设备延迟；
-- 控制器执行延迟；
-- 数据保存线程是否丢帧。
+ACT 对时间对齐非常敏感。它不是只预测单步，而是预测一段动作。如果图像和动作延迟 3 帧，单步 BC 已经会受影响，ACT 会把这个延迟扩展到整个 chunk。
+
+需要特别检查：相机时间戳、机器人状态时间戳、动作命令时间戳、示教设备延迟、控制器执行延迟、数据保存线程是否丢帧。
 
 很多机器人学习问题最后不是模型结构问题，而是时间戳问题。你以为自己在调 Transformer，其实是在和日志系统斗法。
 
----
+### 12.2 评测不能只看 open-loop loss
 
-## 17. ACT 的评测方式
+ACT 至少要从三层评测。
 
-ACT 不能只看训练 loss。至少要从三个层次评测。
+第一层是 open-loop chunk loss：
 
-### 17.1 open-loop chunk loss
+**公式 (13.43)：open-loop 动作块误差**
 
-这是最直接的评测：在验证集上输入 <span class="math">\\(x\_t\\)</span>，预测 <span class="math">\\(\hat a\_{t:t+H}\\)</span>，和专家动作块比较。
-
-可以看：
-
-<div class="math">\[
-\frac1H\sum_{j=0}^{H-1}\|a_{t+j}-\hat a_{t+j}\|^2 \tag{13.47}\]</div>
+$$\frac{1}{H}\sum_{j=0}^{H-1}\lVert a_{t+j}-\hat a_{t+j}\rVert^2$$
 
 也可以分不同 horizon 看误差：
 
-<div class="math">\[
-\ell_j=\|a_{t+j}-\hat a_{t+j}\|^2 \tag{13.48}\]</div>
+**公式 (13.44)：第 j 步预测误差**
 
-如果 <span class="math">\\(j\\)</span> 越大误差越大，说明模型短期预测还行，远期预测不稳。这很常见，也很正常。远期动作本来就更依赖未来观测。
+$$\ell_j=\lVert a_{t+j}-\hat a_{t+j}\rVert^2$$
 
-### 17.2 closed-loop success rate
+如果 $j$ 越大误差越大，说明模型短期预测还行，远期预测不稳。这很常见，也很正常，因为远期动作本来就更依赖未来观测。
 
-最终还是要闭环执行。成功率可以按任务定义：
+第二层是 closed-loop success rate，例如是否成功抓取、插入、打开拉链、放入治具、无碰撞完成、在限定时间内完成。
 
-- 是否成功抓取；
-- 是否插入；
-- 是否打开拉链；
-- 是否放入治具；
-- 是否完成整理；
-- 是否无碰撞完成；
-- 是否在限定时间内完成。
+第三层是动作平滑性和安全指标：
 
-第6章已经讲过，open-loop loss 和 closed-loop success 不一定一致。ACT 也逃不出这条规律。
+**公式 (13.45)：动作平滑指标**
 
-### 17.3 动作平滑性和安全指标
+$$\mathcal{L}_{\mathrm{smooth}}=\sum_t\lVert a_t-a_{t-1}\rVert^2$$
 
-ACT 还应评估动作是否平滑、安全：
+如果动作表示速度或位置增量，还可以看加速度、jerk、关节限位、碰撞距离、接触力等指标。动作块很漂亮，不代表硬件喜欢。硬件喜欢的是可执行、平滑、安全、不过载。
 
-<div class="math">\[
-\mathcal{L}_{\mathrm{smooth}}
-=
-\sum_t\|a_t-a_{t-1}\|^2 \tag{13.49}\]</div>
+### 12.3 适合与不适合的任务
 
-如果动作表示速度或位置增量，还可以看加速度、jerk、关节限位、碰撞距离、接触力等指标。
+ACT 尤其适合具有局部连续结构的任务，例如拉链、插线、折叠、推拉抽屉、整理物体、双臂协作、精准摆放和轻接触操作。这些任务中，一段动作通常比单步动作更有意义。
 
-动作块很漂亮，不代表硬件喜欢。硬件喜欢的是可执行、平滑、安全、不过载。
+ACT 不适合直接裸奔到所有任务上。以下情况要特别谨慎：
 
----
+- 环境变化极快：长 chunk 可能过期；
+- 接触反馈非常关键但观测不足：模型可能在接触发生后仍按旧计划推进；
+- 示范数据动作模式混乱：ACT 会把混乱学进动作块；
+- 安全边界很硬：必须加入碰撞检测、关节限位、速度限制、力限制、工作空间限制和 fallback。
 
-## 18. 常见误区
+### 12.4 自动驾驶、泊车与精准摆入治具视角
 
-### 误区一：action chunk 越长越好
+ACT 常出现在机器人操作任务中，但它的思想对自动驾驶和泊车也有启发。自动驾驶里，单步控制量预测可以写成 $\hat u_t=f_\theta(x_t)$，但更常见的规划形式其实是输出未来一段轨迹或控制序列。
 
-chunk 太短，局部意图不够；chunk 太长，预测难度上升，后半段容易过期。<span class="math">\\(H\\)</span> 要结合控制频率、任务时间尺度和闭环刷新频率选择。
+自动泊车也有类似局部 maneuver：倒车入库第一把、回正、二次调整、贴边微调、停止。如果策略只预测当前控制量，很容易局部抖动；如果预测短期控制序列或轨迹片段，就能表达“这一把要往哪个方向修”。
 
-### 误区二：ACT 可以替代所有规划和控制
+不过车辆有强运动学约束、碰撞约束、法规和安全边界，不能把机械臂论文里的动作块直接塞进车辆域控。更合理的方式是把 action chunk 思想用于候选轨迹生成、轨迹补全、局部策略辅助，再接入传统规划、安全检查和控制器。
 
-ACT 是策略模型，不是完整机器人系统。它不能自动替代碰撞检测、轨迹约束、底层控制、急停、人机安全和异常恢复。
+“抓取 + 精准摆入治具”也是理解 ACT 的好例子。传统几何提供粗定位和安全边界，ACT 可以学习“接近—对准—轻放—微调”的局部柔顺操作。没有足够异常数据，ACT 不会自动处理所有变形治具；没有接触反馈，插入阶段容易猜错；没有安全约束，动作块可能把工件硬怼进去。
 
-### 误区三：temporal ensemble 一定提升效果
+更像工程的结构是：
 
-temporal ensemble 能降低抖动，也可能带来延迟。如果任务需要快速接触反馈，过度平均会让动作慢半拍。
-
-### 误区四：Transformer 是效果来源的全部
-
-ACT 的效果来自多方面：action chunk、CVAE latent、Transformer 表达能力、数据质量、temporal ensemble 和任务设置。把功劳全给 Transformer，就像公司项目成了只夸 PPT 模板。
-
-### 误区五：训练 loss 低就能部署
-
-训练 loss 是离线指标，部署需要闭环成功率、安全边界、异常恢复和长期稳定性。机器人不会因为你 validation loss 很好就少撞一下桌子。
-
-### 误区六：多模态一定需要随机采样
-
-有些任务需要多模态，有些任务只需要稳定确定策略。比如安全关键场景中，随机采样动作必须被严格约束。多样性不是放飞自我。
-
-### 误区七：数据越多越能解决时间对齐问题
-
-时间戳错位不是靠更多错位数据自动解决的。更多错位数据只会让模型更认真地学错。
+> 传统几何提供粗定位和安全边界，ACT 学习局部柔顺操作和短期动作模式，底层控制器保证执行稳定。
 
 ---
 
-## 19. 方法边界与工程风险
+## 13. 读完本章，你应该能判断什么？
 
-### 19.1 horizon mismatch
+读完本章后，你应该能形成以下判断：
 
-训练时使用 <span class="math">\\(H\\)</span> 步动作块，部署时策略刷新频率、控制频率或执行窗口变了，可能导致行为不一致。比如训练时每 20ms 一个动作，部署时实际 30ms 执行一次，整个动作块时间尺度就变了。
-
-### 19.2 stale chunk
-
-如果执行了过长的旧 chunk，环境已经变化，动作仍按旧计划推进。这在接触任务里很危险。
-
-### 19.3 chunk boundary artifact
-
-动作块之间可能在边界处不连续。temporal ensemble 可以缓解，但如果模型每次预测的 chunk 差异很大，边界仍可能抖动。
-
-### 19.4 latent collapse
-
-和 CVAE 一样，ACT 也可能出现 latent collapse：不同 <span class="math">\\(z\\)</span> 输出的动作块几乎一样。此时多模态能力消失，模型退化为普通 action chunk 回归器。
-
-### 19.5 demonstration inconsistency
-
-如果示范者动作风格不稳定，ACT 会把这些不稳定学进动作块。尤其是长 chunk，会放大示范中的迟疑、抖动和修正。
-
-### 19.6 safety gap
-
-ACT 输出的动作块可能在 open-loop 看着合理，但闭环执行中违反安全约束。必须加入碰撞检测、关节限位、速度限制、力限制、工作空间限制和 fallback 策略。
+1. ACT 的核心不是 Transformer，而是把动作建模对象从单步动作扩展为 action chunk。
+2. action chunk 能表达局部时间结构，但不等于开环执行到底。
+3. ACT 继承 CVAE 的 latent 思想，用来表达多种合理动作块。
+4. ACT 损失可以看成 CVAE 负 ELBO 在动作块生成上的工程化形式。
+5. temporal ensemble 可以减少动作抖动，但可能引入滞后。
+6. open-loop chunk loss 低不代表 closed-loop success 高。
+7. ACT 是否有效，很大程度取决于数据质量、时间对齐、控制频率、安全约束和任务本身是否具有局部连续结构。
+8. 对泊车或工业机械臂任务，action chunk 思想可以借鉴，但必须和传统几何、规划、安全检查、底层控制结合。
 
 ---
 
-## 20. 本章小结
+## 14. 本章小结：从 ACT 到 Diffusion Policy
 
-本章从第9章 CVAE 出发，进入 ACT：Action Chunking with Transformers。
+本章从第9章 CVAE 出发，把动作预测对象从单步动作：
 
-最核心的变化是把动作预测对象从单步动作：
+**公式 (13.46)：单步动作对象**
 
-<div class="math">\[
-a_t \tag{13.50}\]</div>
+$$a_t$$
 
 扩展成动作块：
 
-<div class="math">\[
-a_{t:t+H}=(a_t,a_{t+1},\dots,a_{t+H-1}) \tag{13.51}\]</div>
+**公式 (13.47)：动作块对象**
+
+$$a_{t:t+H}=(a_t,a_{t+1},\dots,a_{t+H-1})$$
 
 ACT 可以写成一个条件动作块生成模型：
 
-<div class="math">\[
-p_\theta(a_{t:t+H}\mid x_t,z) \tag{13.52}\]</div>
+**公式 (13.48)：ACT 条件动作块生成**
+
+$$p_\theta(a_{t:t+H} \mid x_t,z)$$
 
 训练时使用 CVAE encoder：
 
-<div class="math">\[
-q_\phi(z\mid x_t,a_{t:t+H}) \tag{13.53}\]</div>
+**公式 (13.49)：ACT encoder**
+
+$$q_\phi(z \mid x_t,a_{t:t+H})$$
 
 整体损失包括动作块重建损失和 KL 约束：
 
-<div class="math">\[
-\mathcal{L}_{\mathrm{ACT}}
-=
-\mathcal{L}_{\mathrm{chunk}}
-+
-\beta D_{\mathrm{KL}}(q_\phi(z\mid x_t,a_{t:t+H})\|p(z)) \tag{13.54}\]</div>
+**公式 (13.50)：ACT 总损失**
 
-为了减少动作抖动，ACT 还可以使用 temporal ensemble：
+$$\mathcal{L}_{\mathrm{ACT}}=\mathcal{L}_{\mathrm{chunk}}+\beta D_{\mathrm{KL}}\left(q_\phi(z\mid x_t,a_{t:t+H})\,\Vert\,p(z)\right)$$
 
-<div class="math">\[
-\bar a_t
-=
-\frac{\sum_{i=0}^{K-1}w_i\hat a_t^{(t-i)}}{\sum_{i=0}^{K-1}w_i} \tag{13.55}\]</div>
+为了减少动作抖动，ACT 可以使用 temporal ensemble：
 
-本章最重要的几句话是：
+**公式 (13.51)：temporal ensemble**
 
-1. ACT 的核心不是“Transformer 很强”，而是“把动作建模成 chunk”；
-2. action chunk 让策略学到局部时间结构和短期操作意图；
-3. CVAE latent 让 ACT 能表达多种合理动作块；
-4. temporal ensemble 可以减少动作抖动，但不保证动作正确；
-5. action chunk 通常应滚动执行，而不是开环一口气执行到底；
-6. ACT 适合精细操作、双臂协作、接触操作和局部连续动作明显的任务；
-7. ACT 仍然需要安全约束、底层控制、闭环评测和数据质量保障。
+$$\bar a_t=\frac{\sum_{i=0}^{K-1}w_i\hat a_t^{(t-i)}}{\sum_{i=0}^{K-1}w_i}$$
 
-下一章我们进入 Diffusion Policy。它和 ACT 一样关注动作序列，但生成方式不同：ACT 更像通过 Transformer/CVAE 一次吐出动作块，Diffusion Policy 则把动作生成看成从噪声中逐步去噪。一个像点套餐，一个像慢慢把菜搓出来。听起来都能吃，但厨房原理不一样。
+本章最重要的结论是：ACT 将模仿学习的建模单位从“当前动作”推进到“短期动作序列”。这让策略能表达局部时间结构和短期操作意图，但仍然受限于一次性解码、重建损失、latent 表达能力、数据质量和闭环部署风险。
+
+下一章进入 Diffusion Policy。它和 ACT 一样关注动作块，但生成方式不同：ACT 更像通过 Transformer/CVAE 一次生成动作块；Diffusion Policy 则把动作生成看成从噪声中逐步去噪。一个像点套餐，一个像慢慢把菜搓出来。听起来都能吃，但厨房原理不一样。
 
 ---
 
-## 21. 本章公式索引
+## 15. 本章公式索引
 
-| 公式 | 名称 | 作用 |
-|---|---|---|
-| <span class="math">\\(a\_t\\)</span> | 单步动作 | 当前时间步的动作 |
-| <span class="math">\\(a\_{t:t+H}=(a\_t,a\_{t+1},\dots,a\_{t+H-1})\\)</span> | action chunk | 从当前开始的长度为 <span class="math">\\(H\\)</span> 的动作块 |
-| <span class="math">\\(\hat a\_{t:t+H}=f\_\theta(x\_t,z)\\)</span> | 动作块预测 | 给定当前条件和 latent 输出未来动作序列 |
-| <span class="math">\\(p\_\theta(a\_{t:t+H}\mid x\_t,z)\\)</span> | 条件动作块分布 | ACT 的动作生成分布形式 |
-| <span class="math">\\(q\_\phi(z\mid x\_t,a\_{t:t+H})\\)</span> | ACT encoder / posterior | 训练时根据条件和专家动作块推断 latent |
-| <span class="math">\\(q\_\phi(z\mid x\_t,a\_{t:t+H})=\mathcal{N}(z;\mu\_\phi,\mathrm{diag}(\sigma\_\phi^2))\\)</span> | 高斯 posterior | encoder 输出 latent 均值和方差 |
-| <span class="math">\\(z=\mu\_\phi+\sigma\_\phi\odot\epsilon\\)</span> | 重参数化技巧 | 让 latent 采样可反向传播 |
-| <span class="math">\\(\epsilon\sim\mathcal{N}(0,I)\\)</span> | 标准高斯噪声 | 重参数化中的随机源 |
-| <span class="math">\\(\mathcal{L}\_{\mathrm{chunk}}=\sum\_{j=0}^{H-1}\|a\_{t+j}-\hat a\_{t+j}\|^2\\)</span> | 动作块重建损失 | 衡量预测 chunk 与专家 chunk 的差异 |
-| <span class="math">\\(\mathcal{L}\_{\mathrm{chunk}}=\frac1H\sum\_{j=0}^{H-1}\|a\_{t+j}-\hat a\_{t+j}\|^2\\)</span> | 平均动作块损失 | 对不同 chunk 长度更方便比较 |
-| <span class="math">\\(\mathcal{L}\_{\mathrm{KL}}=D\_{\mathrm{KL}}(q\_\phi(z\mid x\_t,a\_{t:t+H})\|p(z))\\)</span> | KL 约束 | 对齐 posterior 与 prior |
-| <span class="math">\\(\mathcal{L}\_{\mathrm{ACT}}=\mathcal{L}\_{\mathrm{chunk}}+\beta\mathcal{L}\_{\mathrm{KL}}\\)</span> | ACT 损失 | 同时约束动作块重建和 latent 空间 |
-| <span class="math">\\(\hat a\_t^{(t-i)}\\)</span> | 历史 chunk 对当前动作的预测 | 表示 <span class="math">\\(t-i\\)</span> 时刻预测出的当前动作 |
-| <span class="math">\\(\bar a\_t=\frac{\sum\_{i=0}^{K-1}w\_i\hat a\_t^{(t-i)}}{\sum\_{i=0}^{K-1}w\_i}\\)</span> | temporal ensemble | 融合多个 chunk 对当前动作的预测 |
-| <span class="math">\\(w\_i=\exp(-\lambda i)\\)</span> | 指数衰减权重 | 让更新的预测权重更大 |
-| <span class="math">\\(\hat a\_{t+k:t+k+H}=f\_\theta(x\_{t+k},z')\\)</span> | receding execution | 执行一小段后根据新观测重新预测 |
-| <span class="math">\\(\mathcal{D}\_{\mathrm{chunk}}=\{(x\_t,a\_{t:t+H})\}\_{t=0}^{T-H}\\)</span> | chunk 数据集 | 从专家轨迹滑窗构造训练样本 |
-| <span class="math">\\(\mathcal{L}\_{\mathrm{smooth}}=\sum\_t\|a\_t-a\_{t-1}\|^2\\)</span> | 动作平滑指标 | 衡量执行动作是否抖动 |
+### 公式 (13.1)：单步动作策略
+
+$$\pi_\theta(a_t \mid x_t)$$
+
+- **作用**：描述给定当前输入时预测当前动作的策略形式。
+- **需要掌握到什么程度**：理解这是单步动作建模，不直接表达未来动作序列。
+
+### 公式 (13.2)：带 latent 的单步动作生成
+
+$$p_\theta(a_t \mid x_t,z)$$
+
+- **作用**：在单步动作生成中引入隐变量。
+- **需要掌握到什么程度**：理解它承接第8章、第9章的隐变量策略主线。
+
+### 公式 (13.3)：action chunk 定义
+
+$$a_{t:t+H}=(a_t,a_{t+1},\dots,a_{t+H-1})$$
+
+- **作用**：定义从当前时间开始的长度为 $H$ 的动作块。
+- **需要掌握到什么程度**：必须记住这是左闭右开，不包含 $a_{t+H}$。
+
+### 公式 (13.4)：ACT 的条件动作块分布
+
+$$p_\theta(a_{t:t+H} \mid x_t,z)$$
+
+- **作用**：把 ACT 写成条件动作块生成模型。
+- **需要掌握到什么程度**：理解 ACT 的生成对象是一段动作，而不是单个动作。
+
+### 公式 (13.5)：动作块预测函数
+
+$$\hat a_{t:t+H}=f_\theta(x_t,z)$$
+
+- **作用**：描述工程实现中模型直接输出动作块预测。
+- **需要掌握到什么程度**：理解输出形状通常是 $H\times d_a$。
+
+### 公式 (13.6)：ACT encoder / 近似后验
+
+$$q_\phi(z \mid x_t,a_{t:t+H})$$
+
+- **作用**：训练时根据当前输入和专家动作块推断 latent。
+- **需要掌握到什么程度**：知道部署时不能把专家动作块输入 encoder。
+
+### 公式 (13.7)：ACT 训练目标的基本形式
+
+$$\mathcal{L}_{\mathrm{ACT}}=\mathcal{L}_{\mathrm{chunk}}+\beta\mathcal{L}_{\mathrm{KL}}$$
+
+- **作用**：概括 ACT 的重建项和 KL 约束。
+- **需要掌握到什么程度**：理解它来自 CVAE 负 ELBO 的工程化写法。
+
+### 公式 (13.24)：动作块条件似然的 ELBO
+
+$$\log p_\theta(A_t \mid x_t)\geq \mathbb{E}_{z\sim q_\phi(z\mid x_t,A_t)}\left[\log p_\theta(A_t \mid x_t,z)\right]-D_{\mathrm{KL}}\left(q_\phi(z\mid x_t,A_t)\,\Vert\,p(z)\right)$$
+
+- **作用**：说明 ACT 损失可以从 CVAE ELBO 主线推出。
+- **需要掌握到什么程度**：理解第一项对应重建，第二项对应 latent 与 prior 对齐。
+
+### 公式 (13.27)：平均动作块重建损失
+
+$$\mathcal{L}_{\mathrm{chunk}}=\frac{1}{H}\sum_{j=0}^{H-1}\lVert a_{t+j}-\hat a_{t+j}\rVert^2$$
+
+- **作用**：衡量预测动作块和专家动作块之间的差异。
+- **需要掌握到什么程度**：理解它仍然是 open-loop imitation loss，不保证闭环成功。
+
+### 公式 (13.32)：temporal ensemble 加权融合
+
+$$\bar a_t=\frac{\sum_{i=0}^{K-1}w_i\hat a_t^{(t-i)}}{\sum_{i=0}^{K-1}w_i}$$
+
+- **作用**：融合多个历史 chunk 对当前动作的预测。
+- **需要掌握到什么程度**：理解它能平滑动作，也可能引入滞后。
+
+### 公式 (13.39)：下一轮滚动预测
+
+$$\hat a_{t+k:t+k+H}=f_\theta(x_{t+k},z')$$
+
+- **作用**：表示执行一小段后根据新观测重新预测。
+- **需要掌握到什么程度**：理解 ACT 通常不是一口气开环执行完整 chunk。
+
+### 公式 (13.40)：专家轨迹
+
+$$\tau=(x_0,a_0,x_1,a_1,\dots,x_{T-1},a_{T-1},x_T)$$
+
+- **作用**：统一轨迹长度和动作数量，避免 chunk 下标边界混乱。
+- **需要掌握到什么程度**：知道该写法包含 $T$ 个动作和 $T+1$ 个状态。
+
+### 公式 (13.42)：动作块数据集
+
+$$\mathcal{D}_{\mathrm{chunk}}=\{(x_t,a_{t:t+H})\}_{t=0}^{T-H}$$
+
+- **作用**：说明如何从专家轨迹滑窗构造 ACT 训练样本。
+- **需要掌握到什么程度**：理解最后一个合法起点是 $T-H$。
+
+### 公式 (13.45)：动作平滑指标
+
+$$\mathcal{L}_{\mathrm{smooth}}=\sum_t\lVert a_t-a_{t-1}\rVert^2$$
+
+- **作用**：评估执行动作是否抖动。
+- **需要掌握到什么程度**：理解平滑性只是部署评测的一部分，还需要安全和成功率。
 
 ---
 
-## 22. 建议阅读的附录条目
+## 16. 本章定义索引
 
-建议配合阅读以下附录：
+### 定义 13.1：单步动作策略
 
-1. **附录 A：数学符号与公式阅读方法**
-   重点复习切片符号、求和符号、下标和序列记号。本章大量使用 <span class="math">\\(a\_{t:t+H}\\)</span>、<span class="math">\\(a\_{t+j}\\)</span>、<span class="math">\\(\hat a\_t^{(t-i)}\\)</span>。
+给定当前输入 $x_t$，输出当前动作 $a_t$ 的策略形式。
 
-2. **附录 B：概率论最小生存包**
-   重点复习条件概率和采样符号。ACT 中的 <span class="math">\\(p\_\theta(a\_{t:t+H}\mid x\_t,z)\\)</span> 和 <span class="math">\\(z\sim p(z)\\)</span> 都依赖这些基础。
+### 定义 13.2：action chunk
 
-3. **附录 C：最大似然、负对数似然、交叉熵与 KL**
+从时间步 $t$ 开始、长度为 $H$ 的动作序列 $a_{t:t+H}$，包含 $a_t$ 到 $a_{t+H-1}$，不包含 $a_{t+H}$。
+
+### 定义 13.3：条件动作块分布
+
+给定当前输入 $x_t$ 和 latent $z$，生成未来动作块 $a_{t:t+H}$ 的条件分布。
+
+### 定义 13.4：temporal ensemble
+
+融合多个历史 chunk 对当前动作的预测，得到最终执行动作的方法。
+
+### 定义 13.5：receding execution
+
+每次预测一个动作块，但只执行前面一小段，然后根据新观测重新预测的闭环执行方式。
+
+---
+
+## 17. 建议阅读的附录条目
+
+1. **附录 A：数学符号与公式阅读方法**  
+   重点复习切片符号、求和符号、下标和序列记号。本章大量使用 $a_{t:t+H}$、$a_{t+j}$、$\hat a_t^{(t-i)}$。
+
+2. **附录 B：概率论最小生存包**  
+   重点复习条件概率和采样符号。ACT 中的 $p_\theta(a_{t:t+H}\mid x_t,z)$ 和 $z\sim p(z)$ 都依赖这些基础。
+
+3. **附录 C：最大似然、负对数似然、交叉熵与 KL**  
    重点复习 KL 散度和负对数似然。ACT 的 CVAE 部分继承了第9章的 KL 约束。
 
-4. **附录 D：高斯分布与连续变量基础**
+4. **附录 D：高斯分布与连续变量基础**  
    重点复习高斯分布、对角协方差、MSE 与高斯 NLL 的关系。动作块重建损失常可从高斯 NLL 角度理解。
 
-5. **附录 E：优化基础与重参数化直觉**
-   重点复习梯度传播和重参数化技巧。ACT 的 latent 训练仍然需要 <span class="math">\\(z=\mu+\sigma\odot\epsilon\\)</span>。
-
-6. **附录 F：MDP、序列决策与 occupancy measure 入门**
-   重点复习序列决策、策略诱导分布和闭环执行。action chunk 本质上仍在序列决策系统里执行。
-
-7. **附录 G：隐变量、VAE、CVAE 与 ELBO**
+5. **附录 G：隐变量、VAE、CVAE 与 ELBO**  
    重点复习 CVAE encoder、decoder、prior、posterior、ELBO 和 KL annealing。ACT 是 CVAE 在动作块生成中的应用。
 
-8. **附录 H：训练、评测与 rollout 基础**
+6. **附录 H：训练、评测与 rollout 基础**  
    重点复习 open-loop loss、closed-loop success rate、rollout、temporal ensemble 和安全评测。本章的训练 loss 与部署成功之间仍有差距。
 
 ---
 
-## 23. 思考题
+## 18. 思考题
 
 1. 用自己的话解释 action chunk 和单步动作的区别。
-2. 如果控制频率是 50Hz，<span class="math">\\(H=25\\)</span> 表示多长时间的动作块？如果改成 <span class="math">\\(H=100\\)</span>，会带来什么好处和风险？
-3. 为什么 <span class="math">\\(a\_{t:t+H}\\)</span> 在本书中表示 <span class="math">\\(a\_t\\)</span> 到 <span class="math">\\(a\_{t+H-1}\\)</span>，而不是包含 <span class="math">\\(a\_{t+H}\\)</span>？这个边界在代码中为什么重要？
-4. 用一个机械臂插线任务解释 <span class="math">\\(p\_\theta(a\_{t:t+H}\mid x\_t,z)\\)</span> 中 <span class="math">\\(x\_t\\)</span>、<span class="math">\\(z\\)</span>、<span class="math">\\(a\_{t:t+H}\\)</span> 分别是什么。
+2. 如果控制频率是 50Hz，$H=25$ 表示多长时间的动作块？如果改成 $H=100$，会带来什么好处和风险？
+3. 为什么 $a_{t:t+H}$ 在本书中表示 $a_t$ 到 $a_{t+H-1}$，而不是包含 $a_{t+H}$？这个边界在代码中为什么重要？
+4. 用一个机械臂插线任务解释 $p_\theta(a_{t:t+H}\mid x_t,z)$ 中 $x_t$、$z$、$a_{t:t+H}$ 分别是什么。
 5. ACT 为什么仍然需要 CVAE latent？如果不用 latent，直接对动作块做 MSE，可能出现什么问题？
-6. 写出 ACT 的训练损失，并解释动作块重建项和 KL 项分别在约束什么。
-7. <span class="math">\\(\beta\\)</span> 太大和太小分别可能导致什么问题？请结合第9章的 posterior collapse 和 prior mismatch 解释。
-8. 什么是 temporal ensemble？它为什么能缓解动作抖动？它可能带来什么副作用？
-9. 请解释 <span class="math">\\(\hat a\_t^{(t-i)}\\)</span> 这个符号。为什么同一个 <span class="math">\\(a\_t\\)</span> 会被多个历史 chunk 预测到？
-10. 为什么 ACT 通常不应该预测 <span class="math">\\(H\\)</span> 步后就全部开环执行？receding execution 的意义是什么？
-11. 如果一个任务环境变化很快，应该增大还是减小 <span class="math">\\(H\\)</span>？为什么？
-12. 如果 ACT 的 open-loop chunk loss 很低，但闭环成功率很差，你会从哪些方向排查？至少列出 8 项。
-13. 在“抓取 + 精准摆入治具”任务中，ACT 可能学习哪些局部动作模式？哪些部分仍应交给传统几何或安全控制？
-14. 对自动泊车任务，action chunk 思想可以如何借鉴？为什么不能简单照搬机械臂 ACT？
-15. 如果 temporal ensemble 后动作很平滑，但任务成功率下降，你会如何分析？
-16. 如何检查 ACT 是否发生 latent collapse？请给出至少 4 个现象。
-17. 在数据构造时，为什么不能跨 episode 拼接 action chunk？
-18. 图像和动作时间戳错位会如何影响 ACT？为什么它比单步 BC 更敏感？
-19. 如果 action chunk 边界处动作跳变明显，你会尝试哪些工程处理？
-20. 第14章将进入 Diffusion Policy。你认为 Diffusion Policy 和 ACT 都生成动作序列，它们的主要区别可能是什么？
-
----
-
-## 24. 本章配图清单
-
-本章新增 4 张概念讲解图：
-
-1. **图13-1 单步动作 vs action chunk 对比**：解释单步预测和动作块预测的差异，以及 action chunk 为什么能表达短期意图；
-2. **图13-2 ACT 结构图：CVAE + Transformer + Action Chunk**：展示训练时 encoder、推理时 prior、Transformer policy 和 action chunk 输出之间的关系；
-3. **图13-3 temporal ensemble 图解**：说明多个历史 action chunk 如何对同一时刻动作进行加权融合；
-4. **图13-4 低频决策高频执行示意图**：解释 receding execution，强调 ACT 不是预测完一段就开环执行到底。
-
----
-
-## 推荐阅读与深入材料
-
-### 阅读目的
-
-本章要解释 action chunk 的价值：降低有效决策频率，缓解高频控制中的误差累积，并让模型学习一小段连续动作的结构。
-
-### 推荐材料
-
-1. **Zhao et al., 2023, “Learning Fine-Grained Bimanual Manipulation with Low-Cost Hardware”**
-   - 类型：A/C 类本章核心论文。
-   - 链接：https://arxiv.org/abs/2304.13705
-   - 阅读目的：理解 ACT、CVAE、Transformer、temporal ensemble 如何组合。
-   - 重点看：action chunk、latent style、overlapping chunks、temporal aggregation。
-
-2. **ALOHA project website and code**
-   - 类型：C 类工程材料。
-   - 链接：https://tonyzhaozh.github.io/aloha/
-   - 阅读目的：理解低成本硬件、遥操作采集和实机任务设置。
-   - 对应本章：可以帮助读者把“公式中的 action chunk”对应到真实机械臂控制频率。
-
-3. **Mobile ALOHA, 2024, “Learning Bimanual Mobile Manipulation with Low-Cost Whole-Body Teleoperation”**
-   - 类型：C 类扩展材料。
-   - 阅读目的：理解 ACT 类方法如何从桌面双臂扩展到移动操作。
-
-### 阅读提示
-
-读 ACT 时要重点看三件事：chunk 长度怎么选？推理时如何重叠平均？任务是否需要细粒度接触反馈？这些问题会影响 ACT 与 Diffusion/Flow 的工程选型。
-
----
+6. 为什么 ACT 损失可以从 CVAE ELBO 推出？重建项和 KL 项分别对应什么？
+7. temporal ensemble 为什么可以减少动作抖动？它为什么也可能引入滞后？
+8. receding execution 和一次性执行完整 chunk 有什么区别？
+9. 在“抓取 + 精准摆入治具”任务中，ACT 适合学习哪一段能力？哪些部分仍应交给传统几何、安全约束和底层控制？
+10. 为什么第14章 Diffusion Policy 仍然有必要？它和 ACT 都生成动作块，但生成方式有什么不同？
