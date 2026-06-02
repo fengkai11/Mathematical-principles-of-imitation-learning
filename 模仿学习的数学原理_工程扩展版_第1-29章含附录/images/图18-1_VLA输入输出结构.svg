@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <rect width="1200" height="600" fill="#ffffff"/>
+  <text x="600" y="44" text-anchor="middle" font-size="28" font-family="Arial, 'Microsoft YaHei', sans-serif" font-weight="700">图18-1 VLA：视觉、语言与动作的统一策略模型</text>
+  <text x="600" y="82" text-anchor="middle" font-size="18" font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#57606a">VLA 的核心不是会说话，而是在视觉和语言条件下生成机器人动作</text>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker></defs>
+  <g font-family="Arial, 'Microsoft YaHei', sans-serif">
+    <rect x="70" y="150" width="210" height="90" rx="16" fill="#f6f8fa" stroke="#24292f" stroke-width="2"/>
+    <text x="175" y="187" text-anchor="middle" font-size="22" font-weight="700">视觉观测</text>
+    <text x="175" y="216" text-anchor="middle" font-size="17" fill="#57606a">图像 / 深度 / 点云</text>
+    <rect x="70" y="275" width="210" height="90" rx="16" fill="#f6f8fa" stroke="#24292f" stroke-width="2"/>
+    <text x="175" y="312" text-anchor="middle" font-size="22" font-weight="700">语言指令</text>
+    <text x="175" y="341" text-anchor="middle" font-size="17" fill="#57606a">任务目标 / 约束</text>
+    <rect x="70" y="400" width="210" height="90" rx="16" fill="#f6f8fa" stroke="#24292f" stroke-width="2"/>
+    <text x="175" y="437" text-anchor="middle" font-size="22" font-weight="700">机器人状态</text>
+    <text x="175" y="466" text-anchor="middle" font-size="17" fill="#57606a">关节 / 末端 / 夹爪</text>
+
+    <path d="M285 195 L405 300" stroke="#24292f" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M285 320 L405 320" stroke="#24292f" stroke-width="3" marker-end="url(#arrow)"/>
+    <path d="M285 445 L405 340" stroke="#24292f" stroke-width="3" marker-end="url(#arrow)"/>
+
+    <rect x="410" y="205" width="320" height="230" rx="22" fill="#ffffff" stroke="#24292f" stroke-width="3"/>
+    <text x="570" y="260" text-anchor="middle" font-size="24" font-weight="700">多模态策略模型</text>
+    <text x="570" y="300" text-anchor="middle" font-size="18" fill="#57606a">tokenize + fuse + decode</text>
+    <text x="570" y="334" text-anchor="middle" font-size="18" fill="#57606a">不是 VLM 聊天，而是策略条件建模</text>
+    <text x="570" y="370" text-anchor="middle" font-size="19">πθ(a | image, language, state)</text>
+
+    <path d="M735 320 L850 320" stroke="#24292f" stroke-width="3" marker-end="url(#arrow)"/>
+    <rect x="860" y="205" width="270" height="230" rx="22" fill="#f6f8fa" stroke="#24292f" stroke-width="2"/>
+    <text x="995" y="258" text-anchor="middle" font-size="24" font-weight="700">动作输出</text>
+    <text x="995" y="300" text-anchor="middle" font-size="18" fill="#57606a">连续动作</text>
+    <text x="995" y="330" text-anchor="middle" font-size="18" fill="#57606a">动作 token</text>
+    <text x="995" y="360" text-anchor="middle" font-size="18" fill="#57606a">action chunk</text>
+    <text x="995" y="405" text-anchor="middle" font-size="17" fill="#57606a">再进入低层控制与安全外壳</text>
+  </g>
+</svg>
