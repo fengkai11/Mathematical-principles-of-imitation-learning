@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#333"/></marker>
+    <style>
+      text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;fill:#222}.title{font-size:26px;font-weight:700}.label{font-size:18px;font-weight:600}.small{font-size:15px;fill:#444}.grid{stroke:#eee}.arrow{stroke:#333;stroke-width:2;marker-end:url(#arrow)}.box{fill:#fff;stroke:#ddd;stroke-width:2}
+    </style>
+  </defs>
+  <text x="40" y="45" class="title">图1-5：状态访问分布 dπ 与占用分布 ρπ</text>
+  <text x="40" y="78" class="small">dπ 描述策略会到哪里；π(a|s) 描述在那里会做什么；二者合成 ρπ(s,a)。</text>
+
+  <rect x="60" y="115" width="360" height="280" rx="12" fill="#fafafa" stroke="#ddd"/>
+  <text x="85" y="150" class="label">状态访问分布 dπ(s)</text>
+  <g>
+    <line x1="100" y1="350" x2="380" y2="350" stroke="#555"/>
+    <line x1="100" y1="350" x2="100" y2="180" stroke="#555"/>
+    <circle cx="150" cy="315" r="13" fill="#bdd7ff" stroke="#4778c7"/>
+    <circle cx="205" cy="285" r="24" fill="#8ebcff" stroke="#4778c7"/>
+    <circle cx="270" cy="245" r="34" fill="#5b9cff" stroke="#4778c7"/>
+    <circle cx="335" cy="220" r="18" fill="#9ec8ff" stroke="#4778c7"/>
+    <text x="115" y="375" class="small">不同状态被访问的频率</text>
+  </g>
+
+  <rect x="500" y="115" width="330" height="280" rx="12" fill="#fffaf2" stroke="#e7c383"/>
+  <text x="530" y="150" class="label">动作条件分布 π(a|s)</text>
+  <g>
+    <circle cx="590" cy="245" r="30" fill="#5b9cff" stroke="#4778c7"/>
+    <line x1="590" y1="245" x2="680" y2="210" class="arrow"/>
+    <line x1="590" y1="245" x2="650" y2="295" class="arrow"/>
+    <line x1="590" y1="245" x2="540" y2="285" class="arrow"/>
+    <text x="705" y="213" class="small">高概率动作</text>
+    <text x="657" y="312" class="small">其他动作</text>
+    <text x="532" y="308" class="small">其他动作</text>
+  </g>
+
+  <rect x="230" y="435" width="450" height="55" rx="12" fill="#f4fff3" stroke="#9ac57d"/>
+  <text x="270" y="468" class="label">ρπ(s,a)=dπ(s)π(a|s)</text>
+  <line x1="420" y1="255" x2="500" y2="255" class="arrow"/>
+  <line x1="455" y1="395" x2="455" y2="435" class="arrow"/>
+</svg>
