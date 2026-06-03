@@ -2,8 +2,6 @@
 
 一本面向机器人模仿学习的数学原理教程，从 Behavior Cloning、DAgger、MDP、IRL/GAIL，到 ACT、Diffusion Policy、Flow Matching、Decision Transformer、VLA 与世界模型。
 
-![《模仿学习的数学原理》全书内容关联地图](模仿学习的数学原理_工程扩展版_第1-29章含附录/images/全书内容关联地图_新版29章.png)
-
 ## 在线阅读
 
 电子书地址：
