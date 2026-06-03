@@ -31,12 +31,6 @@ Copyright (c) 2026 冯凯。保留所有权利。
 mdbook build
 ```
 
-如果本机的 `mdbook` 不在 `PATH` 中，也可以使用：
-
-```bash
-/home/fengkai/.cargo/bin/mdbook build
-```
-
 构建输出目录为：
 
 ```text
@@ -49,10 +43,4 @@ GitHub Pages 通过 GitHub Actions 自动发布。每次 push 到 `main` 或 `ma
 
 ```text
 .github/workflows/deploy.yml
-```
-
-详细说明见：
-
-```text
-GITHUB_PAGES_SETUP.md
 ```
