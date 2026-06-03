@@ -34,8 +34,44 @@ jobs:
         with:
           enablement: true
 
-      - name: Build mdBook
-        run: mdbook build
+      - name: Build mdBook or fallback page
+        shell: bash
+        run: |
+          set -uo pipefail
+          rm -rf book
+
+          if mdbook build; then
+            echo "mdBook build succeeded."
+          else
+            status=$?
+            echo "::warning::mdBook build failed with exit code ${status}. Publishing fallback page so the site URL remains reachable."
+            mkdir -p book
+            cat > book/index.html <<'HTML'
+          <!doctype html>
+          <html lang="zh-CN">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>模仿学习的数学原理</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 880px; margin: 48px auto; padding: 0 20px; line-height: 1.7; }
+              code { background: #f6f8fa; padding: 2px 6px; border-radius: 4px; }
+              .box { border: 1px solid #d0d7de; border-radius: 12px; padding: 20px; background: #f6f8fa; }
+            </style>
+          </head>
+          <body>
+            <h1>模仿学习的数学原理</h1>
+            <div class="box">
+              <p>站点已恢复访问，但本次 mdBook 构建未通过。</p>
+              <p>请查看 GitHub Actions 中的 <code>Build mdBook or fallback page</code> 日志，修复书稿或构建配置后，下一次 push 会自动发布完整电子书。</p>
+            </div>
+            <p><a href="https://github.com/fengkai11/Mathematical-principles-of-imitation-learning">返回 GitHub 仓库</a></p>
+          </body>
+          </html>
+          HTML
+          fi
+
+          touch book/.nojekyll
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
