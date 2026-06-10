@@ -182,14 +182,14 @@ ACT 因此继承第6章 CVAE 的思想：
 **公式 (13.3)：ACT 的 chunk loss + KL 目标**
 
 $$
-\mathcal{L}_{\mathrm{ACT}}(\theta,\phi)
+\mathcal{L}_{ACT}(\theta,\phi)
 =
 \mathbb{E}_{z\sim q_\phi(z\mid c_t,A_t)}
 \left[
-\mathcal{L}_{\mathrm{chunk}}(A_t,\hat A_t)
+\mathcal{L}_{chunk}(A_t,\hat A_t)
 \right]
 +
-\beta D_{\mathrm{KL}}
+\beta D_{KL}
 \left(
 q_\phi(z\mid c_t,A_t)
 \Vert
@@ -204,7 +204,7 @@ $$
 **公式 (13.4)：动作块重建损失**
 
 $$
-\mathcal{L}_{\mathrm{chunk}}(A_t,\hat A_t)
+\mathcal{L}_{chunk}(A_t,\hat A_t)
 =
 \frac{1}{H}
 \sum_{j=0}^{H-1}
@@ -472,14 +472,14 @@ $$
 ### 公式 (13.3)：ACT 的 chunk loss + KL 目标
 
 $$
-\mathcal{L}_{\mathrm{ACT}}(\theta,\phi)
+\mathcal{L}_{ACT}(\theta,\phi)
 =
 \mathbb{E}_{z\sim q_\phi(z\mid c_t,A_t)}
 \left[
-\mathcal{L}_{\mathrm{chunk}}(A_t,\hat A_t)
+\mathcal{L}_{chunk}(A_t,\hat A_t)
 \right]
 +
-\beta D_{\mathrm{KL}}
+\beta D_{KL}
 \left(
 q_\phi(z\mid c_t,A_t)
 \Vert
@@ -494,7 +494,7 @@ $$
 ### 公式 (13.4)：动作块重建损失
 
 $$
-\mathcal{L}_{\mathrm{chunk}}(A_t,\hat A_t)
+\mathcal{L}_{chunk}(A_t,\hat A_t)
 =
 \frac{1}{H}
 \sum_{j=0}^{H-1}
