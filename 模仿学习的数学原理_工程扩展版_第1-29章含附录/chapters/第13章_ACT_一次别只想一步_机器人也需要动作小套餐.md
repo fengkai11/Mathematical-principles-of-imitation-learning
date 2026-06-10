@@ -75,9 +75,7 @@ ACT 动作块生成模型是指：在当前条件 $c_t$ 和隐变量 $z$ 给定�
 
 **公式 (13.1)：ACT 条件动作块生成**
 
-$$
-p_\theta(A_t\mid c_t,z)
-$$
+$$p_\theta(A_t\mid c_t,z)$$
 
 其中，$A_t$ 是动作块，$c_t$ 是当前策略可见条件，$z$ 表示动作模式或短期操作风格。
 
@@ -87,9 +85,7 @@ ACT encoder 是训练时使用的近似后验。它可以看到当前条件和�
 
 **公式 (13.2)：ACT 训练时近似后验**
 
-$$
-q_\phi(z\mid c_t,A_t)
-$$
+$$q_\phi(z\mid c_t,A_t)$$
 
 部署时没有专家动作块，因此不能再把 $A_t$ 输入 encoder。部署阶段通常从 prior 采样或使用默认 latent，再由 decoder 生成动作块。
 
@@ -181,21 +177,7 @@ ACT 因此继承第6章 CVAE 的思想：
 
 **公式 (13.3)：ACT 的 chunk loss + KL 目标**
 
-$$
-\mathcal{L}_{ACT}(\theta,\phi)
-=
-\mathbb{E}_{z\sim q_\phi(z\mid c_t,A_t)}
-\left[
-\mathcal{L}_{chunk}(A_t,\hat A_t)
-\right]
-+
-\beta D_{KL}
-\left(
-q_\phi(z\mid c_t,A_t)
-\Vert
-p(z)
-\right)
-$$
+$$\mathcal{L}_{ACT}(\theta,\phi)=\mathbb{E}_{z\sim q_\phi(z\mid c_t,A_t)}\left[\mathcal{L}_{chunk}(A_t,\hat A_t)\right]+\beta D_{KL}\left(q_\phi(z\mid c_t,A_t)\Vert p(z)\right)$$
 
 其中，第一项要求 decoder 能重建专家动作块，第二项要求 encoder 得到的 latent 分布不要离 prior 太远。$\beta$ 控制这两者的权衡。
 
@@ -203,13 +185,7 @@ $$
 
 **公式 (13.4)：动作块重建损失**
 
-$$
-\mathcal{L}_{chunk}(A_t,\hat A_t)
-=
-\frac{1}{H}
-\sum_{j=0}^{H-1}
-\ell(a_{t+j},\hat a_{t+j})
-$$
+$$\mathcal{L}_{chunk}(A_t,\hat A_t)=\frac{1}{H}\sum_{j=0}^{H-1}\ell(a_{t+j},\hat a_{t+j})$$
 
 如果 $\ell$ 取平方误差，它就是动作块 MSE；如果动作维度包含夹爪、关节、末端位姿或归一化控制量，也可以对不同维度设置不同权重。
 
@@ -267,15 +243,7 @@ t 时刻新预测的 chunk 直接给出 a_t。
 
 **公式 (13.5)：temporal ensemble 加权融合**
 
-$$
-\bar a_t
-=
-\frac{
-\sum_{i=0}^{K-1}w_i\hat a_t^{(t-i)}
-}{
-\sum_{i=0}^{K-1}w_i
-}
-$$
+$$\bar a_t=\frac{\sum_{i=0}^{K-1}w_i\hat a_t^{(t-i)}}{\sum_{i=0}^{K-1}w_i}$$
 
 其中，$\hat a_t^{(t-i)}$ 表示在 $t-i$ 时刻预测出的动作块中，对当前动作 $a_t$ 的估计。$w_i$ 是权重，通常新预测权重大，旧预测权重小。
 
@@ -301,9 +269,7 @@ $$
 
 **公式 (13.6)：滚动执行中的下一轮动作块预测**
 
-$$
-\hat A_{t+k}=f_\theta(c_{t+k},z')
-$$
+$$\hat A_{t+k}=f_\theta(c_{t+k},z')$$
 
 这里 $k\leq H$。系统先在时刻 $t$ 预测 $\hat A_t$，只执行其中前 $k$ 步；到 $t+k$ 时刻拿到新条件 $c_{t+k}$，再预测新的动作块 $\hat A_{t+k}$。
 
@@ -451,9 +417,7 @@ ACT 把模仿学习的建模单位从“当前动作”推进到“短期动作�
 
 ### 公式 (13.1)：ACT 条件动作块生成
 
-$$
-p_\theta(A_t\mid c_t,z)
-$$
+$$p_\theta(A_t\mid c_t,z)$$
 
 - **作用**：把 ACT 写成给定当前条件和 latent 的动作块生成模型。
 - **类型**：A 类，第四篇 ACT 的核心对象。
@@ -461,9 +425,7 @@ $$
 
 ### 公式 (13.2)：ACT 训练时近似后验
 
-$$
-q_\phi(z\mid c_t,A_t)
-$$
+$$q_\phi(z\mid c_t,A_t)$$
 
 - **作用**：训练时根据当前条件和专家动作块推断 latent。
 - **类型**：B 类，承接第6章 CVAE encoder。
@@ -471,21 +433,7 @@ $$
 
 ### 公式 (13.3)：ACT 的 chunk loss + KL 目标
 
-$$
-\mathcal{L}_{ACT}(\theta,\phi)
-=
-\mathbb{E}_{z\sim q_\phi(z\mid c_t,A_t)}
-\left[
-\mathcal{L}_{chunk}(A_t,\hat A_t)
-\right]
-+
-\beta D_{KL}
-\left(
-q_\phi(z\mid c_t,A_t)
-\Vert
-p(z)
-\right)
-$$
+$$\mathcal{L}_{ACT}(\theta,\phi)=\mathbb{E}_{z\sim q_\phi(z\mid c_t,A_t)}\left[\mathcal{L}_{chunk}(A_t,\hat A_t)\right]+\beta D_{KL}\left(q_\phi(z\mid c_t,A_t)\Vert p(z)\right)$$
 
 - **作用**：把 CVAE 训练目标实例化为 ACT 动作块训练目标。
 - **类型**：A 类，ACT 训练主公式。
@@ -493,13 +441,7 @@ $$
 
 ### 公式 (13.4)：动作块重建损失
 
-$$
-\mathcal{L}_{chunk}(A_t,\hat A_t)
-=
-\frac{1}{H}
-\sum_{j=0}^{H-1}
-\ell(a_{t+j},\hat a_{t+j})
-$$
+$$\mathcal{L}_{chunk}(A_t,\hat A_t)=\frac{1}{H}\sum_{j=0}^{H-1}\ell(a_{t+j},\hat a_{t+j})$$
 
 - **作用**：衡量预测动作块和专家动作块之间的逐步误差。
 - **类型**：B 类，工程训练与评测常用。
@@ -507,15 +449,7 @@ $$
 
 ### 公式 (13.5)：temporal ensemble 加权融合
 
-$$
-\bar a_t
-=
-\frac{
-\sum_{i=0}^{K-1}w_i\hat a_t^{(t-i)}
-}{
-\sum_{i=0}^{K-1}w_i
-}
-$$
+$$\bar a_t=\frac{\sum_{i=0}^{K-1}w_i\hat a_t^{(t-i)}}{\sum_{i=0}^{K-1}w_i}$$
 
 - **作用**：融合多个历史 chunk 对当前动作的预测。
 - **类型**：B 类，部署平滑技巧。
@@ -523,9 +457,7 @@ $$
 
 ### 公式 (13.6)：滚动执行中的下一轮动作块预测
 
-$$
-\hat A_{t+k}=f_\theta(c_{t+k},z')
-$$
+$$\hat A_{t+k}=f_\theta(c_{t+k},z')$$
 
 - **作用**：表示执行一小段后，根据新观测重新预测动作块。
 - **类型**：B 类，连接训练动作块与闭环部署。
