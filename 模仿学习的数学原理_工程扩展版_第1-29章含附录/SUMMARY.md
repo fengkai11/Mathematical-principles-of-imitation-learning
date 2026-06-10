@@ -30,30 +30,30 @@
 ## 第三篇：经典模仿学习的分布匹配与奖励视角
 
 - [第三篇导读：经典模仿学习的分布匹配与奖励视角](导读/03_第三篇_经典模仿学习的分布匹配与奖励视角.md)
-- [第10章 IRL：专家到底在优化什么](chapters/第10章_IRL_专家到底在优化什么.md)
-- [第11章 GAIL：从判别器里偷一个奖励函数](chapters/第11章_GAIL_从判别器里偷一个奖励函数.md)
-- [第12章 Offline Imitation Learning：离线数据不是越多越好，是坑有没有录进去](chapters/第12章_Offline_Imitation_Learning_离线数据不是越多越好_是坑有没有录进去.md)
+- [第7章 IRL：专家到底在优化什么](chapters/第07章_IRL_专家到底在优化什么.md)
+- [第8章 GAIL：从判别器里偷一个奖励函数](chapters/第08章_GAIL_从判别器里偷一个奖励函数.md)
+- [第9章 Offline Imitation Learning：离线数据不是越多越好，是坑有没有录进去](chapters/第09章_Offline_Imitation_Learning_离线数据不是越多越好_是坑有没有录进去.md)
 
 ## 第四篇：现代机器人策略模型
 
 - [第四篇导读：现代机器人策略模型](导读/04_第四篇_现代机器人策略模型.md)
-- [第13章 ACT：一次别只想一步，机器人也需要动作小套餐](chapters/第13章_ACT_一次别只想一步_机器人也需要动作小套餐.md)
-- [第14章 Diffusion Policy：把动作从一团噪声里慢慢搓出来](chapters/第14章_Diffusion_Policy_把动作从一团噪声里慢慢搓出来.md)
-- [第15章 Flow Matching：从扩散去噪到连续流场生成动作](chapters/第15章_Flow_Matching_从扩散去噪到连续流场生成动作.md)
-- [第16章 BC / ACT / Diffusion Policy / Flow Matching 对比](chapters/第16章_BC_ACT_Diffusion_Policy_Flow_Matching_对比.md)
+- [第10章 ACT：一次别只想一步，机器人也需要动作小套餐](chapters/第13章_ACT_一次别只想一步_机器人也需要动作小套餐.md)
+- [第11章 Diffusion Policy：把动作从一团噪声里慢慢搓出来](chapters/第14章_Diffusion_Policy_把动作从一团噪声里慢慢搓出来.md)
+- [第12章 Flow Matching：从扩散去噪到连续流场生成动作](chapters/第15章_Flow_Matching_从扩散去噪到连续流场生成动作.md)
+- [第13章 BC / ACT / Diffusion Policy / Flow Matching 对比](chapters/第16章_BC_ACT_Diffusion_Policy_Flow_Matching_对比.md)
 
 ## 第五篇：从历史上下文到多模态条件策略
 
 - [第五篇导读：从历史上下文到多模态条件策略](导读/05_第五篇_长序列架构与多模态策略.md)
-- [第17章 序列策略模型：从 Decision Transformer 到 Transformer Policy](chapters/第17章_Decision_Transformer_把决策问题伪装成语言建模.md)
-- [第18章 VLA：视觉、语言与动作的统一策略模型](chapters/第18章_VLA_视觉语言与动作的统一策略模型.md)
+- [第14章 序列策略模型：从 Decision Transformer 到 Transformer Policy](chapters/第17章_Decision_Transformer_把决策问题伪装成语言建模.md)
+- [第15章 VLA：视觉、语言与动作的统一策略模型](chapters/第18章_VLA_视觉语言与动作的统一策略模型.md)
 
 ## 第六篇：从动作模仿到世界预测
 
 - [第六篇导读：从动作模仿到世界预测](导读/06_第六篇_世界模型、快慢系统与认知架构.md)
-- [第19章 从动作模仿到世界预测：机器人不能只会背动作表](chapters/第19章_从动作模仿到世界预测_机器人不能只会背动作表.md)
-- [第20章 World Models、World Action Models 与 JEPA：机器人要学会预测动作后果](chapters/第20章_World_ModelsWorld_Action_Models_与_JEPA_机器人要学会预测动作后果.md)
-- [第21章 世界预测如何进入机器人策略系统：计划、验证与安全边界](chapters/第21章_世界预测如何进入机器人策略系统_计划验证与安全边界.md)
+- [第16章 从动作模仿到世界预测：机器人不能只会背动作表](chapters/第19章_从动作模仿到世界预测_机器人不能只会背动作表.md)
+- [第17章 World Models、World Action Models 与 JEPA：机器人要学会预测动作后果](chapters/第20章_World_ModelsWorld_Action_Models_与_JEPA_机器人要学会预测动作后果.md)
+- [第18章 世界预测如何进入机器人策略系统：计划、验证与安全边界](chapters/第21章_世界预测如何进入机器人策略系统_计划验证与安全边界.md)
 
 # 附录
 
