@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker>
+    <style>
+      .title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.box{fill:#f6f8fa;stroke:#8c959f;stroke-width:2;rx:16;ry:16}.policy{fill:#ddf4ff;stroke:#0969da;stroke-width:2;rx:16;ry:16}.world{fill:#fff8c5;stroke:#9a6700;stroke-width:2;rx:16;ry:16}.risk{fill:#ffebe9;stroke:#cf222e;stroke-width:2;rx:16;ry:16}.txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.formula{font:16px Arial,'Microsoft YaHei',sans-serif;fill:#6e7781}.arrow{stroke:#24292f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图19-1 policy-only 与动作后果预测</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">动作策略回答“现在怎么做”，世界预测回答“这样做之后会怎样”</text>
+
+  <text x="320" y="130" text-anchor="middle" class="txt">policy-only 模仿</text>
+  <rect x="90" y="170" width="185" height="90" class="box"/>
+  <text x="182" y="205" text-anchor="middle" class="txt">上下文</text>
+  <text x="182" y="232" text-anchor="middle" class="formula">c_t</text>
+  <rect x="365" y="170" width="185" height="90" class="policy"/>
+  <text x="457" y="205" text-anchor="middle" class="txt">策略</text>
+  <text x="457" y="232" text-anchor="middle" class="formula">π_θ(a_t|c_t)</text>
+  <rect x="640" y="170" width="185" height="90" class="box"/>
+  <text x="732" y="205" text-anchor="middle" class="txt">动作</text>
+  <text x="732" y="232" text-anchor="middle" class="formula">a_t</text>
+  <path d="M275 215 L365 215" class="arrow"/>
+  <path d="M550 215 L640 215" class="arrow"/>
+  <rect x="880" y="170" width="275" height="90" class="risk"/>
+  <text x="1018" y="205" text-anchor="middle" class="txt">未显式回答</text>
+  <text x="1018" y="232" text-anchor="middle" class="small">动作后果 / 风险 / 恢复</text>
+  <path d="M825 215 L880 215" class="arrow"/>
+
+  <line x1="80" y1="335" x2="1200" y2="335" stroke="#d0d7de" stroke-width="2"/>
+
+  <text x="350" y="390" text-anchor="middle" class="txt">加入动作后果预测</text>
+  <rect x="70" y="430" width="170" height="85" class="box"/>
+  <text x="155" y="462" text-anchor="middle" class="txt">世界表示</text>
+  <text x="155" y="490" text-anchor="middle" class="formula">h_t</text>
+  <rect x="300" y="430" width="170" height="85" class="policy"/>
+  <text x="385" y="462" text-anchor="middle" class="txt">候选动作</text>
+  <text x="385" y="490" text-anchor="middle" class="formula">a_t 或 A_t</text>
+  <rect x="530" y="430" width="200" height="85" class="world"/>
+  <text x="630" y="462" text-anchor="middle" class="txt">世界预测</text>
+  <text x="630" y="490" text-anchor="middle" class="formula">p_φ(h_{t+1}|h_t,a_t)</text>
+  <rect x="790" y="430" width="170" height="85" class="box"/>
+  <text x="875" y="462" text-anchor="middle" class="txt">风险评估</text>
+  <text x="875" y="490" text-anchor="middle" class="small">目标 / 安全 / 误差</text>
+  <rect x="1020" y="430" width="170" height="85" class="box"/>
+  <text x="1105" y="462" text-anchor="middle" class="txt">执行决策</text>
+  <text x="1105" y="490" text-anchor="middle" class="small">继续 / 纠正 / fallback</text>
+  <path d="M240 472 L300 472" class="arrow"/>
+  <path d="M470 472 L530 472" class="arrow"/>
+  <path d="M730 472 L790 472" class="arrow"/>
+  <path d="M960 472 L1020 472" class="arrow"/>
+
+  <text x="640" y="635" text-anchor="middle" class="small">第六篇的新增对象：不是替代策略，而是在动作执行前后加入“后果预测与异常发现”。</text>
+</svg>
