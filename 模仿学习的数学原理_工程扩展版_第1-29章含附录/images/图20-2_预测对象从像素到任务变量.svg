@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker>
+    <style>
+      .title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}
+      .box{fill:#f6f8fa;stroke:#8c959f;stroke-width:2;rx:16;ry:16}.good{fill:#dafbe1;stroke:#1a7f37;stroke-width:2;rx:16;ry:16}.warn{fill:#fff8c5;stroke:#9a6700;stroke-width:2;rx:16;ry:16}.task{fill:#ddf4ff;stroke:#0969da;stroke-width:2;rx:16;ry:16}.txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.arrow{stroke:#24292f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图20-2 预测对象从像素到任务变量</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">世界模型的价值不取决于图像多漂亮，而取决于预测对象是否服务动作选择</text>
+
+  <rect x="85" y="190" width="230" height="160" class="box"/>
+  <text x="200" y="235" text-anchor="middle" class="txt">像素 / 图像</text>
+  <text x="200" y="275" text-anchor="middle" class="small">下一帧 RGB</text>
+  <text x="200" y="305" text-anchor="middle" class="small">未来视频片段</text>
+
+  <rect x="385" y="190" width="230" height="160" class="warn"/>
+  <text x="500" y="235" text-anchor="middle" class="txt">显式状态</text>
+  <text x="500" y="275" text-anchor="middle" class="small">物体位姿 / 速度</text>
+  <text x="500" y="305" text-anchor="middle" class="small">接触状态</text>
+
+  <rect x="685" y="190" width="230" height="160" class="good"/>
+  <text x="800" y="235" text-anchor="middle" class="txt">latent 表示</text>
+  <text x="800" y="275" text-anchor="middle" class="small">对象关系</text>
+  <text x="800" y="305" text-anchor="middle" class="small">任务进度 / 可达性</text>
+
+  <rect x="985" y="190" width="230" height="160" class="task"/>
+  <text x="1100" y="235" text-anchor="middle" class="txt">任务变量</text>
+  <text x="1100" y="275" text-anchor="middle" class="small">成功概率 / 风险</text>
+  <text x="1100" y="305" text-anchor="middle" class="small">碰撞 / 卡滞 / 接管</text>
+
+  <path d="M315 270 L385 270" class="arrow"/>
+  <path d="M615 270 L685 270" class="arrow"/>
+  <path d="M915 270 L985 270" class="arrow"/>
+
+  <text x="200" y="420" text-anchor="middle" class="small">看起来像未来</text>
+  <text x="500" y="420" text-anchor="middle" class="small">更接近物理状态</text>
+  <text x="800" y="420" text-anchor="middle" class="small">更适合表示学习</text>
+  <text x="1100" y="420" text-anchor="middle" class="small">最贴近控制决策</text>
+
+  <rect x="255" y="520" width="770" height="80" class="task"/>
+  <text x="640" y="553" text-anchor="middle" class="txt">核心判断</text>
+  <text x="640" y="582" text-anchor="middle" class="small">机器人控制更关心：这个动作会不会成功、碰撞、滑落、卡住，是否需要纠正或 fallback。</text>
+</svg>
