@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker>
+    <style>
+      .title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}
+      .stage{fill:#f6f8fa;stroke:#8c959f;stroke-width:2;rx:16;ry:16}.model{fill:#ddf4ff;stroke:#0969da;stroke-width:2;rx:16;ry:16}.flow{fill:#fff8c5;stroke:#9a6700;stroke-width:2;rx:16;ry:16}.txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.arrow{stroke:#24292f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图18-4 代表 VLA 模型在本章框架中的位置</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">看到一个新 VLA 方法，先判断它主要改的是编码器、融合模块，还是动作解码器</text>
+
+  <rect x="80" y="140" width="245" height="110" class="stage"/>
+  <text x="202" y="180" text-anchor="middle" class="txt">多模态输入</text>
+  <text x="202" y="213" text-anchor="middle" class="small">图像 / 语言 / 状态 / 历史动作</text>
+
+  <rect x="390" y="140" width="245" height="110" class="stage"/>
+  <text x="512" y="180" text-anchor="middle" class="txt">Context Encoder</text>
+  <text x="512" y="213" text-anchor="middle" class="small">VLM / Transformer backbone</text>
+
+  <rect x="700" y="140" width="245" height="110" class="stage"/>
+  <text x="822" y="180" text-anchor="middle" class="txt">Fusion Module</text>
+  <text x="822" y="213" text-anchor="middle" class="small">token 融合 / attention</text>
+
+  <rect x="1010" y="140" width="245" height="110" class="stage"/>
+  <text x="1132" y="180" text-anchor="middle" class="txt">Action Decoder</text>
+  <text x="1132" y="213" text-anchor="middle" class="small">token / continuous / flow</text>
+
+  <path d="M325 195 L390 195" class="arrow"/>
+  <path d="M635 195 L700 195" class="arrow"/>
+  <path d="M945 195 L1010 195" class="arrow"/>
+
+  <rect x="120" y="345" width="310" height="180" class="model"/>
+  <text x="275" y="385" text-anchor="middle" class="txt">RT-1 / RT-2</text>
+  <text x="275" y="426" text-anchor="middle" class="small">重点：序列建模</text>
+  <text x="275" y="458" text-anchor="middle" class="small">视觉 + 语言 + 动作 token</text>
+  <text x="275" y="490" text-anchor="middle" class="small">适合理解“动作也可 token 化”</text>
+
+  <rect x="485" y="345" width="310" height="180" class="model"/>
+  <text x="640" y="385" text-anchor="middle" class="txt">OpenVLA</text>
+  <text x="640" y="426" text-anchor="middle" class="small">重点：开源 VLA backbone</text>
+  <text x="640" y="458" text-anchor="middle" class="small">数据混合 / 微调 / action token</text>
+  <text x="640" y="490" text-anchor="middle" class="small">适合理解可复用通用策略骨架</text>
+
+  <rect x="850" y="345" width="310" height="180" class="flow"/>
+  <text x="1005" y="385" text-anchor="middle" class="txt">π0</text>
+  <text x="1005" y="426" text-anchor="middle" class="small">重点：VLM backbone</text>
+  <text x="1005" y="458" text-anchor="middle" class="small">+ flow action decoder</text>
+  <text x="1005" y="490" text-anchor="middle" class="small">适合理解连续动作生成路线</text>
+
+  <path d="M275 345 C420 285 780 280 1110 250" class="arrow"/>
+  <path d="M640 345 C710 295 900 275 1115 250" class="arrow"/>
+  <path d="M1005 345 C1045 300 1080 275 1130 250" class="arrow"/>
+
+  <text x="640" y="625" text-anchor="middle" class="small">本章读法：不要先背论文名，先判断它的创新落在 Context Encoder、Fusion Module，还是 Action Decoder。</text>
+</svg>
