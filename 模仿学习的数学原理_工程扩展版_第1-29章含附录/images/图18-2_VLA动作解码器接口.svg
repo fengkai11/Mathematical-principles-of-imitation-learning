@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker>
+    <style>
+      .title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}
+      .ctx{fill:#fff8c5;stroke:#9a6700;stroke-width:2;rx:16;ry:16}.box{fill:#f6f8fa;stroke:#8c959f;stroke-width:2;rx:16;ry:16}.warn{fill:#ffebe9;stroke:#cf222e;stroke-width:2;rx:16;ry:16}
+      .txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.formula{font:16px Arial,'Microsoft YaHei',sans-serif;fill:#6e7781}.arrow{stroke:#24292f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图18-2 VLA 动作解码器的三种常见接口</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">同一个多模态融合表示 h_t，可以接不同动作头；动作头决定控制精度、延迟和训练目标</text>
+
+  <rect x="500" y="125" width="280" height="90" class="ctx"/>
+  <text x="640" y="160" text-anchor="middle" class="txt">多模态融合表示</text>
+  <text x="640" y="190" text-anchor="middle" class="formula">h_t=F_θ(z₁:m)</text>
+
+  <rect x="80" y="310" width="315" height="210" class="box"/>
+  <text x="238" y="350" text-anchor="middle" class="txt">连续动作头</text>
+  <text x="238" y="390" text-anchor="middle" class="formula">â_t=D_θ(h_t)</text>
+  <text x="238" y="430" text-anchor="middle" class="small">直接输出末端位姿增量</text>
+  <text x="238" y="462" text-anchor="middle" class="small">或关节速度 / 夹爪命令</text>
+  <text x="238" y="496" text-anchor="middle" class="small">优点：接口简单</text>
+
+  <rect x="482" y="310" width="315" height="210" class="box"/>
+  <text x="640" y="350" text-anchor="middle" class="txt">动作 token 头</text>
+  <text x="640" y="390" text-anchor="middle" class="formula">p_θ(y_t | h_t)</text>
+  <text x="640" y="430" text-anchor="middle" class="small">把连续动作量化为 token</text>
+  <text x="640" y="462" text-anchor="middle" class="small">复用序列模型训练方式</text>
+  <text x="640" y="496" text-anchor="middle" class="small">风险：量化误差 / 平滑性</text>
+
+  <rect x="885" y="310" width="315" height="210" class="box"/>
+  <text x="1042" y="350" text-anchor="middle" class="txt">动作块 / 生成式动作头</text>
+  <text x="1042" y="390" text-anchor="middle" class="formula">π_θ(A_t | h_t)</text>
+  <text x="1042" y="430" text-anchor="middle" class="small">一次生成未来 H 步动作</text>
+  <text x="1042" y="462" text-anchor="middle" class="small">可接 ACT / Diffusion / Flow</text>
+  <text x="1042" y="496" text-anchor="middle" class="small">风险：延迟 / 滚动执行</text>
+
+  <path d="M590 215 C470 250 350 270 238 310" class="arrow"/>
+  <path d="M640 215 L640 310" class="arrow"/>
+  <path d="M690 215 C810 250 930 270 1042 310" class="arrow"/>
+
+  <rect x="270" y="575" width="740" height="70" class="warn"/>
+  <text x="640" y="606" text-anchor="middle" class="txt">关键判断</text>
+  <text x="640" y="633" text-anchor="middle" class="small">VLA 的“智能”不只来自 backbone，也强烈取决于动作解码器是否适合控制任务。</text>
+</svg>
