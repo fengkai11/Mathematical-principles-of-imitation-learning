@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker><style>.title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.axis{stroke:#24292f;stroke-width:3;marker-end:url(#arrow)}.curve{stroke:#cf222e;stroke-width:4;fill:none}.safe{fill:#dafbe1;stroke:#1a7f37;stroke-width:2;rx:16;ry:16}.warn{fill:#fff8c5;stroke:#9a6700;stroke-width:2;rx:16;ry:16}.bad{fill:#ffebe9;stroke:#cf222e;stroke-width:2;rx:16;ry:16}.txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.formula{font:16px Arial,'Microsoft YaHei',sans-serif;fill:#6e7781}</style></defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图21-3 rollout horizon 与误差累积</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">短期 rollout 可用于动作验证，长 horizon 容易积累模型误差</text>
+  <line x1="130" y1="540" x2="760" y2="540" class="axis"/>
+  <line x1="130" y1="540" x2="130" y2="140" class="axis"/>
+  <text x="445" y="590" text-anchor="middle" class="txt">rollout horizon H</text>
+  <text x="55" y="350" text-anchor="middle" class="txt" transform="rotate(-90 55 350)">累计预测误差</text>
+  <path d="M150 500 C250 485 340 455 430 400 C520 335 620 250 735 160" class="curve"/>
+  <rect x="195" y="455" width="150" height="55" class="safe"/><text x="270" y="488" text-anchor="middle" class="small">短期可用</text>
+  <rect x="405" y="355" width="155" height="55" class="warn"/><text x="482" y="388" text-anchor="middle" class="small">谨慎使用</text>
+  <rect x="620" y="205" width="160" height="55" class="bad"/><text x="700" y="238" text-anchor="middle" class="small">长 horizon 高风险</text>
+  <rect x="850" y="185" width="300" height="250" class="warn"/>
+  <text x="1000" y="225" text-anchor="middle" class="txt">工程含义</text>
+  <text x="1000" y="270" text-anchor="middle" class="small">抓取 / 插入等接触任务</text>
+  <text x="1000" y="302" text-anchor="middle" class="small">有效 horizon 往往很短</text>
+  <text x="1000" y="350" text-anchor="middle" class="small">rollout 用于局部验证</text>
+  <text x="1000" y="382" text-anchor="middle" class="small">不能当作长期可靠想象</text>
+  <text x="640" y="665" text-anchor="middle" class="formula">h_hat_{t+ell+1}=F_phi(h_hat_{t+ell}, a_{t+ell})</text>
+</svg>
