@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker>
+    <style>
+      .title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}
+      .box{fill:#f6f8fa;stroke:#8c959f;stroke-width:2;rx:16;ry:16}.pix{fill:#ffebe9;stroke:#cf222e;stroke-width:2;rx:16;ry:16}.jepa{fill:#ddf4ff;stroke:#0969da;stroke-width:2;rx:16;ry:16}.good{fill:#dafbe1;stroke:#1a7f37;stroke-width:2;rx:16;ry:16}.txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.formula{font:16px Arial,'Microsoft YaHei',sans-serif;fill:#6e7781}.arrow{stroke:#24292f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图20-4 像素重建与 JEPA 表示预测对比</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">像素重建逼模型画清楚未来；JEPA 式目标逼模型预测对行动有用的表示</text>
+
+  <text x="320" y="130" text-anchor="middle" class="txt">像素重建路线</text>
+  <rect x="80" y="170" width="190" height="90" class="box"/>
+  <text x="175" y="205" text-anchor="middle" class="txt">当前图像</text>
+  <text x="175" y="232" text-anchor="middle" class="formula">I_t</text>
+  <rect x="370" y="170" width="190" height="90" class="pix"/>
+  <text x="465" y="205" text-anchor="middle" class="txt">像素解码器</text>
+  <text x="465" y="232" text-anchor="middle" class="small">重建未来图像</text>
+  <rect x="650" y="170" width="220" height="90" class="pix"/>
+  <text x="760" y="205" text-anchor="middle" class="txt">预测像素</text>
+  <text x="760" y="232" text-anchor="middle" class="formula">I_{t+1}</text>
+  <path d="M270 215 L370 215" class="arrow"/>
+  <path d="M560 215 L650 215" class="arrow"/>
+  <rect x="930" y="170" width="250" height="90" class="pix"/>
+  <text x="1055" y="204" text-anchor="middle" class="txt">风险</text>
+  <text x="1055" y="232" text-anchor="middle" class="small">纹理、光照、背景细节占用容量</text>
+
+  <line x1="80" y1="340" x2="1200" y2="340" stroke="#d0d7de" stroke-width="2"/>
+
+  <text x="320" y="395" text-anchor="middle" class="txt">JEPA 式表示预测路线</text>
+  <rect x="80" y="435" width="190" height="90" class="box"/>
+  <text x="175" y="470" text-anchor="middle" class="txt">当前表示</text>
+  <text x="175" y="497" text-anchor="middle" class="formula">h_t</text>
+  <rect x="370" y="435" width="190" height="90" class="jepa"/>
+  <text x="465" y="470" text-anchor="middle" class="txt">表示预测器</text>
+  <text x="465" y="497" text-anchor="middle" class="formula">g_φ(h_t,a_t)</text>
+  <rect x="650" y="435" width="220" height="90" class="jepa"/>
+  <text x="760" y="470" text-anchor="middle" class="txt">未来表示目标</text>
+  <text x="760" y="497" text-anchor="middle" class="formula">sg(h_{t+1})</text>
+  <path d="M270 480 L370 480" class="arrow"/>
+  <path d="M560 480 L650 480" class="arrow"/>
+  <rect x="930" y="435" width="250" height="90" class="good"/>
+  <text x="1055" y="470" text-anchor="middle" class="txt">优势</text>
+  <text x="1055" y="498" text-anchor="middle" class="small">关注对象关系、接触和任务进度</text>
+
+  <text x="640" y="625" text-anchor="middle" class="formula">L_JEPA = || g_φ(h_t,a_t) - sg(h_{t+1}) ||²</text>
+  <text x="640" y="665" text-anchor="middle" class="small">关键：JEPA 不是“不预测未来”，而是在更适合控制的表示空间里预测未来。</text>
+</svg>
