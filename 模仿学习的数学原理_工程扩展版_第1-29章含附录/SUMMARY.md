@@ -51,9 +51,9 @@
 ## 第六篇：从动作模仿到世界预测
 
 - [第六篇导读：从动作模仿到世界预测](导读/06_第六篇_世界模型、快慢系统与认知架构.md)
-- [第16章 从动作模仿到世界预测：机器人不能只会背动作表](chapters/第19章_从动作模仿到世界预测_机器人不能只会背动作表.md)
-- [第17章 World Models、World Action Models 与 JEPA：机器人要学会预测动作后果](chapters/第20章_World_ModelsWorld_Action_Models_与_JEPA_机器人要学会预测动作后果.md)
-- [第18章 世界预测如何进入机器人策略系统：计划、验证与安全边界](chapters/第21章_世界预测如何进入机器人策略系统_计划验证与安全边界.md)
+- [第16章 从动作模仿到世界预测：机器人不能只会背动作表](chapters/第16章_从动作模仿到世界预测_机器人不能只会背动作表.md)
+- [第17章 World Models、World Action Models 与 JEPA：机器人要学会预测动作后果](chapters/第17章_World_Models_World_Action_Models_与_JEPA.md)
+- [第18章 世界预测如何进入机器人策略系统：计划、验证与安全边界](chapters/第18章_世界预测如何进入机器人策略系统_计划验证与安全边界.md)
 
 # 附录
 
