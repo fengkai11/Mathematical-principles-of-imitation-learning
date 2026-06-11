@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker>
+    <style>.title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.box{fill:#f6f8fa;stroke:#8c959f;stroke-width:2;rx:16;ry:16}.core{fill:#fff8c5;stroke:#9a6700;stroke-width:2;rx:16;ry:16}.out{fill:#ddf4ff;stroke:#0969da;stroke-width:2;rx:16;ry:16}.risk{fill:#ffebe9;stroke:#cf222e;stroke-width:2;rx:16;ry:16}.txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.formula{font:16px Arial,'Microsoft YaHei',sans-serif;fill:#6e7781}.arrow{stroke:#24292f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}</style>
+  </defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图19-2 动作条件世界预测网络框架</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">候选动作或动作块进入世界模型，预测未来表示、任务变量和风险</text>
+
+  <rect x="70" y="145" width="210" height="115" class="box"/><text x="175" y="185" text-anchor="middle" class="txt">历史观测</text><text x="175" y="218" text-anchor="middle" class="formula">o_≤t, q_≤t, a_&lt;t</text>
+  <rect x="70" y="375" width="210" height="115" class="out"/><text x="175" y="415" text-anchor="middle" class="txt">候选动作块</text><text x="175" y="448" text-anchor="middle" class="formula">A_t</text>
+  <rect x="380" y="145" width="230" height="115" class="box"/><text x="495" y="185" text-anchor="middle" class="txt">世界表示编码器</text><text x="495" y="218" text-anchor="middle" class="formula">h_t=E_η(...)</text>
+  <rect x="710" y="245" width="250" height="160" class="core"/><text x="835" y="288" text-anchor="middle" class="txt">动作条件世界模型</text><text x="835" y="330" text-anchor="middle" class="formula">p_φ(h_{t+1:t+H}|h_t,A_t,c_t)</text><text x="835" y="370" text-anchor="middle" class="small">预测动作执行后的未来</text>
+  <rect x="1050" y="140" width="185" height="95" class="box"/><text x="1142" y="176" text-anchor="middle" class="txt">未来表示</text><text x="1142" y="204" text-anchor="middle" class="formula">h_{t+1:t+H}</text>
+  <rect x="1050" y="285" width="185" height="95" class="box"/><text x="1142" y="321" text-anchor="middle" class="txt">任务变量</text><text x="1142" y="349" text-anchor="middle" class="small">成功 / 接触 / 距离</text>
+  <rect x="1050" y="430" width="185" height="95" class="risk"/><text x="1142" y="466" text-anchor="middle" class="txt">风险信号</text><text x="1142" y="494" text-anchor="middle" class="small">碰撞 / 卡滞 / 异常</text>
+
+  <path d="M280 202 L380 202" class="arrow"/><path d="M610 202 C665 210 690 250 710 285" class="arrow"/><path d="M280 432 C480 430 585 390 710 350" class="arrow"/>
+  <path d="M960 300 C1000 250 1020 205 1050 187" class="arrow"/><path d="M960 325 L1050 332" class="arrow"/><path d="M960 360 C1000 400 1020 450 1050 475" class="arrow"/>
+  <rect x="340" y="575" width="600" height="65" class="out"/><text x="640" y="603" text-anchor="middle" class="txt">用途</text><text x="640" y="630" text-anchor="middle" class="small">计划前评估候选动作，执行中比较预测与真实反馈，异常时触发纠正或 fallback。</text>
+</svg>
