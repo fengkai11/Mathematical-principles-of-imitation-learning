@@ -45,8 +45,8 @@
 ## 第五篇：从历史上下文到多模态条件策略
 
 - [第五篇导读：从历史上下文到多模态条件策略](导读/05_第五篇_长序列架构与多模态策略.md)
-- [第14章 序列策略模型：从 Decision Transformer 到 Transformer Policy](chapters/第17章_Decision_Transformer_把决策问题伪装成语言建模.md)
-- [第15章 VLA：视觉、语言与动作的统一策略模型](chapters/第18章_VLA_视觉语言与动作的统一策略模型.md)
+- [第14章 序列策略模型：从 Decision Transformer 到 Transformer Policy](chapters/第14章_序列策略模型_从_Decision_Transformer_到_Transformer_Policy.md)
+- [第15章 VLA：视觉、语言与动作的统一策略模型](chapters/第15章_VLA_视觉语言与动作的统一策略模型.md)
 
 ## 第六篇：从动作模仿到世界预测
 
