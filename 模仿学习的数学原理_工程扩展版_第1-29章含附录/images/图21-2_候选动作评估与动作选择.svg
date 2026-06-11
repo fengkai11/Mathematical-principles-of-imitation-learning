@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker><style>.title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.box{fill:#f6f8fa;stroke:#8c959f;stroke-width:2;rx:16;ry:16}.good{fill:#dafbe1;stroke:#1a7f37;stroke-width:2;rx:16;ry:16}.warn{fill:#fff8c5;stroke:#9a6700;stroke-width:2;rx:16;ry:16}.bad{fill:#ffebe9;stroke:#cf222e;stroke-width:2;rx:16;ry:16}.txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.formula{font:16px Arial,'Microsoft YaHei',sans-serif;fill:#6e7781}.arrow{stroke:#24292f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}</style></defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图21-2 候选动作评估与动作选择</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">不要只选最像专家的动作，而要选预测后果更好、风险更低的动作</text>
+  <rect x="90" y="145" width="230" height="100" class="box"/><text x="205" y="182" text-anchor="middle" class="txt">候选 A</text><text x="205" y="212" text-anchor="middle" class="small">继续下压</text>
+  <rect x="90" y="310" width="230" height="100" class="box"/><text x="205" y="347" text-anchor="middle" class="txt">候选 B</text><text x="205" y="377" text-anchor="middle" class="small">回退后重对齐</text>
+  <rect x="90" y="475" width="230" height="100" class="box"/><text x="205" y="512" text-anchor="middle" class="txt">候选 C</text><text x="205" y="542" text-anchor="middle" class="small">低速微调</text>
+  <rect x="450" y="145" width="250" height="100" class="bad"/><text x="575" y="182" text-anchor="middle" class="txt">预测后果</text><text x="575" y="212" text-anchor="middle" class="small">卡滞风险高</text>
+  <rect x="450" y="310" width="250" height="100" class="warn"/><text x="575" y="347" text-anchor="middle" class="txt">预测后果</text><text x="575" y="377" text-anchor="middle" class="small">成功率中等，风险低</text>
+  <rect x="450" y="475" width="250" height="100" class="good"/><text x="575" y="512" text-anchor="middle" class="txt">预测后果</text><text x="575" y="542" text-anchor="middle" class="small">成功率高，耗时略长</text>
+  <rect x="840" y="260" width="300" height="170" class="good"/><text x="990" y="305" text-anchor="middle" class="txt">动作选择</text><text x="990" y="345" text-anchor="middle" class="formula">J(后果, q) - lambda R(后果)</text><text x="990" y="390" text-anchor="middle" class="small">选择收益与风险综合最优的候选</text>
+  <path d="M320 195 L450 195" class="arrow"/><path d="M320 360 L450 360" class="arrow"/><path d="M320 525 L450 525" class="arrow"/>
+  <path d="M700 195 C765 220 810 270 840 320" class="arrow"/><path d="M700 360 L840 345" class="arrow"/><path d="M700 525 C765 490 815 425 840 370" class="arrow"/>
+  <text x="640" y="650" text-anchor="middle" class="small">公式 (21.5) 的图解：动作选择不再只看策略概率，而是比较预测后果中的任务收益和风险。</text>
+</svg>
