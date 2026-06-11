@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker>
+    <style>.title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.axis{stroke:#24292f;stroke-width:3;marker-end:url(#arrow)}.line{stroke:#0969da;stroke-width:4;fill:none}.t1{stroke:#9a6700;stroke-width:3;stroke-dasharray:8 6}.t2{stroke:#cf222e;stroke-width:3;stroke-dasharray:8 6}.ok{fill:#dafbe1;stroke:#1a7f37;stroke-width:2;rx:16;ry:16}.mid{fill:#fff8c5;stroke:#9a6700;stroke-width:2;rx:16;ry:16}.bad{fill:#ffebe9;stroke:#cf222e;stroke-width:2;rx:16;ry:16}.txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.formula{font:16px Arial,'Microsoft YaHei',sans-serif;fill:#6e7781}</style>
+  </defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图19-3 预测误差与执行模式切换</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">预测误差不是最终真理，但可以作为继续、纠正或 fallback 的触发信号</text>
+  <line x1="120" y1="520" x2="780" y2="520" class="axis"/>
+  <line x1="120" y1="520" x2="120" y2="140" class="axis"/>
+  <text x="450" y="570" text-anchor="middle" class="txt">时间 t</text>
+  <text x="50" y="330" text-anchor="middle" class="txt" transform="rotate(-90 50 330)">预测误差 e_{t+1}</text>
+  <path d="M140 470 C220 465 280 450 340 430 C420 400 475 330 540 260 C600 205 660 190 740 165" class="line"/>
+  <line x1="120" y1="350" x2="780" y2="350" class="t1"/>
+  <line x1="120" y1="230" x2="780" y2="230" class="t2"/>
+  <text x="790" y="355" class="formula">epsilon</text>
+  <text x="790" y="235" class="formula">epsilon_stop</text>
+  <rect x="875" y="150" width="270" height="90" class="ok"/><text x="1010" y="185" text-anchor="middle" class="txt">continue</text><text x="1010" y="214" text-anchor="middle" class="small">误差小，继续执行</text>
+  <rect x="875" y="285" width="270" height="90" class="mid"/><text x="1010" y="320" text-anchor="middle" class="txt">correct</text><text x="1010" y="349" text-anchor="middle" class="small">减速、纠偏、重新观察</text>
+  <rect x="875" y="420" width="270" height="90" class="bad"/><text x="1010" y="455" text-anchor="middle" class="txt">fallback</text><text x="1010" y="484" text-anchor="middle" class="small">停止、退回或人工接管</text>
+  <text x="640" y="645" text-anchor="middle" class="small">注意：误差大可能来自感知噪声；误差小也不保证安全。阈值必须结合任务风险和实机验证标定。</text>
+</svg>
