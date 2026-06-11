@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker>
+    <style>
+      .title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}
+      .lang{fill:#ddf4ff;stroke:#0969da;stroke-width:2;rx:16;ry:16}.vision{fill:#dafbe1;stroke:#1a7f37;stroke-width:2;rx:16;ry:16}.action{fill:#fff8c5;stroke:#9a6700;stroke-width:2;rx:16;ry:16}.risk{fill:#ffebe9;stroke:#cf222e;stroke-width:2;rx:16;ry:16}
+      .txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.arrow{stroke:#24292f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图18-3 语言、视觉与动作 grounding</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">VLA 必须把语言中的对象和关系，落到图像区域与机器人动作序列上</text>
+
+  <rect x="70" y="150" width="270" height="390" class="lang"/>
+  <text x="205" y="190" text-anchor="middle" class="txt">语言指令</text>
+  <text x="205" y="245" text-anchor="middle" class="small">“抓取红色工件”</text>
+  <text x="205" y="295" text-anchor="middle" class="small">“放入左侧槽位”</text>
+  <text x="205" y="345" text-anchor="middle" class="small">“轻轻放下”</text>
+  <text x="205" y="425" text-anchor="middle" class="small">语义约束</text>
+  <text x="205" y="455" text-anchor="middle" class="small">对象 / 空间关系 / 动作要求</text>
+
+  <rect x="505" y="130" width="270" height="430" class="vision"/>
+  <text x="640" y="170" text-anchor="middle" class="txt">视觉与空间 grounding</text>
+  <circle cx="595" cy="255" r="38" fill="#ffebe9" stroke="#cf222e" stroke-width="2"/>
+  <text x="595" y="262" text-anchor="middle" class="small">红色工件</text>
+  <rect x="655" y="215" width="78" height="78" fill="#f6f8fa" stroke="#57606a" stroke-width="2"/>
+  <text x="694" y="260" text-anchor="middle" class="small">蓝色</text>
+  <rect x="575" y="360" width="130" height="80" fill="#f6f8fa" stroke="#1f2328" stroke-width="2"/>
+  <text x="640" y="406" text-anchor="middle" class="small">左侧槽位</text>
+  <text x="640" y="510" text-anchor="middle" class="small">图像区域 / 目标位姿 / 相对关系</text>
+
+  <rect x="940" y="150" width="270" height="390" class="action"/>
+  <text x="1075" y="190" text-anchor="middle" class="txt">动作 grounding</text>
+  <text x="1075" y="245" text-anchor="middle" class="small">接近目标物</text>
+  <text x="1075" y="285" text-anchor="middle" class="small">闭合夹爪</text>
+  <text x="1075" y="325" text-anchor="middle" class="small">移动到槽位</text>
+  <text x="1075" y="365" text-anchor="middle" class="small">下降 / 释放 / 撤离</text>
+  <text x="1075" y="455" text-anchor="middle" class="small">控制量 a_t 或动作块 A_t</text>
+
+  <path d="M340 260 C420 235 450 235 505 250" class="arrow"/>
+  <path d="M340 320 C420 340 450 365 505 390" class="arrow"/>
+  <path d="M775 330 C850 320 885 315 940 300" class="arrow"/>
+  <path d="M775 410 C850 430 885 440 940 455" class="arrow"/>
+
+  <rect x="310" y="600" width="660" height="64" class="risk"/>
+  <text x="640" y="626" text-anchor="middle" class="txt">失败模式</text>
+  <text x="640" y="652" text-anchor="middle" class="small">语言理解正确，但对象定位、空间关系或动作执行任一环节失败，机器人仍然会失败。</text>
+</svg>
