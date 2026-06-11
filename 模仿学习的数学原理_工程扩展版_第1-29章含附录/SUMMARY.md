@@ -37,10 +37,10 @@
 ## 第四篇：现代机器人策略模型
 
 - [第四篇导读：现代机器人策略模型](导读/04_第四篇_现代机器人策略模型.md)
-- [第10章 ACT：一次别只想一步，机器人也需要动作小套餐](chapters/第13章_ACT_一次别只想一步_机器人也需要动作小套餐.md)
-- [第11章 Diffusion Policy：把动作从一团噪声里慢慢搓出来](chapters/第14章_Diffusion_Policy_把动作从一团噪声里慢慢搓出来.md)
-- [第12章 Flow Matching：从扩散去噪到连续流场生成动作](chapters/第15章_Flow_Matching_从扩散去噪到连续流场生成动作.md)
-- [第13章 BC / ACT / Diffusion Policy / Flow Matching 对比](chapters/第16章_BC_ACT_Diffusion_Policy_Flow_Matching_对比.md)
+- [第10章 ACT：一次别只想一步，机器人也需要动作小套餐](chapters/第10章_ACT_一次别只想一步_机器人也需要动作小套餐.md)
+- [第11章 Diffusion Policy：把动作从一团噪声里慢慢搓出来](chapters/第11章_Diffusion_Policy_把动作从一团噪声里慢慢搓出来.md)
+- [第12章 Flow Matching：从扩散去噪到连续流场生成动作](chapters/第12章_Flow_Matching_从扩散去噪到连续流场生成动作.md)
+- [第13章 BC / ACT / Diffusion Policy / Flow Matching 对比](chapters/第13章_BC_ACT_Diffusion_Policy_Flow_Matching_对比.md)
 
 ## 第五篇：从历史上下文到多模态条件策略
 
