@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker><style>.title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.box{fill:#f6f8fa;stroke:#8c959f;stroke-width:2;rx:16;ry:16}.pred{fill:#ddf4ff;stroke:#0969da;stroke-width:2;rx:16;ry:16}.bad{fill:#ffebe9;stroke:#cf222e;stroke-width:2;rx:16;ry:16}.warn{fill:#fff8c5;stroke:#9a6700;stroke-width:2;rx:16;ry:16}.good{fill:#dafbe1;stroke:#1a7f37;stroke-width:2;rx:16;ry:16}.txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.formula{font:16px Arial,'Microsoft YaHei',sans-serif;fill:#6e7781}.arrow{stroke:#24292f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}</style></defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图21-4 预测失配、fallback 与数据回流</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">预测和真实反馈不一致时，系统应恢复或接管，并把失败片段回流成训练数据</text>
+  <rect x="80" y="160" width="220" height="105" class="pred"/><text x="190" y="198" text-anchor="middle" class="txt">预测后果</text><text x="190" y="228" text-anchor="middle" class="formula">h_hat_{t+1}</text>
+  <rect x="80" y="360" width="220" height="105" class="box"/><text x="190" y="398" text-anchor="middle" class="txt">真实反馈</text><text x="190" y="428" text-anchor="middle" class="formula">h_{t+1}</text>
+  <rect x="405" y="260" width="235" height="105" class="bad"/><text x="522" y="298" text-anchor="middle" class="txt">预测反馈误差</text><text x="522" y="328" text-anchor="middle" class="formula">e_{t+1}=d(h_hat,h)</text>
+  <rect x="750" y="170" width="230" height="95" class="warn"/><text x="865" y="205" text-anchor="middle" class="txt">恢复策略</text><text x="865" y="234" text-anchor="middle" class="small">纠偏 / 回退 / 重规划</text>
+  <rect x="750" y="370" width="230" height="95" class="bad"/><text x="865" y="405" text-anchor="middle" class="txt">fallback / 接管</text><text x="865" y="434" text-anchor="middle" class="small">停止 / 安全模式 / 人工</text>
+  <rect x="1035" y="260" width="190" height="105" class="good"/><text x="1130" y="298" text-anchor="middle" class="txt">数据回流</text><text x="1130" y="328" text-anchor="middle" class="small">失败片段 / 偏好对</text>
+  <path d="M300 212 C350 235 370 265 405 295" class="arrow"/>
+  <path d="M300 412 C350 390 370 350 405 330" class="arrow"/>
+  <path d="M640 300 C690 260 715 220 750 215" class="arrow"/>
+  <path d="M640 325 C690 365 715 410 750 417" class="arrow"/>
+  <path d="M980 215 C1050 215 1090 245 1130 260" class="arrow"/>
+  <path d="M980 417 C1050 405 1090 370 1130 365" class="arrow"/>
+  <text x="640" y="610" text-anchor="middle" class="small">核心：世界预测不仅用于计划，也用于发现异常、触发恢复，并沉淀新的训练样本。</text>
+</svg>
