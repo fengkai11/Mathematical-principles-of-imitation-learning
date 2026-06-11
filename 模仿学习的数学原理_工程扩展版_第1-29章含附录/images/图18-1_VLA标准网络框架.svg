@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#24292f"/>
+    </marker>
+    <style>
+      .title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}
+      .sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}
+      .box{fill:#f6f8fa;stroke:#8c959f;stroke-width:2;rx:16;ry:16}
+      .core{fill:#fff8c5;stroke:#9a6700;stroke-width:2;rx:16;ry:16}
+      .out{fill:#ddf4ff;stroke:#0969da;stroke-width:2;rx:16;ry:16}
+      .txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}
+      .small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}
+      .formula{font:16px Arial,'Microsoft YaHei',sans-serif;fill:#6e7781}
+      .arrow{stroke:#24292f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}
+    </style>
+  </defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图18-1 VLA 标准网络框架</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">多模态输入经过编码、token 融合与动作解码，形成机器人可执行动作</text>
+
+  <rect x="60" y="150" width="185" height="90" class="box"/>
+  <text x="152" y="184" text-anchor="middle" class="txt">视觉历史</text>
+  <text x="152" y="212" text-anchor="middle" class="formula">I₁:t</text>
+
+  <rect x="60" y="275" width="185" height="90" class="box"/>
+  <text x="152" y="309" text-anchor="middle" class="txt">本体状态</text>
+  <text x="152" y="337" text-anchor="middle" class="formula">q₁:t</text>
+
+  <rect x="60" y="400" width="185" height="90" class="box"/>
+  <text x="152" y="434" text-anchor="middle" class="txt">历史动作</text>
+  <text x="152" y="462" text-anchor="middle" class="formula">a₁:t-1</text>
+
+  <rect x="60" y="525" width="185" height="90" class="box"/>
+  <text x="152" y="559" text-anchor="middle" class="txt">语言指令</text>
+  <text x="152" y="587" text-anchor="middle" class="formula">l</text>
+
+  <rect x="330" y="145" width="210" height="475" class="box"/>
+  <text x="435" y="185" text-anchor="middle" class="txt">模态编码器</text>
+  <text x="435" y="225" text-anchor="middle" class="small">E_I(I₁:t)=v₁:t</text>
+  <text x="435" y="315" text-anchor="middle" class="small">E_q(q₁:t)=r₁:t</text>
+  <text x="435" y="405" text-anchor="middle" class="small">E_a(a₁:t-1)=b₁:t-1</text>
+  <text x="435" y="495" text-anchor="middle" class="small">E_l(l)=u</text>
+  <text x="435" y="565" text-anchor="middle" class="small">把不同模态变成 token</text>
+
+  <rect x="620" y="220" width="245" height="220" class="core"/>
+  <text x="742" y="262" text-anchor="middle" class="txt">Token 融合模块</text>
+  <text x="742" y="304" text-anchor="middle" class="small">z₁:m=[v,r,b,u]</text>
+  <text x="742" y="346" text-anchor="middle" class="small">Transformer / Attention</text>
+  <text x="742" y="388" text-anchor="middle" class="small">h_t=F_θ(z₁:m)</text>
+
+  <rect x="945" y="220" width="210" height="220" class="out"/>
+  <text x="1050" y="262" text-anchor="middle" class="txt">动作解码器</text>
+  <text x="1050" y="304" text-anchor="middle" class="small">连续动作</text>
+  <text x="1050" y="338" text-anchor="middle" class="small">动作 token</text>
+  <text x="1050" y="372" text-anchor="middle" class="small">动作块 / 生成式动作</text>
+  <text x="1050" y="412" text-anchor="middle" class="formula">a_t 或 A_t</text>
+
+  <path d="M245 195 L330 195" class="arrow"/>
+  <path d="M245 320 L330 320" class="arrow"/>
+  <path d="M245 445 L330 445" class="arrow"/>
+  <path d="M245 570 L330 570" class="arrow"/>
+  <path d="M540 382 L620 330" class="arrow"/>
+  <path d="M865 330 L945 330" class="arrow"/>
+
+  <text x="640" y="675" text-anchor="middle" class="small">核心读法：VLA 的关键不是“会说话”，而是把视觉、语言、状态和历史动作对齐到动作输出。</text>
+</svg>
