@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#ffffff"/>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#24292f"/></marker><style>.title{font:700 30px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.sub{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.box{fill:#f6f8fa;stroke:#8c959f;stroke-width:2;rx:16;ry:16}.policy{fill:#ddf4ff;stroke:#0969da;stroke-width:2;rx:16;ry:16}.world{fill:#fff8c5;stroke:#9a6700;stroke-width:2;rx:16;ry:16}.risk{fill:#ffebe9;stroke:#cf222e;stroke-width:2;rx:16;ry:16}.ok{fill:#dafbe1;stroke:#1a7f37;stroke-width:2;rx:16;ry:16}.txt{font:18px Arial,'Microsoft YaHei',sans-serif;fill:#24292f}.small{font:15px Arial,'Microsoft YaHei',sans-serif;fill:#57606a}.formula{font:16px Arial,'Microsoft YaHei',sans-serif;fill:#6e7781}.arrow{stroke:#24292f;stroke-width:2.5;fill:none;marker-end:url(#arrow)}</style></defs>
+  <text x="640" y="46" text-anchor="middle" class="title">图21-1 世界预测辅助策略执行框架</text>
+  <text x="640" y="80" text-anchor="middle" class="sub">世界模型不替代策略，而是在执行前后提供后果检查</text>
+  <rect x="60" y="180" width="185" height="100" class="box"/><text x="152" y="218" text-anchor="middle" class="txt">当前上下文</text><text x="152" y="248" text-anchor="middle" class="formula">h_t, c_t</text>
+  <rect x="310" y="180" width="205" height="100" class="policy"/><text x="412" y="218" text-anchor="middle" class="txt">策略 / VLA / 规划器</text><text x="412" y="248" text-anchor="middle" class="small">提出候选动作</text>
+  <rect x="585" y="180" width="205" height="100" class="world"/><text x="688" y="218" text-anchor="middle" class="txt">世界预测模块</text><text x="688" y="248" text-anchor="middle" class="small">预测动作后果</text>
+  <rect x="860" y="180" width="205" height="100" class="risk"/><text x="962" y="218" text-anchor="middle" class="txt">目标 / 风险评估</text><text x="962" y="248" text-anchor="middle" class="small">收益 - 风险</text>
+  <rect x="585" y="390" width="205" height="100" class="ok"/><text x="688" y="428" text-anchor="middle" class="txt">执行 / 修正</text><text x="688" y="458" text-anchor="middle" class="small">执行、重规划或 fallback</text>
+  <rect x="310" y="390" width="205" height="100" class="box"/><text x="412" y="428" text-anchor="middle" class="txt">真实反馈</text><text x="412" y="458" text-anchor="middle" class="small">观测、接触、风险</text>
+  <rect x="860" y="390" width="205" height="100" class="box"/><text x="962" y="428" text-anchor="middle" class="txt">日志与数据回流</text><text x="962" y="458" text-anchor="middle" class="small">失败片段 / 偏好对</text>
+  <path d="M245 230 L310 230" class="arrow"/><path d="M515 230 L585 230" class="arrow"/><path d="M790 230 L860 230" class="arrow"/><path d="M962 280 C930 350 835 405 790 430" class="arrow"/><path d="M585 440 L515 440" class="arrow"/><path d="M412 390 C360 330 365 280 390 250" class="arrow"/><path d="M790 440 L860 440" class="arrow"/>
+  <text x="640" y="620" text-anchor="middle" class="small">闭环读法：候选动作不是直接执行，而是先预测后果、评估风险，再进入执行和反馈回流。</text>
+</svg>
