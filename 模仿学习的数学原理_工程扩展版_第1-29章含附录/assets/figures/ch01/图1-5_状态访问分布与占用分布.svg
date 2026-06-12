@@ -1,39 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="420" viewBox="0 0 960 420">
   <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#333"/></marker>
     <style>
-      text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;fill:#222}.title{font-size:26px;font-weight:700}.label{font-size:18px;font-weight:600}.small{font-size:15px;fill:#444}.grid{stroke:#eee}.arrow{stroke:#333;stroke-width:2;marker-end:url(#arrow)}.box{fill:#fff;stroke:#ddd;stroke-width:2}
+      .title { font: bold 24px sans-serif; fill:#222; }
+      .label { font: 18px sans-serif; fill:#222; }
+      .small { font: 15px sans-serif; fill:#444; }
+      .panel { fill:#f9f9f9; stroke:#888; stroke-width:1.5; rx:10; }
     </style>
   </defs>
-  <text x="40" y="45" class="title">图1-5：状态访问分布 dπ 与占用分布 ρπ</text>
-  <text x="40" y="78" class="small">dπ 描述策略会到哪里；π(a|s) 描述在那里会做什么；二者合成 ρπ(s,a)。</text>
-
-  <rect x="60" y="115" width="360" height="280" rx="12" fill="#fafafa" stroke="#ddd"/>
-  <text x="85" y="150" class="label">状态访问分布 dπ(s)</text>
-  <g>
-    <line x1="100" y1="350" x2="380" y2="350" stroke="#555"/>
-    <line x1="100" y1="350" x2="100" y2="180" stroke="#555"/>
-    <circle cx="150" cy="315" r="13" fill="#bdd7ff" stroke="#4778c7"/>
-    <circle cx="205" cy="285" r="24" fill="#8ebcff" stroke="#4778c7"/>
-    <circle cx="270" cy="245" r="34" fill="#5b9cff" stroke="#4778c7"/>
-    <circle cx="335" cy="220" r="18" fill="#9ec8ff" stroke="#4778c7"/>
-    <text x="115" y="375" class="small">不同状态被访问的频率</text>
-  </g>
-
-  <rect x="500" y="115" width="330" height="280" rx="12" fill="#fffaf2" stroke="#e7c383"/>
-  <text x="530" y="150" class="label">动作条件分布 π(a|s)</text>
-  <g>
-    <circle cx="590" cy="245" r="30" fill="#5b9cff" stroke="#4778c7"/>
-    <line x1="590" y1="245" x2="680" y2="210" class="arrow"/>
-    <line x1="590" y1="245" x2="650" y2="295" class="arrow"/>
-    <line x1="590" y1="245" x2="540" y2="285" class="arrow"/>
-    <text x="705" y="213" class="small">高概率动作</text>
-    <text x="657" y="312" class="small">其他动作</text>
-    <text x="532" y="308" class="small">其他动作</text>
-  </g>
-
-  <rect x="230" y="435" width="450" height="55" rx="12" fill="#f4fff3" stroke="#9ac57d"/>
-  <text x="270" y="468" class="label">ρπ(s,a)=dπ(s)π(a|s)</text>
-  <line x1="420" y1="255" x2="500" y2="255" class="arrow"/>
-  <line x1="455" y1="395" x2="455" y2="435" class="arrow"/>
+  <text x="40" y="40" class="title">图1-5 状态访问分布与占用分布</text>
+  <rect x="40" y="70" width="390" height="290" class="panel"/>
+  <text x="145" y="105" class="label">状态访问分布 dπ(s)</text>
+  <circle cx="120" cy="180" r="28" fill="#cfe8ff" stroke="#4a90e2" stroke-width="2"/>
+  <circle cx="220" cy="180" r="38" fill="#9fd0ff" stroke="#4a90e2" stroke-width="2"/>
+  <circle cx="330" cy="180" r="50" fill="#6fb7ff" stroke="#4a90e2" stroke-width="2"/>
+  <text x="90" y="230" class="small">正常推进状态</text>
+  <text x="182" y="235" class="small">轻微偏差状态</text>
+  <text x="298" y="245" class="small">边缘 / 卡滞状态</text>
+  <text x="70" y="300" class="small">dπ(s) 描述：策略执行后，方块更常出现在哪些状态。</text>
+  <rect x="500" y="70" width="420" height="290" class="panel"/>
+  <text x="610" y="105" class="label">状态—动作执行分布 ρπ(s,a)</text>
+  <rect x="560" y="145" width="100" height="50" fill="#e8f4ff" stroke="#4a90e2"/>
+  <text x="580" y="175" class="small">状态 s</text>
+  <text x="685" y="178" class="label">+</text>
+  <rect x="730" y="145" width="120" height="50" fill="#fff4db" stroke="#d19a00"/>
+  <text x="755" y="175" class="small">动作 a</text>
+  <text x="570" y="245" class="small">ρπ(s,a)=dπ(s)π(a|s)</text>
+  <text x="545" y="285" class="small">不仅看“方块会到哪里”，还看“到了那里怎么推”。</text>
+  <text x="70" y="390" class="small">在推块入槽里：若策略总把方块推到槽口边缘，dπ(s) 已偏离专家；若到了边缘还继续硬推，ρπ(s,a) 会更偏离专家。</text>
 </svg>
