@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="420" viewBox="0 0 900 420">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#333"/>
+    </marker>
+    <style>
+      .title { font: bold 24px sans-serif; fill:#222; }
+      .label { font: 18px sans-serif; fill:#222; }
+      .small { font: 15px sans-serif; fill:#444; }
+      .box { fill:#f7f7f7; stroke:#999; stroke-width:1.5; }
+    </style>
+  </defs>
+  <text x="40" y="40" class="title">图1-1 推块入槽的二维抽象</text>
+  <rect x="40" y="70" width="820" height="300" rx="12" class="box"/>
+  <rect x="700" y="150" width="80" height="120" fill="#d9e8ff" stroke="#3b6db3" stroke-width="3"/>
+  <rect x="720" y="170" width="40" height="80" fill="#fff" stroke="#3b6db3" stroke-width="2"/>
+  <text x="690" y="295" class="label">槽口</text>
+  <rect x="230" y="185" width="55" height="55" fill="#ffd77a" stroke="#b8860b" stroke-width="3"/>
+  <text x="210" y="170" class="label">方块</text>
+  <circle cx="160" cy="212" r="18" fill="#8fd3ff" stroke="#247ba0" stroke-width="3"/>
+  <rect x="90" y="200" width="70" height="24" fill="#8fd3ff" stroke="#247ba0" stroke-width="3"/>
+  <text x="75" y="180" class="label">机器人末端</text>
+  <line x1="185" y1="212" x2="220" y2="212" stroke="#333" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="125" y="255" class="small">动作 a_t：向前推动</text>
+  <path d="M258 212 C330 212, 410 212, 500 212 S620 212, 700 212" fill="none" stroke="#d64545" stroke-width="5" stroke-dasharray="10 7"/>
+  <text x="350" y="180" class="label">专家推块轨迹</text>
+  <rect x="500" y="185" width="55" height="55" fill="#ffe8a8" stroke="#b8860b" stroke-width="2" opacity="0.75"/>
+  <rect x="70" y="305" width="760" height="45" fill="#fff" stroke="#ccc"/>
+  <text x="90" y="333" class="small">状态 s_t：机器人末端、方块位姿、槽口位置、接触关系；动作 a_t：推力方向 / 速度 / 小位移指令。</text>
+</svg>
