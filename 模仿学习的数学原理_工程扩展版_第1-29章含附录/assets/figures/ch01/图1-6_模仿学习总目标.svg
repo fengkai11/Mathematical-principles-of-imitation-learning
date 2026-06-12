@@ -1,32 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="520" viewBox="0 0 900 520">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360">
   <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#333"/></marker>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#333"/>
+    </marker>
     <style>
-      text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;fill:#222}.title{font-size:26px;font-weight:700}.label{font-size:18px;font-weight:600}.small{font-size:15px;fill:#444}.expert{stroke:#2f6fdd;stroke-width:5;fill:none}.policy{stroke:#d96c2c;stroke-width:5;fill:none;stroke-dasharray:8 7}.arrow{stroke:#333;stroke-width:2;marker-end:url(#arrow)}.box{fill:#fff;stroke:#ddd;stroke-width:2}
+      .title { font: bold 24px sans-serif; fill:#222; }
+      .label { font: 18px sans-serif; fill:#222; }
+      .small { font: 15px sans-serif; fill:#444; }
+      .panel { fill:#f9f9f9; stroke:#888; stroke-width:1.5; rx:10; }
     </style>
   </defs>
-  <text x="40" y="45" class="title">图1-6：模仿学习总目标 ρπ ≈ ρE</text>
-  <text x="40" y="78" class="small">学习目标不是只让单步动作像专家，而是让学习策略闭环执行后的 occupancy 接近专家 occupancy。</text>
-
-  <rect x="60" y="120" width="330" height="250" rx="14" fill="#f5f8ff" stroke="#9ec1ff"/>
-  <text x="105" y="155" class="label">专家 occupancy ρE</text>
-  <path d="M110 315 C150 270, 190 250, 240 215 C280 190, 315 165, 345 145" class="expert" marker-end="url(#arrow)"/>
-  <circle cx="110" cy="315" r="8" fill="#2f6fdd"/>
-  <circle cx="190" cy="250" r="8" fill="#2f6fdd"/>
-  <circle cx="280" cy="190" r="8" fill="#2f6fdd"/>
-  <text x="100" y="350" class="small">专家会到哪里，并在那里做什么</text>
-
-  <rect x="510" y="120" width="330" height="250" rx="14" fill="#fff7ef" stroke="#e7b47d"/>
-  <text x="540" y="155" class="label">学习策略 occupancy ρπ</text>
-  <path d="M560 315 C610 280, 640 260, 690 230 C735 205, 765 180, 805 150" class="policy" marker-end="url(#arrow)"/>
-  <circle cx="560" cy="315" r="8" fill="#d96c2c"/>
-  <circle cx="650" cy="255" r="8" fill="#d96c2c"/>
-  <circle cx="735" cy="205" r="8" fill="#d96c2c"/>
-  <text x="540" y="350" class="small">学习策略自己闭环执行后的分布</text>
-
-  <line x1="390" y1="245" x2="510" y2="245" class="arrow"/>
-  <text x="420" y="230" class="small">缩小距离</text>
-
-  <rect x="250" y="420" width="420" height="55" rx="12" fill="#f4fff3" stroke="#9ac57d"/>
-  <text x="290" y="455" class="label">minπ D(ρπ, ρE)</text>
+  <text x="40" y="40" class="title">图1-6 模仿学习总目标</text>
+  <rect x="60" y="90" width="320" height="190" class="panel"/>
+  <text x="140" y="125" class="label">专家执行分布 ρE</text>
+  <text x="95" y="165" class="small">专家通常把方块推到：</text>
+  <text x="115" y="195" class="small">• 正常推进路径</text>
+  <text x="115" y="220" class="small">• 槽口正前方</text>
+  <text x="115" y="245" class="small">• 必要时做稳定微调</text>
+  <rect x="580" y="90" width="320" height="190" class="panel"/>
+  <text x="650" y="125" class="label">学习策略分布 ρπ</text>
+  <text x="615" y="165" class="small">学习策略执行后可能：</text>
+  <text x="635" y="195" class="small">• 接近专家分布</text>
+  <text x="635" y="220" class="small">• 偏到槽口边缘</text>
+  <text x="635" y="245" class="small">• 进入卡滞状态</text>
+  <line x1="390" y1="185" x2="570" y2="185" stroke="#333" stroke-width="4" marker-end="url(#arrow)"/>
+  <text x="415" y="160" class="small">让两者尽量接近</text>
+  <text x="405" y="215" class="small">min D(ρπ, ρE)</text>
+  <text x="80" y="325" class="small">核心思想：模仿学习不仅要模仿专家动作，还要让学习策略闭环执行后的整体行为分布接近专家。</text>
 </svg>
