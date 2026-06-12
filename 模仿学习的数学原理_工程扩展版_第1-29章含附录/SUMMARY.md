@@ -18,45 +18,45 @@
 ## 第一篇：模仿学习的基本范式：从动作拟合到执行分布
 
 - [第一篇导读：从“照着专家学”到“匹配专家分布”](导读/01_第一篇_模仿学习的基本问题.md)
-- [第1章 从专家轨迹到执行分布](chapters/第01章_模仿学习到底在模仿什么.md)
-- [第2章 Behavior Cloning：专家分布上的动作拟合](chapters/第02章_Behavior_Cloning_最朴素也最容易翻车的模仿学习.md)
-- [第3章 分布偏移与 DAgger：从闭环失败到训练分布修正](chapters/第03章_分布偏移_为什么_Behavior_Cloning_会越走越歪.md)
+- [第1章 从专家轨迹到执行分布](chapters_p1/第01章_模仿学习到底在模仿什么.md)
+- [第2章 Behavior Cloning：专家分布上的动作拟合](chapters_p1/第02章_Behavior_Cloning_最朴素也最容易翻车的模仿学习.md)
+- [第3章 分布偏移与 DAgger：从闭环失败到训练分布修正](chapters_p1/第03章_分布偏移_为什么_Behavior_Cloning_会越走越歪.md)
 - [第一篇公式地图：从专家轨迹到执行分布](导读/01A_第一篇_公式地图_从专家轨迹到执行分布.md)
 
 ## 第二篇：动作分布、轨迹损失与隐变量策略
 
 - [第二篇导读：动作分布、轨迹损失与隐变量策略](导读/02_第二篇_序列决策与轨迹分布基础.md)
-- [第4章 从单步动作到动作序列：轨迹损失与动作块](chapters/第04章_从单步动作到动作序列_轨迹损失与动作块.md)
-- [第5章 从点估计到动作分布：概率策略、MSE 与多峰陷阱](chapters/第05章_从点估计到动作分布_概率策略MSE与多峰陷阱.md)
-- [第6章 隐变量策略与 CVAE：从多模式动作到可训练生成模型](chapters/第06章_隐变量策略与_CVAE_从多模式动作到可训练生成模型.md)
+- [第4章 从单步动作到动作序列：轨迹损失与动作块](chapters_p1/第04章_从单步动作到动作序列_轨迹损失与动作块.md)
+- [第5章 从点估计到动作分布：概率策略、MSE 与多峰陷阱](chapters_p1/第05章_从点估计到动作分布_概率策略MSE与多峰陷阱.md)
+- [第6章 隐变量策略与 CVAE：从多模式动作到可训练生成模型](chapters_p1/第06章_隐变量策略与_CVAE_从多模式动作到可训练生成模型.md)
 
 ## 第三篇：经典模仿学习的分布匹配与奖励视角
 
 - [第三篇导读：经典模仿学习的分布匹配与奖励视角](导读/03_第三篇_经典模仿学习的分布匹配与奖励视角.md)
-- [第7章 IRL：专家到底在优化什么](chapters/第07章_IRL_专家到底在优化什么.md)
-- [第8章 GAIL：从判别器里偷一个奖励函数](chapters/第08章_GAIL_从判别器里偷一个奖励函数.md)
-- [第9章 Offline Imitation Learning：离线数据不是越多越好，是坑有没有录进去](chapters/第09章_Offline_Imitation_Learning_离线数据不是越多越好_是坑有没有录进去.md)
+- [第7章 IRL：专家到底在优化什么](chapters_p1/第07章_IRL_专家到底在优化什么.md)
+- [第8章 GAIL：从判别器里偷一个奖励函数](chapters_p1/第08章_GAIL_从判别器里偷一个奖励函数.md)
+- [第9章 Offline Imitation Learning：离线数据不是越多越好，是坑有没有录进去](chapters_p1/第09章_Offline_Imitation_Learning_离线数据不是越多越好_是坑有没有录进去.md)
 
 ## 第四篇：现代机器人策略模型
 
 - [第四篇导读：现代机器人策略模型](导读/04_第四篇_现代机器人策略模型.md)
-- [第10章 ACT：一次别只想一步，机器人也需要动作小套餐](chapters/第10章_ACT_一次别只想一步_机器人也需要动作小套餐.md)
-- [第11章 Diffusion Policy：把动作从一团噪声里慢慢搓出来](chapters/第11章_Diffusion_Policy_把动作从一团噪声里慢慢搓出来.md)
-- [第12章 Flow Matching：从扩散去噪到连续流场生成动作](chapters/第12章_Flow_Matching_从扩散去噪到连续流场生成动作.md)
-- [第13章 BC / ACT / Diffusion Policy / Flow Matching 对比](chapters/第13章_BC_ACT_Diffusion_Policy_Flow_Matching_对比.md)
+- [第10章 ACT：一次别只想一步，机器人也需要动作小套餐](chapters_p1/第10章_ACT_一次别只想一步_机器人也需要动作小套餐.md)
+- [第11章 Diffusion Policy：把动作从一团噪声里慢慢搓出来](chapters_p1/第11章_Diffusion_Policy_把动作从一团噪声里慢慢搓出来.md)
+- [第12章 Flow Matching：从扩散去噪到连续流场生成动作](chapters_p1/第12章_Flow_Matching_从扩散去噪到连续流场生成动作.md)
+- [第13章 BC / ACT / Diffusion Policy / Flow Matching 对比](chapters_p1/第13章_BC_ACT_Diffusion_Policy_Flow_Matching_对比.md)
 
 ## 第五篇：从历史上下文到多模态条件策略
 
 - [第五篇导读：从历史上下文到多模态条件策略](导读/05_第五篇_长序列架构与多模态策略.md)
-- [第14章 序列策略模型：从 Decision Transformer 到 Transformer Policy](chapters/第14章_序列策略模型_从_Decision_Transformer_到_Transformer_Policy.md)
-- [第15章 VLA：视觉、语言与动作的统一策略模型](chapters/第15章_VLA_视觉语言与动作的统一策略模型.md)
+- [第14章 序列策略模型：从 Decision Transformer 到 Transformer Policy](chapters_p1/第14章_序列策略模型_从_Decision_Transformer_到_Transformer_Policy.md)
+- [第15章 VLA：视觉、语言与动作的统一策略模型](chapters_p1/第15章_VLA_视觉语言与动作的统一策略模型.md)
 
 ## 第六篇：从动作模仿到世界预测
 
 - [第六篇导读：从动作模仿到世界预测](导读/06_第六篇_世界模型、快慢系统与认知架构.md)
-- [第16章 从动作模仿到世界预测：机器人不能只会背动作表](chapters/第16章_从动作模仿到世界预测_机器人不能只会背动作表.md)
-- [第17章 World Models、World Action Models 与 JEPA：机器人要学会预测动作后果](chapters/第17章_World_Models_World_Action_Models_与_JEPA.md)
-- [第18章 世界预测如何进入机器人策略系统：计划、验证与安全边界](chapters/第18章_世界预测如何进入机器人策略系统_计划验证与安全边界.md)
+- [第16章 从动作模仿到世界预测：机器人不能只会背动作表](chapters_p1/第16章_从动作模仿到世界预测_机器人不能只会背动作表.md)
+- [第17章 World Models、World Action Models 与 JEPA：机器人要学会预测动作后果](chapters_p1/第17章_World_Models_World_Action_Models_与_JEPA.md)
+- [第18章 世界预测如何进入机器人策略系统：计划、验证与安全边界](chapters_p1/第18章_世界预测如何进入机器人策略系统_计划验证与安全边界.md)
 
 # 附录
 
